@@ -2,7 +2,7 @@
 
 import numpy as np
 from sklearn.metrics import pairwise_distances
-from paractive.designmethods.gen_funcs.acquisition_funcs_support import compute_postvar, compute_eivar, multiple_pdfs, get_emuvar
+from PUQ.designmethods.gen_funcs.acquisition_funcs_support import compute_postvar, compute_eivar, multiple_pdfs, get_emuvar
 
 plotting = False
 def rnd(n, 

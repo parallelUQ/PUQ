@@ -15,7 +15,7 @@ class designer(object):
                  args={}):
         
         self.method = \
-                importlib.import_module('paractive.designmethods.' + method)
+                importlib.import_module('PUQ.designmethods.' + method)
         self._info = {'method': method}
         
         self.fit(data_cls, args)
