@@ -1,9 +1,0 @@
-[0]  2022-09-03 17:06:19,663 libensemble.libE (INFO): Logger initializing: [workerID] precedes each line. [0] = Manager
-[0]  2022-09-03 17:06:19,664 libensemble.libE (INFO): libE version v0.9.1
-[0]  2022-09-03 17:06:19,667 libensemble.manager (INFO): Manager initiated on node ozges-MacBook-Pro.local
-[0]  2022-09-03 17:06:19,667 libensemble.manager (INFO): Manager exit_criteria: {'sim_max': 210}
-[1]  2022-09-03 17:06:19,668 libensemble.worker (INFO): Worker 1 initiated on node ozges-MacBook-Pro.local
-[2]  2022-09-03 17:06:19,669 libensemble.worker (INFO): Worker 2 initiated on node ozges-MacBook-Pro.local
-[0]  2022-09-03 17:08:11,167 libensemble.manager (INFO): Term test tripped: sim_max
-[0]  2022-09-03 17:08:11,167 libensemble.manager (INFO): Term test tripped: sim_max
-[0]  2022-09-03 17:08:11,170 libensemble.libE (INFO): Manager total time: 111.502

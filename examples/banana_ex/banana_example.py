@@ -6,12 +6,6 @@ Created on Sat Jun 25 15:07:50 2022
 @author: ozgesurer
 """
 
-# import sys
-# sys.path.append("/Users/ozgesurer/Desktop/GithubRepos/paractive/")
-# sys.path.append("/Users/ozgesurer/Desktop/GithubRepos/paractive/paractive")
-# sys.path.append("/Users/ozgesurer/Desktop/GithubRepos/surmise/")
-# sys.path.append("/Users/ozgesurer/Desktop/GithubRepos/surmise/surmise")
-
 import seaborn as sns
 import pandas as pd
 import scipy.stats as sps
@@ -19,7 +13,7 @@ from generate_test_data import generate_test_data
 import numpy as np
 import matplotlib.pyplot as plt
 from PUQ.design import designer
-from PUQ.designmethods.utils import parse_arguments, save_output, read_output
+from PUQ.designmethods.utils import parse_arguments, save_output
 
 
 def prior_banana(n, thetalimits, seed=None):

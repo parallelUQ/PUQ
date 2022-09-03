@@ -1,5 +1,5 @@
 import numpy as np
-from surmise.emulation import emulator
+from PUQ.surrogate import emulator
 import pyximport
 pyximport.install(setup_args={"include_dirs":np.get_include()},
                   reload_support=True)
@@ -99,6 +99,6 @@ def fit_emulator(x, theta, fevals, thetalimits):
     emu = emulator(x, 
                    theta_c, 
                    fevals_c, 
-                   method='PCGPfast')
+                   method='PCGP')
 
     return emu

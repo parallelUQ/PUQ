@@ -1,5 +1,5 @@
 """
-This module contains a class that implements the main emulation method.
+This module contains a class that implements the main design method.
 """
 import numpy as np
 import importlib
