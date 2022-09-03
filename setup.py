@@ -16,12 +16,12 @@ with open("README.rst", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="paractive",
+    name="UQ",
     version="0.1.1",
     author="Özge Sürer",
-    author_email="ozgesurer2019@u.northwestern.edu",
-    description="A modular interface for surrogate models and tools",
-    url="https://github.com/surmising/paractive",
+    author_email="surero@miamioh.edu",
+    description="Uncertainty quantification methods with parallel implementations",
+    url="https://github.com/parallelUQ/PUQ",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
