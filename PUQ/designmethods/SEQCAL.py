@@ -126,6 +126,8 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         acquisition_f = eval(AL)
         list_id = []
 
+        theta = 0
+        
         while tag not in [STOP_TAG, PERSIS_STOP]:
             if not first_iter:
                 # Update fevals from calc_in
@@ -153,14 +155,6 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 print('Percentage Complete: %0.2f ( %d / %d)' % (100*np.round(np.mean(complete), 4),
                                                                  np.sum(complete),
                                                                  np.prod(pending.shape)))
-               
-                #print(x.shape)
-                #print(fevals.shape)
-                #print(real_x.shape)
-                #for i in range(fevals.shape[1]):
-                #    plt.plot(x.flatten(), fevals[:, i], zorder=1)
-                #plt.scatter(real_x.flatten(), true_fevals.flatten(), zorder=2)
-                #plt.show()
                 
                 emu            = fit_emulator(x, theta, fevals, theta_limits)
                 prev_pending   = pending.copy()
@@ -181,7 +175,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
             if first_iter:
                 print('Selecting theta for the first iteration...\n')
-                
+
                 n_init = max(n_workers-1, n0)
                 theta  = prior_func(n_init, theta_limits, seed)
                 fevals, pending, prev_pending, complete, prev_complete = create_arrays(n_x, n_init)

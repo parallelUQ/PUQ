@@ -419,10 +419,10 @@ def acquisition(fitinfo, x, theta1, theta2, **kwargs):
         #print('tau:', tau.shape)
     pctscale = (fitinfo['pcti'].T * fitinfo['standardpcinfo']['scale']).T
     
-    print('here1')
+    #print('here1')
  
     BtauT            = (np.sqrt(tau)[:, :, :, None] * (pctscale.T))
-    print(BtauT.shape)
+    #print(BtauT.shape)
     Btau             = BtauT.transpose(0,1,3,2)
     Btau_torch       = torch.from_numpy(Btau)
     Btau_torchT      = torch.from_numpy(BtauT)
@@ -430,7 +430,7 @@ def acquisition(fitinfo, x, theta1, theta2, **kwargs):
     phi_mat_np       = phi_mat_torch.numpy()
     phi_mat_np       = phi_mat_np.transpose(0,3,2,1)
 
-    print('here2')
+    #print('here2')
     #print(phi_mat_np[1, :, :, 0])
     #phi_matrix2 = np.zeros((theta1.shape[0], len(x), len(x), theta2.shape[0]))
     #for i in range(theta1.shape[0]):

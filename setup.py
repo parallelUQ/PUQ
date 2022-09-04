@@ -16,7 +16,7 @@ with open("README.rst", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="UQ",
+    name="PUQ",
     version="0.1.1",
     author="Özge Sürer",
     author_email="surero@miamioh.edu",
@@ -28,17 +28,21 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.5',
+    python_requires='>=3.6',
     setup_requires=[
         'setuptools>=18.0',
         'cython'
     ],
     install_requires=[
                       'numpy',
-                      'scipy'
+                      'scipy',
+                      'libensemble'
                       ],
-    extras_require={'extras': ['GPy'],
-                    'docs': ['sphinx', 'sphinxcontrib.bibtex', 'sphinx_rtd_theme']},
+    tests_require=["pytest", "pytest-cov", "flake8"],
+    extras_require={'docs': ['sphinx', 'sphinxcontrib.bibtex', 'sphinx_rtd_theme']},
     cmdclass={'test': Run_TestSuite},
+    ext_modules=[
+        Extension('PUQ.surrogatesupport.matern_covmat', sources=['PUQ/surrogatesupport/matern_covmat.pyx']),
+    ],
     include_dirs=[numpy.get_include()]
 )
