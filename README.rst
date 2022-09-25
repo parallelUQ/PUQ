@@ -1,6 +1,6 @@
 
 ==================================================================================
-PUQ: Python package for uncertainty quantification with parallel implementations
+PUQ: Python package for parallel uncertainty quantification
 ==================================================================================
 
 
