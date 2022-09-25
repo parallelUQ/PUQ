@@ -1,5 +1,9 @@
 |
 
+.. image:: https://img.shields.io/badge/License-MIT-yellow.svg
+    :target: https://opensource.org/licenses/MIT
+    :alt: License
+
 .. image:: https://github.com/parallelUQ/PUQ/actions/workflows/puq-ci.yml/badge.svg?/branch=main
     :target: https://github.com/parallelUQ/PUQ/actions
 
