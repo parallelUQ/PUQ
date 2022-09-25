@@ -8,26 +8,10 @@ Created on Sat Jun 25 15:07:50 2022
 import seaborn as sns
 import pandas as pd
 import scipy.stats as sps
-from generate_test_data import generate_test_data
 import numpy as np
 import matplotlib.pyplot as plt
-from paractive.design import designer
-from paractive.designmethods.utils import parse_arguments, save_output
-
-def prior_unidentifiable(n, thetalimits, seed=None):
-    """Generate and return n parameters for the test function."""
-    if seed == None:
-        pass
-    else:
-        np.random.seed(seed)
-    class prior_uniform:                                                                            
-        def rnd(n):
-            thlist = []
-            for i in range(2):
-                thlist.append(sps.uniform.rvs(thetalimits[i][0], thetalimits[i][1]-thetalimits[i][0], size=n))
-            return np.array(thlist).T
-    thetas = prior_uniform.rnd(n)
-    return thetas
+from PUQ.design import designer
+from PUQ.designmethods.utils import parse_arguments, save_output
 
 class unidentifiable:
     def __init__(self):
@@ -58,7 +42,34 @@ class unidentifiable:
 
 args                = parse_arguments()
 cls_unidentifiable  = unidentifiable()
-test_data           = generate_test_data(cls_unidentifiable)
+
+# # # Create a mesh for test set # # # 
+xpl = np.linspace(cls_unidentifiable.thetalimits[0][0], cls_unidentifiable.thetalimits[0][1], 50)
+ypl = np.linspace(cls_unidentifiable.thetalimits[1][0], cls_unidentifiable.thetalimits[1][1], 50)
+Xpl, Ypl = np.meshgrid(xpl, ypl)
+th = np.vstack([Xpl.ravel(), Ypl.ravel()])
+setattr(cls_unidentifiable, 'theta', th.T)
+
+al_banana_test = designer(data_cls=cls_unidentifiable, 
+                            method='SEQUNIFORM', 
+                            args={'mini_batch': 4, 
+                                  'n_init_thetas': 10,
+                                  'nworkers': 5,
+                                  'max_evals': th.shape[1]})
+
+ftest = al_banana_test._info['f']
+thetatest = al_banana_test._info['theta']
+
+ptest = np.zeros(thetatest.shape[0])
+for i in range(ftest.shape[0]):
+    mean = ftest[i, :] 
+    rnd = sps.multivariate_normal(mean=mean, cov=cls_unidentifiable.obsvar)
+    ptest[i] = rnd.pdf(cls_unidentifiable.real_data)
+            
+test_data = {'theta': thetatest, 
+             'f': ftest,
+             'p': ptest} 
+# # # # # # # # # # # # # # # # # # # # # 
 
 al_unidentifiable = designer(data_cls=cls_unidentifiable, 
                              method='SEQCAL', 
@@ -67,13 +78,13 @@ al_unidentifiable = designer(data_cls=cls_unidentifiable,
                                    'nworkers': args.nworkers,
                                    'AL': args.al_func,
                                    'seed_n0': args.seed_n0,
-                                   'prior': prior_unidentifiable,
+                                   'prior': 'uniform',
                                    'data_test': test_data,
                                    'max_evals': 210})
 
 save_output(al_unidentifiable, cls_unidentifiable.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
 
-show = False
+show = True
 if show:
     theta_al = al_unidentifiable._info['theta']
     TV       = al_unidentifiable._info['TV']
@@ -88,4 +99,13 @@ if show:
     plt.scatter(np.arange(len(HD[10:])), HD[10:])
     plt.yscale('log')
     plt.ylabel('HD')
+    plt.show()
+    
+    fig, ax = plt.subplots()    
+    cp = ax.contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap='RdGy')
+    ax.scatter(theta_al[10:, 0], theta_al[10:, 1], c='black', marker='+', zorder=2)
+    ax.scatter(theta_al[0:10, 0], theta_al[0:10, 1], zorder=2, marker='o', facecolors='none', edgecolors='blue')
+    ax.set_xlabel(r'$\theta_1$', fontsize=16)
+    ax.set_ylabel(r'$\theta_2$', fontsize=16)
+    ax.tick_params(axis='both', labelsize=16)
     plt.show()

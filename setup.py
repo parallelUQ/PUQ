@@ -17,7 +17,7 @@ with open("README.rst", "r", encoding="utf-8") as fh:
 
 setup(
     name="PUQ",
-    version="0.1.1",
+    version="0.1.0",
     author="Özge Sürer",
     author_email="surero@miamioh.edu",
     description="Uncertainty quantification methods with parallel implementations",

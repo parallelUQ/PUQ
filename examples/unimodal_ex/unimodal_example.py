@@ -7,9 +7,9 @@ Created on Sat Jun 25 15:07:50 2022
 """
 import seaborn as sns
 import pandas as pd
-from generate_test_data import generate_test_data
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.stats as sps
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 
@@ -46,17 +46,39 @@ class unimodal:
 
 args         = parse_arguments()
 cls_unimodal = unimodal()
-test_data    = generate_test_data(cls_unimodal)
+
+# # # Create a mesh for test set # # # 
+xpl = np.linspace(cls_unimodal.thetalimits[0][0], cls_unimodal.thetalimits[0][1], 50)
+ypl = np.linspace(cls_unimodal.thetalimits[1][0], cls_unimodal.thetalimits[1][1], 50)
+Xpl, Ypl = np.meshgrid(xpl, ypl)
+th = np.vstack([Xpl.ravel(), Ypl.ravel()])
+setattr(cls_unimodal, 'theta', th.T)
+
+al_unimodal_test = designer(data_cls=cls_unimodal, 
+                            method='SEQUNIFORM', 
+                            args={'mini_batch': 4, 
+                                  'n_init_thetas': 10,
+                                  'nworkers': 5,
+                                  'max_evals': th.shape[1]})
+
+ftest = al_unimodal_test._info['f']
+thetatest = al_unimodal_test._info['theta']
+ptest = sps.norm.pdf(cls_unimodal.real_data-ftest, 0, np.sqrt(cls_unimodal.obsvar)) 
+
+test_data = {'theta': thetatest, 
+             'f': ftest,
+             'p': ptest} 
+# # # # # # # # # # # # # # # # # # # # # 
 
 al_unimodal = designer(data_cls=cls_unimodal, 
                        method='SEQCAL', 
                        args={'mini_batch': 1, #args.minibatch, 
                              'n_init_thetas': 10,
                              'nworkers': 2, #args.nworkers,
-                             'AL': 'maxvar',
+                             'AL': 'eivar',
                              'seed_n0': 6, #args.seed_n0, #6
                              'prior': 'uniform',
-                             'data_test': None, #test_data,
+                             'data_test': test_data, #test_data,
                              'max_evals': 60})
 
 save_output(al_unimodal, cls_unimodal.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
@@ -78,14 +100,12 @@ if show:
     plt.ylabel('HD')
     plt.show()
     
-    fig, ax = plt.subplots()
-    pcm = ax.scatter(test_data['theta'][:, 0], test_data['theta'][:, 1], c=test_data['p'], zorder=1)
-    ax.scatter(theta_al[10:, 0], theta_al[10:, 1], c='red', zorder=2)
-    ax.scatter(theta_al[0:10, 0], theta_al[0:10, 1], c='cyan', zorder=2)
+    fig, ax = plt.subplots()    
+    cp = ax.contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap='RdGy')
+    ax.scatter(theta_al[10:, 0], theta_al[10:, 1], c='black', marker='+', zorder=2)
+    ax.scatter(theta_al[0:10, 0], theta_al[0:10, 1], zorder=2, marker='o', facecolors='none', edgecolors='blue')
     ax.set_xlabel(r'$\theta_1$', fontsize=16)
     ax.set_ylabel(r'$\theta_2$', fontsize=16)
-    #cbar = fig.colorbar(pcm, ax=ax)
-    #cbar.ax.tick_params(labelsize=16) 
     ax.tick_params(axis='both', labelsize=16)
     plt.show()
     
@@ -96,13 +116,10 @@ if show:
     sampling = LHS(xlimits=xlimits, random_state=2)
     n = 50
     x = sampling(n)
-    fig, ax = plt.subplots()
-    pcm = ax.scatter(test_data['theta'][:, 0], test_data['theta'][:, 1], c=test_data['p'], zorder=1)
-    ax.scatter(x[:, 0], x[:, 1], c='red', zorder=2)
+    fig, ax = plt.subplots()    
+    cp = ax.contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap='RdGy')
+    ax.scatter(x[:, 0], x[:, 1], zorder=2, marker='+', c='black')
     ax.set_xlabel(r'$\theta_1$', fontsize=16)
     ax.set_ylabel(r'$\theta_2$', fontsize=16)
-    #cbar = fig.colorbar(pcm, ax=ax)
-    #cbar.ax.tick_params(labelsize=16) 
     ax.tick_params(axis='both', labelsize=16)
     plt.show()
-    

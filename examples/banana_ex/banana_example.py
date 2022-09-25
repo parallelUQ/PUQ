@@ -9,27 +9,11 @@ Created on Sat Jun 25 15:07:50 2022
 import seaborn as sns
 import pandas as pd
 import scipy.stats as sps
-from generate_test_data import generate_test_data
 import numpy as np
 import matplotlib.pyplot as plt
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 
-
-def prior_banana(n, thetalimits, seed=None):
-    """Generate and return n parameters for the test function."""
-    if seed == None:
-        pass
-    else:
-        np.random.seed(seed)
-    class prior_uniform:                                                                            
-        def rnd(n):
-            thlist = []
-            for i in range(2):
-                thlist.append(sps.uniform.rvs(thetalimits[i][0], thetalimits[i][1]-thetalimits[i][0], size=n))
-            return np.array(thlist).T
-    thetas = prior_uniform.rnd(n)
-    return thetas
 
 class banana:
     def __init__(self):
@@ -59,7 +43,34 @@ class banana:
 
 args        = parse_arguments()
 cls_banana  = banana()
-test_data   = generate_test_data(cls_banana)
+
+# # # Create a mesh for test set # # # 
+xpl = np.linspace(cls_banana.thetalimits[0][0], cls_banana.thetalimits[0][1], 50)
+ypl = np.linspace(cls_banana.thetalimits[1][0], cls_banana.thetalimits[1][1], 50)
+Xpl, Ypl = np.meshgrid(xpl, ypl)
+th = np.vstack([Xpl.ravel(), Ypl.ravel()])
+setattr(cls_banana, 'theta', th.T)
+
+al_banana_test = designer(data_cls=cls_banana, 
+                            method='SEQUNIFORM', 
+                            args={'mini_batch': 4, 
+                                  'n_init_thetas': 10,
+                                  'nworkers': 5,
+                                  'max_evals': th.shape[1]})
+
+ftest = al_banana_test._info['f']
+thetatest = al_banana_test._info['theta']
+
+ptest = np.zeros(thetatest.shape[0])
+for i in range(ftest.shape[0]):
+    mean = ftest[i, :] 
+    rnd = sps.multivariate_normal(mean=mean, cov=cls_banana.obsvar)
+    ptest[i] = rnd.pdf(cls_banana.real_data)
+            
+test_data = {'theta': thetatest, 
+             'f': ftest,
+             'p': ptest} 
+# # # # # # # # # # # # # # # # # # # # # 
 
 al_banana = designer(data_cls=cls_banana, 
                      method='SEQCAL', 
@@ -68,7 +79,7 @@ al_banana = designer(data_cls=cls_banana,
                            'nworkers': args.nworkers,
                            'AL': args.al_func,
                            'seed_n0': args.seed_n0,
-                           'prior': prior_banana,
+                           'prior': 'uniform',
                            'data_test': test_data,
                            'max_evals': 210})
 
@@ -91,11 +102,12 @@ if show:
     plt.ylabel('HD')
     plt.show()
     
-    fig, ax = plt.subplots()
-    pcm = ax.scatter(test_data['theta'][:, 0], test_data['theta'][:, 1], c=test_data['p'], zorder=1)
-    ax.scatter(theta_al[10:, 0], theta_al[10:, 1], c='red', s=5, zorder=2)
-    ax.set_xlabel(r'$\theta_1$')
-    ax.set_ylabel(r'$\theta_2$')
-    fig.colorbar(pcm, ax=ax)
+    fig, ax = plt.subplots()    
+    cp = ax.contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap='RdGy')
+    ax.scatter(theta_al[10:, 0], theta_al[10:, 1], c='black', marker='+', zorder=2)
+    ax.scatter(theta_al[0:10, 0], theta_al[0:10, 1], zorder=2, marker='o', facecolors='none', edgecolors='blue')
+    ax.set_xlabel(r'$\theta_1$', fontsize=16)
+    ax.set_ylabel(r'$\theta_2$', fontsize=16)
+    ax.tick_params(axis='both', labelsize=16)
     plt.show()
     
