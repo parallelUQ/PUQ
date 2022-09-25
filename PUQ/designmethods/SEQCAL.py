@@ -9,6 +9,7 @@ from libensemble.alloc_funcs.start_only_persistent import only_persistent_gens a
 from libensemble.libE import libE
 from libensemble.tools import parse_args, save_libE_output, add_unique_random_streams
 import matplotlib.pyplot as plt
+from PUQ.prior import prior_dist
 
 def fit(fitinfo, data_cls, args):
 
@@ -100,12 +101,18 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         seed            = gen_specs['user']['seed_n0']
         synth_info      = gen_specs['user']['synth_cls']
         test_data       = gen_specs['user']['test_data']
-        prior_func      = gen_specs['user']['prior']
+        p_dist          = gen_specs['user']['prior']
         
         obsvar          = synth_info.obsvar
         data            = synth_info.real_data
         theta_limits    = synth_info.thetalimits
-        thetatest, posttest, ftest = test_data['theta'], test_data['p'], test_data['f']
+        
+        prior_func      = prior_dist(dist=p_dist)
+        
+        thetatest, posttest, ftest = None, None, None
+        
+        if test_data is not None:
+            thetatest, posttest, ftest = test_data['theta'], test_data['p'], test_data['f']
         
 
         true_fevals = np.reshape(data[0, :], (1, data.shape[1]))
@@ -159,19 +166,21 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 emu            = fit_emulator(x, theta, fevals, theta_limits)
                 prev_pending   = pending.copy()
                 update_model   = False
-                emupredict     = emu.predict(x=x, theta=thetatest)
-                emumean        = emupredict.mean()
-                emuvar, is_cov = get_emuvar(emupredict)
-                emumeanT       = emumean.T
-                emuvarT        = emuvar.transpose(1, 0, 2)
-                var_obsvar1    = emuvarT + obsvar3d 
-
-                posttesthat    = multiple_pdfs(true_fevals, 
-                                               emumeanT[:, real_x.flatten()], 
-                                               var_obsvar1[:, real_x, real_x.T])
                 
-                TV = np.mean(np.abs(posttest - posttesthat))
-                HD = np.sqrt(0.5*np.mean((np.sqrt(posttesthat) - np.sqrt(posttest))**2))     
+                if test_data is not None:
+                    emupredict     = emu.predict(x=x, theta=thetatest)
+                    emumean        = emupredict.mean()
+                    emuvar, is_cov = get_emuvar(emupredict)
+                    emumeanT       = emumean.T
+                    emuvarT        = emuvar.transpose(1, 0, 2)
+                    var_obsvar1    = emuvarT + obsvar3d 
+    
+                    posttesthat    = multiple_pdfs(true_fevals, 
+                                                   emumeanT[:, real_x.flatten()], 
+                                                   var_obsvar1[:, real_x, real_x.T])
+                    
+                    TV = np.mean(np.abs(posttest - posttesthat))
+                    HD = np.sqrt(0.5*np.mean((np.sqrt(posttesthat) - np.sqrt(posttest))**2))     
 
             if first_iter:
                 print('Selecting theta for the first iteration...\n')

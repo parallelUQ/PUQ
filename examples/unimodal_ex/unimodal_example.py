@@ -7,28 +7,11 @@ Created on Sat Jun 25 15:07:50 2022
 """
 import seaborn as sns
 import pandas as pd
-import scipy.stats as sps
 from generate_test_data import generate_test_data
 import numpy as np
 import matplotlib.pyplot as plt
-from paractive.design import designer
-from paractive.designmethods.utils import parse_arguments, save_output
-
-def prior_unimodal(n, thetalimits, seed=None):
-    """Generate and return n parameters for the test function."""
-    if seed == None:
-        pass
-    else:
-        np.random.seed(seed)
-    class prior_uniform:                                                                            
-        def rnd(n):
-            thlist = []
-            for i in range(2):
-                thlist.append(sps.uniform.rvs(thetalimits[i][0], thetalimits[i][1]-thetalimits[i][0], size=n))
-            return np.array(thlist).T
-        
-    thetas = prior_uniform.rnd(n)
-    return thetas
+from PUQ.design import designer
+from PUQ.designmethods.utils import parse_arguments, save_output
 
 class unimodal:
     def __init__(self):
@@ -43,6 +26,9 @@ class unimodal:
         self.real_x      = np.arange(0, self.d)[:, None]
         
     def function(self, theta1, theta2):
+        """
+        Wraps the unimodal function
+        """
         thetas           = np.array([theta1, theta2]).reshape((1, 2))
         S                = np.array([[1, 0.5], [0.5, 1]])
         f                = (thetas @ S) @ thetas.T
@@ -50,7 +36,7 @@ class unimodal:
     
     def sim(self, H, persis_info, sim_specs, libE_info):
         """
-        Wraps the unimodal function
+        Wraps the simulator
         """
         function        = sim_specs['user']['function']
         H_o             = np.zeros(1, dtype=sim_specs['out'])
@@ -67,10 +53,10 @@ al_unimodal = designer(data_cls=cls_unimodal,
                        args={'mini_batch': 1, #args.minibatch, 
                              'n_init_thetas': 10,
                              'nworkers': 2, #args.nworkers,
-                             'AL': args.al_func,
+                             'AL': 'maxvar',
                              'seed_n0': 6, #args.seed_n0, #6
-                             'prior': prior_unimodal,
-                             'data_test': test_data,
+                             'prior': 'uniform',
+                             'data_test': None, #test_data,
                              'max_evals': 60})
 
 save_output(al_unimodal, cls_unimodal.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)

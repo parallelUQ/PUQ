@@ -8,9 +8,8 @@ export RUN_COV_TESTS=true     #Provide a coverage report
 
 
 # Options for test types (only matters if "true" or anything else)
-export RUN_EMU_TESTS=true
-export RUN_CAL_TESTS=true
-export RUN_UTI_TESTS=true
+export RUN_UQ_TESTS=true
+
 
 usage() {
   echo -e "\nUsage:"
@@ -101,18 +100,12 @@ fi;
 
 # Test Directories - all relative to project root dir
 export TESTING_DIR=$ROOT_DIR/tests
-export TEST_SUBDIR_EMU_CAL=$ROOT_DIR/tests/test_emu_cal
-export TEST_SUBDIR_EMU=$ROOT_DIR/tests/test_emulator
-export TEST_SUBDIR_CAL=$ROOT_DIR/tests/test_calibrator
-export TEST_SUBDIR_NEW_EMU=$ROOT_DIR/tests/test_new_emulator
-export TEST_SUBDIR_NEW_CAL=$ROOT_DIR/tests/test_new_calibrator
+export TEST_SUBDIR_EMU_CAL=$ROOT_DIR/tests/unit_tests
+
 
 tput bold
 tput sgr 0
 echo -e "Selected:"
-[ $RUN_EMU_TESTS = "true" ] && echo -e "Emulator tests"
-[ $RUN_CAL_TESTS = "true" ]  && echo -e "Calibrator tests"
-[ $RUN_COV_TESTS = "true" ]  && echo -e "Including coverage analysis"
 
 COV_LINE_SERIAL=''
 if [ $RUN_COV_TESTS = "true" ]; then
@@ -121,10 +114,10 @@ fi;
 
 # Run Tests -----------------------------------------------------------------------
 if [ "$RUN_EMU_TESTS" = true ] && [ "$RUN_CAL_TESTS" = true ]; then
-  echo -e "\n************** Running: surmise Test-Suite **************\n"
+  echo -e "\n************** Running: PUQ Test-Suite **************\n"
   pytest $COV_LINE_SERIAL -k 'not new'
 else
-  if [ "$RUN_EMU_TESTS" = true ]; then
+  if [ "$RUN_UQ_TESTS" = true ]; then
     if [ -z "$TEST_INPUT" ]; then
       echo -e "\n************** Running: surmise.emulation Test-Suite **************\n"
       for DIR in $TEST_SUBDIR_EMU_CAL
@@ -133,39 +126,6 @@ else
         for TEST_SCRIPT in $TEST_LIST
         do
           pytest $TEST_SCRIPT $COV_LINE_SERIAL
-        done
-      done
-    else
-      echo -e "\n************** Running: New surmise.emulation Test-Suite **************\n"
-      for DIR in $TEST_SUBDIR_NEW_EMU
-      do
-        cd $DIR
-        for TEST_SCRIPT in $TEST_LIST
-        do
-          pytest $TEST_SCRIPT $COV_LINE_SERIAL --cmdopt1=$TEST_INPUT
-        done
-      done
-    fi;
-  fi;
-  if [ "$RUN_CAL_TESTS" = true ]; then
-    if [ -z "$TEST_INPUT" ]; then
-      echo -e "\n************** Running: surmise.calibration Test-Suite **************\n"
-      for DIR in $TEST_SUBDIR_EMU_CAL
-      do
-        cd $DIR
-        for TEST_SCRIPT in $TEST_LIST
-        do
-          pytest $TEST_SCRIPT $COV_LINE_SERIAL
-        done
-      done
-    else
-      echo -e "\n************** Running: New surmise.calibration Test-Suite **************\n"
-      for DIR in $TEST_SUBDIR_NEW_CAL
-      do
-        cd $DIR
-        for TEST_SCRIPT in $TEST_LIST
-        do
-          pytest $TEST_SCRIPT $COV_LINE_SERIAL --cmdopt2=$TEST_INPUT
         done
       done
     fi;
