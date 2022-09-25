@@ -1,4 +1,10 @@
+|
 
+.. image:: https://github.com/parallelUQ/PUQ/actions/workflows/puq-ci.yml/badge.svg?/branch=main
+    :target: https://github.com/parallelUQ/PUQ/actions
+
+|
+    
 ==================================================================================
 PUQ: Python package for parallel uncertainty quantification
 ==================================================================================
@@ -7,9 +13,14 @@ PUQ: Python package for parallel uncertainty quantification
 Dependencies
 ~~~~~~~~~~~~
 
-libEnsemble is required
+PUQ has been tested on Unix/Linux and MacOS systems.
 
-* _libEnsemble
+PUQ's base has the following dependencies:
+
+ * Python_ 3.6+
+ * NumPy_ -- for data structures and performant numerical linear algebra
+ * SciPy_ -- for scientific calculations needed for specific modules
+ * libEnsemble_ -- for parallel implementation
 
 
 Installation
