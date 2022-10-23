@@ -8,7 +8,7 @@
     :target: https://github.com/parallelUQ/PUQ/actions
 
 |
-    
+
 ==================================================================================
 PUQ: Python package for parallel uncertainty quantification
 ==================================================================================
@@ -80,11 +80,11 @@ The HTML files are then stored in ``docs/_build/html``
 .. code-block:: bibtex
 
    @techreport{PUQ2022,
-     author      = {Özge Sürer},
+     author      = {X, Y, Z},
      title       = {PUQ Users Manual},
-     institution = {Miami University},
+     institution = {AAA University},
      number      = {Version 0.1.0},
-     year        = {2021},
+     year        = {2022},
      url         = {https://PUQ.readthedocs.io}
    }
 
