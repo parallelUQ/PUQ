@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Jun 25 15:07:50 2022
-
-@author: ozgesurer
-"""
 import seaborn as sns
 import pandas as pd
 import scipy.stats as sps
@@ -95,10 +88,6 @@ if show:
     plt.scatter(np.arange(len(TV[10:])), TV[10:])
     plt.yscale('log')
     plt.ylabel('TV')
-    plt.show()
-    plt.scatter(np.arange(len(HD[10:])), HD[10:])
-    plt.yscale('log')
-    plt.ylabel('HD')
     plt.show()
     
     fig, ax = plt.subplots()    

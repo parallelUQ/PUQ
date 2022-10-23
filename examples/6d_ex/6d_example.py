@@ -1,36 +1,12 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Jun 25 15:07:50 2022
-
-@author: ozgesurer
-"""
 import seaborn as sns
 import pandas as pd
 import scipy.stats as sps
 from generate_test_data import generate_test_data
 import numpy as np
 import matplotlib.pyplot as plt
-from paractive.design import designer
-from paractive.designmethods.utils import parse_arguments, save_output
+from PUQ.design import designer
+from PUQ.designmethods.utils import parse_arguments, save_output
 
-def prior_6d(n, thetalimits, seed=None):
-    """Generate and return n parameters for the test function."""
-    if seed == None:
-        pass
-    else:
-        np.random.seed(seed)
-
-    class prior_uniform:                                                                            
-        def rnd(n):
-            thlist = []
-            for i in range(6):
-                thlist.append(sps.uniform.rvs(thetalimits[i][0], 
-                                              thetalimits[i][1]-thetalimits[i][0], 
-                                              size=n))
-            return np.array(thlist).T
-    thetas = prior_uniform.rnd(n)
-    return thetas
 
 class gaussian6d:
     def __init__(self):
@@ -75,7 +51,7 @@ al_6d = designer(data_cls=cls_6d,
                        'nworkers': args.nworkers,
                        'AL': args.al_func,
                        'seed_n0': args.seed_n0,
-                       'prior': prior_6d,
+                       'prior': 'uniform',
                        'data_test': test_data,
                        'max_evals': 220})
 
@@ -89,11 +65,7 @@ if show:
     
     sns.pairplot(pd.DataFrame(theta_al))
     plt.show()
-    plt.scatter(np.arange(len(TV[10:])), TV[10:])
+    plt.scatter(np.arange(len(TV[20:])), TV[20:])
     plt.yscale('log')
-    plt.ylabel('TV')
-    plt.show()
-    plt.scatter(np.arange(len(HD[10:])), HD[10:])
-    plt.yscale('log')
-    plt.ylabel('HD')
+    plt.ylabel('MAD')
     plt.show()

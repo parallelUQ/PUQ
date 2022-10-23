@@ -13,8 +13,8 @@ import scipy.stats as sps
 from generate_test_data import generate_test_data
 import numpy as np
 import matplotlib.pyplot as plt
-from paractive.design import designer
-from paractive.designmethods.utils import parse_arguments, save_output
+from PUQ.design import designer
+from PUQ.designmethods.utils import parse_arguments, save_output
 
 def prior_3d(n, thetalimits, seed=None):
     """Generate and return n parameters for the test function."""

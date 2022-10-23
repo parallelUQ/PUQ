@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Jun 25 15:07:50 2022
-
-@author: ozgesurer
-"""
 import os
 import seaborn as sns
 import pandas as pd
@@ -12,26 +5,9 @@ import scipy.stats as sps
 from generate_test_data import generate_test_data
 import numpy as np
 import matplotlib.pyplot as plt
-from paractive.design import designer
-from paractive.designmethods.utils import parse_arguments, save_output
+from PUQ.design import designer
+from PUQ.designmethods.utils import parse_arguments, save_output
 
-def prior_3d(n, thetalimits, seed=None):
-    """Generate and return n parameters for the test function."""
-    if seed == None:
-        pass
-    else:
-        np.random.seed(seed)
-
-    class prior_uniform:                                                                            
-        def rnd(n):
-            thlist = []
-            for i in range(3):
-                thlist.append(sps.uniform.rvs(thetalimits[i][0], 
-                                              thetalimits[i][1]-thetalimits[i][0], 
-                                              size=n))
-            return np.array(thlist).T
-    thetas = prior_uniform.rnd(n)
-    return thetas
 
 class bfrescox:
     def __init__(self):
@@ -43,13 +19,13 @@ class bfrescox:
                                      #[0.5, 1.5],
                                      #[0.1, 0.4]])
 
-        self.d = 181
+        self.d = 15
         self.p = 3
         self.x = np.arange(0, self.d)[:, None]
-        self.real_x = np.array([[26, 31, 41, 51, 61, 71, 76, 81, 91, 101, 111, 121, 131, 141, 151]]).T
+        self.real_x = np.arange(0, self.d)[:, None] #np.array([[26, 31, 41, 51, 61, 71, 76, 81, 91, 101, 111, 121, 131, 141, 151]]).T
         self.real_data = np.log(np.array([[1243, 887.7, 355.5, 111.5, 26.5, 10.4, 8.3, 
                                            7.3, 17.2, 37.6, 48.7, 38.9, 32.4, 36.4, 61.9]], dtype='float64'))
-        self.obsvar = np.diag(np.repeat(0.1, 181))
+        self.obsvar = np.diag(np.repeat(0.1, 15))
         self.out = [('f', float, (self.d,))]
 
     def generate_input_file(self, parameter_values):
@@ -88,6 +64,7 @@ class bfrescox:
             if fname.startswith("fort"):
                 os.remove(fname)
         f = np.log(np.array(cross_section))
+        f = f[np.array([[26, 31, 41, 51, 61, 71, 76, 81, 91, 101, 111, 121, 131, 141, 151]])]
         return f
     
     def sim(self, H, persis_info, sim_specs, libE_info):
@@ -123,13 +100,13 @@ test_data   = generate_test_data(cls_fresco)
 al_fresco = designer(data_cls=cls_fresco, 
                  method='SEQCAL', 
                  args={'mini_batch': args.minibatch, 
-                       'n_init_thetas': 30,
+                       'n_init_thetas': 32,
                        'nworkers': args.nworkers,
                        'AL': args.al_func,
                        'seed_n0': args.seed_n0,
-                       'prior': prior_3d,
+                       'prior': 'uniform',
                        'data_test': test_data,
-                       'max_evals': 230})
+                       'max_evals': 132})
 
 save_output(al_fresco, cls_fresco.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
 
@@ -141,11 +118,57 @@ if show:
     
     sns.pairplot(pd.DataFrame(theta_al))
     plt.show()
-    plt.scatter(np.arange(len(TV[30:])), TV[30:])
+    plt.scatter(np.arange(len(TV[32:])), TV[32:])
     plt.yscale('log')
-    plt.ylabel('TV')
+    plt.ylabel('MAD')
     plt.show()
-    plt.scatter(np.arange(len(HD[30:])), HD[30:])
+
+    map_parameters = [49.2849, 0.9070, 3.3944]
+    fig, ax = plt.subplots(3, 3, figsize=(10, 10))
+    font = {'family' : 'normal',
+            'weight' : 'normal',
+            'size'   : 20}
+    
+    plt.rc('font', **font) 
+    for i in range(3):
+        for j in range(i+1):
+            if i == j:
+                ax[i, i].hist(theta_al[:, i], color='gray')
+                ax[i, i].axvline(x=map_parameters[i], color='red')
+            else:
+                ax[i, j].scatter(theta_al[32:, j], theta_al[32:, i], color='gray')
+                ax[i, j].scatter(theta_al[0:32, j], theta_al[0:32, i], color='blue')
+    ax[1,0].set_ylabel(r'$\theta_2$', fontsize=16)
+    ax[2,0].set_ylabel(r'$\theta_3$', fontsize=16)
+    ax[2,0].set_xlabel(r'$\theta_1$', fontsize=16)
+    ax[2,1].set_xlabel(r'$\theta_2$', fontsize=16)
+    ax[2,2].set_xlabel(r'$\theta_3$', fontsize=16)
+    ax[1,2].axis('off')
+    ax[0,1].axis('off')
+    ax[0,2].axis('off')
+    plt.show()
+    
+    real_x = np.array([[26, 31, 41, 51, 61, 71, 76, 81, 91, 101, 111, 121, 131, 141, 151]]).T
+    real_data = np.array([[1243, 887.7, 355.5, 111.5, 26.5, 10.4, 8.3, 7.3, 17.2, 37.6, 48.7, 38.9, 32.4, 36.4, 61.9]], dtype='float64')
+    n0 = 32
+    f = al_fresco._info['f']
+    for i in range(theta_al.shape[0]):
+        if i < n0:
+            #if i > 0:
+            plt.plot(np.arange(15), np.exp(f[i, :]), color='gray', alpha=1, zorder=1)
+            #else:
+            #    plt.plot(np.arange(15), np.exp(f[i, :]), color='gray', alpha=1, zorder=1, label='Initial sample')
+        else:
+            #if i < 231:
+            plt.plot(np.arange(15), np.exp(f[i, :]), color='red', alpha=0.1, zorder=1)
+            #else:
+            #    plt.plot(np.arange(15), np.exp(f[i, :]), color='red', alpha=0.1, zorder=1, label='Acquired sample')
+    plt.scatter(np.arange(15), real_data.T, color='black', marker='P', zorder=2, label='Data')
+    plt.xticks(ticks=np.arange(15)[::3], labels=real_x.flatten()[::3], fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.xlabel('Degree', fontsize=16)
+    plt.ylabel('Cross section', fontsize=16)
+    #plt.legend(fontsize=14)
     plt.yscale('log')
-    plt.ylabel('HD')
     plt.show()
+    
