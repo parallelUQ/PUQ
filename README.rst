@@ -80,12 +80,12 @@ The HTML files are then stored in ``docs/_build/html``
 .. code-block:: bibtex
 
    @techreport{PUQ2022,
-     author      = {X, Y, Z},
+     author      = {Özge Sürer, Matthew Plumlee, Stefan M. Wild},
      title       = {PUQ Users Manual},
-     institution = {AAA University},
+     institution = {},
      number      = {Version 0.1.0},
      year        = {2022},
-     url         = {https://PUQ.readthedocs.io}
+     url         = {https://github.com/parallelUQ/PUQ}
    }
 
 Examples
