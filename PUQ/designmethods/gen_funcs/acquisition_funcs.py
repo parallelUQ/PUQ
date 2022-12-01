@@ -292,3 +292,54 @@ def maxexp(n,
         
     theta_acq = np.array(theta_acq).reshape((n, p))
     return theta_acq
+
+
+def pi(n, 
+           x, 
+           real_x,
+           emu, 
+           theta, 
+           fevals, 
+           obs, 
+           obsvar, 
+           thetalimits, 
+           prior_func, 
+           thetatest=None, 
+           posttest=None):
+    
+    # Update emulator for uncompleted jobs.
+    idnan            = np.isnan(fevals).any(axis=0).flatten()
+    theta_uc         = theta[idnan, :]
+    if sum(idnan) > 0:
+        fevalshat_uc = emu.predict(x=x, theta=theta_uc)
+        emu.update(theta=theta_uc, f=fevalshat_uc.mean()) 
+        
+    theta_acq, f_acq = [], []
+    d, p             = x.shape[0], theta.shape[1]
+    obsvar3d         = obsvar.reshape(1, d, d)
+    diags            = np.diag(obsvar[real_x, real_x.T])
+    d_real           = real_x.shape[0]
+    coef             = (2**d_real)*(np.sqrt(np.pi)**d_real)*np.sqrt(np.prod(diags))
+    
+    # Create a candidate list.
+    clist = prior_func(100*n, thetalimits, None)
+    import scipy
+    error = np.sum(np.abs(obs - fevals.T), axis=1)
+    besterror = np.abs(obs - fevals.T)[np.argmin(error)]# np.min(error, axis=0)
+    pimp = np.ones(len(clist))
+
+    for cd_id, cl in enumerate(clist):
+        pp = emu.predict(x, cl)
+        ppmean = pp.mean()
+        ppvar = pp.var()
+        for l in range(ppmean.shape[0]):
+            pimp[cd_id] += (scipy.stats.norm.cdf(besterror[l], obs[0, l] - ppmean[l], np.sqrt(np.diag(obsvar)[l] + ppvar[l])) - scipy.stats.norm.cdf(-besterror[l], obs[0, l] - ppmean[l], np.sqrt(np.diag(obsvar)[l] + ppvar[l])))
+   
+    #print(pimp)
+    idc = np.argmax(pimp)
+    ctheta         = clist[idc, :].reshape((1, p))
+    theta_acq.append(ctheta)
+
+    theta_acq = np.array(theta_acq).reshape((n, p))
+
+    return theta_acq  

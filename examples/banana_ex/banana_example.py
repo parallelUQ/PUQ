@@ -69,7 +69,7 @@ al_banana = designer(data_cls=cls_banana,
                      args={'mini_batch': args.minibatch, 
                            'n_init_thetas': 10,
                            'nworkers': args.nworkers,
-                           'AL': args.al_func,
+                           'AL': 'pi', #args.al_func,
                            'seed_n0': args.seed_n0,
                            'prior': 'uniform',
                            'data_test': test_data,
@@ -82,12 +82,24 @@ if show:
     theta_al = al_banana._info['theta']
     TV       = al_banana._info['TV']
     HD       = al_banana._info['HD']
+    AE       = al_banana._info['AE']
+    time     = al_banana._info['time']
     
     sns.pairplot(pd.DataFrame(theta_al))
     plt.show()
     plt.scatter(np.arange(len(TV[10:])), TV[10:])
     plt.yscale('log')
     plt.ylabel('MAD')
+    plt.show()
+
+    plt.scatter(np.arange(len(AE[10:])), AE[10:])
+    plt.yscale('log')
+    plt.ylabel('AE')
+    plt.show()
+    
+    plt.scatter(np.arange(len(time[12:])), time[12:])
+    #plt.yscale('log')
+    plt.ylabel('Time')
     plt.show()
     
     fig, ax = plt.subplots()    

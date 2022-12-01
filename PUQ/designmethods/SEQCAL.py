@@ -1,6 +1,6 @@
 import numpy as np
 from PUQ.designmethods.gen_funcs.acquisition_funcs_support import get_emuvar, multiple_pdfs
-from PUQ.designmethods.gen_funcs.acquisition_funcs import maxvar, eivar, maxexp, hybrid, rnd
+from PUQ.designmethods.gen_funcs.acquisition_funcs import maxvar, eivar, maxexp, hybrid, rnd, pi
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
@@ -8,7 +8,7 @@ from libensemble.alloc_funcs.start_only_persistent import only_persistent_gens a
 from libensemble.libE import libE
 from libensemble.tools import parse_args, save_libE_output, add_unique_random_streams
 from PUQ.prior import prior_dist
-
+import time
 def fit(fitinfo, data_cls, args):
 
     mini_batch = args['mini_batch']
@@ -40,6 +40,8 @@ def fit(fitinfo, data_cls, args):
         ('obsvar', float, (1,)),
         ('TV', float),
         ('HD', float),
+        ('AE', float),
+        ('time', float),
     ]
 
     gen_specs = {
@@ -84,6 +86,8 @@ def fit(fitinfo, data_cls, args):
     fitinfo['theta'] = H['thetas']
     fitinfo['TV'] = H['TV']
     fitinfo['HD'] = H['HD']
+    fitinfo['AE'] = H['AE']
+    fitinfo['time'] = H['time']
     return
 
 
@@ -121,7 +125,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         real_x  = synth_info.real_x
 
         obs_offset, theta_offset, generated_no = 0, 0, 0
-        TV, HD = 1000, 1000
+        TV, HD, AE, timepass = 1000, 1000, 1000, 1000
         fevals, pending, prev_pending, complete, prev_complete = None, None, None, None, None
         first_iter = True
         tag = 0
@@ -134,6 +138,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         theta = 0
         
         while tag not in [STOP_TAG, PERSIS_STOP]:
+            starttime = time.time()
             if not first_iter:
                 # Update fevals from calc_in
                 update_arrays(n_x,
@@ -152,6 +157,8 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                         break
 
             if update_model:
+                
+                
                 print('Updating model...\n')
 
                 print('Percentage Pending: %0.2f ( %d / %d)' % (100*np.round(np.mean(pending), 4),
@@ -179,6 +186,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                     
                     TV = np.mean(np.abs(posttest - posttesthat))
                     HD = np.sqrt(0.5*np.mean((np.sqrt(posttesthat) - np.sqrt(posttest))**2))     
+                    AE = np.min(np.sum(np.abs(true_fevals - fevals.T), axis=1))
 
             if first_iter:
                 print('Selecting theta for the first iteration...\n')
@@ -188,7 +196,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 fevals, pending, prev_pending, complete, prev_complete = create_arrays(n_x, n_init)
                             
                 H_o    = np.zeros(len(theta), dtype=gen_specs['out'])
-                H_o    = load_H(H_o, theta, TV, HD, generated_no, set_priorities=True)
+                H_o    = load_H(H_o, theta, TV, HD, AE, timepass, generated_no, set_priorities=True)
                 tag, Work, calc_in = ps.send_recv(H_o)       
                 first_iter = False
                 generated_no += n_workers-1
@@ -216,9 +224,12 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         
          
                     H_o = np.zeros(len(new_theta), dtype=gen_specs['out'])
-                    H_o = load_H(H_o, new_theta, TV, HD, generated_no, set_priorities=True)
+                    H_o = load_H(H_o, new_theta, TV, HD, AE, timepass, generated_no, set_priorities=True)
                     tag, Work, calc_in = ps.send_recv(H_o) 
                     generated_no += mini_batch
+                    
+            endtime = time.time()
+            timepass = endtime-starttime
 
         return None, persis_info, FINISHED_PERSISTENT_GEN_TAG
 

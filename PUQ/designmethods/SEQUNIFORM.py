@@ -36,6 +36,8 @@ def fit(fitinfo, data_cls, args):
         ('obsvar', float, (1,)),
         ('TV', float),
         ('HD', float),
+        ('AE', float),
+        ('time', float),
     ]
 
     gen_specs = {
@@ -74,6 +76,7 @@ def fit(fitinfo, data_cls, args):
     fitinfo['theta'] = H['thetas']
     fitinfo['TV'] = H['TV']
     fitinfo['HD'] = H['HD']
+    fitinfo['AE'] = H['AE']
     return
 
 
@@ -101,7 +104,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         real_x  = synth_info.real_x
 
         obs_offset, theta_offset, generated_no = 0, 0, 0
-        TV, HD = 1000, 1000
+        TV, HD, AE, timepass = 1000, 1000, 1000, 1000
         fevals, pending, prev_pending, complete, prev_complete = None, None, None, None, None
         first_iter = True
         tag = 0
@@ -139,7 +142,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 fevals, pending, prev_pending, complete, prev_complete = create_arrays(n_x, n_init)
                             
                 H_o    = np.zeros(len(theta), dtype=gen_specs['out'])
-                H_o    = load_H(H_o, theta, TV, HD, generated_no, set_priorities=True)
+                H_o    = load_H(H_o, theta, TV, HD, AE, timepass, generated_no, set_priorities=True)
                 tag, Work, calc_in = ps.send_recv(H_o)       
                 first_iter = False
                 generated_no += n_init
@@ -157,7 +160,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         
          
                     H_o = np.zeros(len(new_theta), dtype=gen_specs['out'])
-                    H_o = load_H(H_o, new_theta, TV, HD, generated_no, set_priorities=True)
+                    H_o = load_H(H_o, new_theta, TV, HD, AE, timepass, generated_no, set_priorities=True)
                     tag, Work, calc_in = ps.send_recv(H_o) 
                     generated_no += mini_batch
 

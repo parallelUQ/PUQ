@@ -69,7 +69,7 @@ def assign_priority(n_thetas, generated_no):
     priority = np.arange(generated_no, generated_no + n_thetas)
     return priority
 
-def load_H(H, thetas, mse, hd, generated_no, offset=0, set_priorities=False):
+def load_H(H, thetas, mse, hd, ae, time, generated_no, offset=0, set_priorities=False):
     """Fill inputs into H0.
     There will be num_points x num_thetas entries
     """
@@ -83,6 +83,8 @@ def load_H(H, thetas, mse, hd, generated_no, offset=0, set_priorities=False):
 
     H['TV'][start:start+n_thetas] = np.repeat(mse, n_thetas)
     H['HD'][start:start+n_thetas] = np.repeat(hd, n_thetas)
+    H['AE'][start:start+n_thetas] = np.repeat(ae, n_thetas)
+    H['time'][start:start+n_thetas] = np.repeat(time, n_thetas)
     if set_priorities:
         H['priority'] = assign_priority(n_thetas, generated_no)
         
