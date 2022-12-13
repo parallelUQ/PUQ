@@ -1,6 +1,6 @@
 import numpy as np
 from PUQ.designmethods.gen_funcs.acquisition_funcs_support import get_emuvar, multiple_pdfs
-from PUQ.designmethods.gen_funcs.acquisition_funcs import maxvar, eivar, maxexp, hybrid, rnd, pi
+from PUQ.designmethods.gen_funcs.acquisition_funcs import maxvar, eivar, maxexp, hybrid, rnd, pi, ei
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport

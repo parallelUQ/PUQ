@@ -68,11 +68,11 @@ al_unimodal = designer(data_cls=cls_unimodal,
                        args={'mini_batch': 1, #args.minibatch, 
                              'n_init_thetas': 10,
                              'nworkers': 2, #args.nworkers,
-                             'AL': 'eivar',
+                             'AL': 'ei',
                              'seed_n0': 6, #args.seed_n0, #6
                              'prior': 'uniform',
                              'data_test': test_data, #test_data,
-                             'max_evals': 60})
+                             'max_evals': 200})
 
 save_output(al_unimodal, cls_unimodal.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
 
@@ -81,12 +81,25 @@ if show:
     theta_al = al_unimodal._info['theta']
     TV       = al_unimodal._info['TV']
     HD       = al_unimodal._info['HD']
+    AE       = al_unimodal._info['AE']
+    time     = al_unimodal._info['time']
     
     sns.pairplot(pd.DataFrame(theta_al))
     plt.show()
     plt.scatter(np.arange(len(TV[10:])), TV[10:])
     plt.yscale('log')
     plt.ylabel('MAD')
+    plt.show()
+    
+    
+    plt.scatter(np.arange(len(AE[10:])), AE[10:])
+    plt.yscale('log')
+    plt.ylabel('AE')
+    plt.show()
+    
+    plt.scatter(np.arange(len(time[12:])), time[12:])
+    #plt.yscale('log')
+    plt.ylabel('Time')
     plt.show()
     
     fig, ax = plt.subplots()    

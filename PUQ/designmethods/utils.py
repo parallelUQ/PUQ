@@ -48,6 +48,7 @@ def save_output(desing_obj, name, al_func, nworker, minibatch, seedno):
 def read_output(path1, name, al_func, nworker, minibatch, seedno):
     
     design_path = path1 + 'output/' + name + '_' + al_func + '_w_' + str(nworker) + '_b_' + str(minibatch) + '_seed_' + str(seedno) + '.pkl'
+    print(design_path)
     with open(design_path, 'rb') as file:
         design_obj = pickle.load(file) 
         

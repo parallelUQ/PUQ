@@ -11,8 +11,8 @@ class banana:
     def __init__(self):
         self.data_name   = 'banana'
         self.thetalimits = np.array([[-20, 20], [-10, 5]])
-        self.obsvar      = np.array([[10**2, 0], [0, 1]]) 
-        self.real_data   = np.array([[1, 3]], dtype='float64')  
+        self.obsvar      = np.array([[10**2/10**2, 0], [0, 1]]) 
+        self.real_data   = np.array([[1-1, 3-3]], dtype='float64')  
         self.out         = [('f', float, (2,))]
         self.p           = 2
         self.d           = 2
@@ -20,7 +20,7 @@ class banana:
         self.real_x      = np.arange(0, self.d)[:, None]
         
     def function(self, theta1, theta2):
-        f                = np.array([theta1, theta2 + 0.03*theta1**2])
+        f                = np.array([(theta1-1)/10, theta2 + 0.03*theta1**2-3])
         return f
     
     def sim(self, H, persis_info, sim_specs, libE_info):
@@ -69,11 +69,11 @@ al_banana = designer(data_cls=cls_banana,
                      args={'mini_batch': args.minibatch, 
                            'n_init_thetas': 10,
                            'nworkers': args.nworkers,
-                           'AL': 'pi', #args.al_func,
+                           'AL': 'ei', #args.al_func,
                            'seed_n0': args.seed_n0,
                            'prior': 'uniform',
                            'data_test': test_data,
-                           'max_evals': 210})
+                           'max_evals': 200})
 
 save_output(al_banana, cls_banana.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
 

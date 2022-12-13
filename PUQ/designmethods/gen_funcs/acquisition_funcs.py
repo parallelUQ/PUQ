@@ -3,6 +3,7 @@
 import numpy as np
 from sklearn.metrics import pairwise_distances
 from PUQ.designmethods.gen_funcs.acquisition_funcs_support import compute_postvar, compute_eivar, multiple_pdfs, get_emuvar
+import scipy
 
 plotting = False
 def rnd(n, 
@@ -328,18 +329,115 @@ def pi(n,
     besterror = np.abs(obs - fevals.T)[np.argmin(error)]# np.min(error, axis=0)
     pimp = np.ones(len(clist))
 
+    #for cd_id, cl in enumerate(clist):
+    #    pp = emu.predict(x, cl)
+    #    ppmean = pp.mean()
+    #    ppvar = pp.var()
+    #    for l in range(ppmean.shape[0]):
+    #        pimp[cd_id] += (scipy.stats.norm.cdf(besterror[l], obs[0, l] - ppmean[l], np.sqrt(np.diag(obsvar)[l] + ppvar[l])) - scipy.stats.norm.cdf(-besterror[l], obs[0, l] - ppmean[l], np.sqrt(np.diag(obsvar)[l] + ppvar[l])))
+    
+     
     for cd_id, cl in enumerate(clist):
         pp = emu.predict(x, cl)
         ppmean = pp.mean()
         ppvar = pp.var()
         for l in range(ppmean.shape[0]):
-            pimp[cd_id] += (scipy.stats.norm.cdf(besterror[l], obs[0, l] - ppmean[l], np.sqrt(np.diag(obsvar)[l] + ppvar[l])) - scipy.stats.norm.cdf(-besterror[l], obs[0, l] - ppmean[l], np.sqrt(np.diag(obsvar)[l] + ppvar[l])))
-   
+            #ub = obs[0, l] + besterror[l]
+            #lb = obs[0, l] - besterror[l]
+            diff = obs[0, l] - ppmean[l]
+            #pimp[cd_id] += (scipy.stats.norm.cdf(ub, ppmean[l], np.sqrt(np.diag(obsvar)[l] + ppvar[l])) - scipy.stats.norm.cdf(lb, ppmean[l], np.sqrt(np.diag(obsvar)[l] + ppvar[l])))
+            pimp[cd_id] += (scipy.stats.norm.cdf((besterror[l] - diff)/np.sqrt(np.diag(obsvar)[l] + ppvar[l]), 0, 1) - scipy.stats.norm.cdf((-besterror[l] - diff)/np.sqrt(np.diag(obsvar)[l] + ppvar[l]), 0, 1))
+
     #print(pimp)
     idc = np.argmax(pimp)
     ctheta         = clist[idc, :].reshape((1, p))
     theta_acq.append(ctheta)
 
+    theta_acq = np.array(theta_acq).reshape((n, p))
+
+    return theta_acq  
+
+def ei(n, 
+           x, 
+           real_x,
+           emu, 
+           theta, 
+           fevals, 
+           obs, 
+           obsvar, 
+           thetalimits, 
+           prior_func, 
+           thetatest=None, 
+           posttest=None):
+    
+    # Update emulator for uncompleted jobs.
+    idnan            = np.isnan(fevals).any(axis=0).flatten()
+    theta_uc         = theta[idnan, :]
+    if sum(idnan) > 0:
+        fevalshat_uc = emu.predict(x=x, theta=theta_uc)
+        emu.update(theta=theta_uc, f=fevalshat_uc.mean()) 
+        
+    theta_acq, f_acq = [], []
+    d, p             = x.shape[0], theta.shape[1]
+    obsvar3d         = obsvar.reshape(1, d, d)
+    diags            = np.diag(obsvar[real_x, real_x.T])
+    d_real           = real_x.shape[0]
+    coef             = (2**d_real)*(np.sqrt(np.pi)**d_real)*np.sqrt(np.prod(diags))
+    
+    # Create a candidate list.
+    clist = prior_func(100*n, thetalimits, None)
+    
+    error = np.sum(np.abs(obs - fevals.T), axis=1)
+    besterror = np.abs(obs - fevals.T)[np.argmin(error)]# np.min(error, axis=0)
+    pimp = np.zeros(len(clist))
+
+    for cd_id, cl in enumerate(clist):
+        pp = emu.predict(x, cl)
+        ppmean = pp.mean()
+        ppvar = pp.var()
+        p1, i1, r1, d1 = 0, 0, 0, 0
+        p2, i2, r2, d2 = 0, 0, 0, 0
+        
+
+        for l in range(ppmean.shape[0]):
+            
+            # Working
+            #lb = obs[0, l] - besterror[l]
+            #ub = obs[0, l] + besterror[l]
+            #p1 = scipy.stats.norm.cdf(lb, ppmean[l], np.sqrt(np.diag(obsvar)[l] + ppvar[l]))
+            #i1 = lb - ppmean[l] 
+            #r1 = (np.sqrt(ppvar[l]))*scipy.stats.norm.pdf(lb, ppmean[l], np.sqrt(np.diag(obsvar)[l] + ppvar[l]))
+            #p2 = 1 - scipy.stats.norm.cdf(ub, ppmean[l], np.sqrt(np.diag(obsvar)[l] + ppvar[l]))
+            #i2 = ppmean[l] - ub
+            #r2 = (np.sqrt(ppvar[l]))*scipy.stats.norm.pdf(ub, ppmean[l], np.sqrt(np.diag(obsvar)[l] + ppvar[l]))
+            # Working
+            #diff = obs[0, l] - ppmean[l]
+            #p1 = scipy.stats.norm.cdf(-besterror[l], diff, np.sqrt(np.diag(obsvar)[l] + ppvar[l]))
+            #i1 = -diff -besterror[l]
+            #r1 = (np.sqrt(np.diag(obsvar)[l]))*scipy.stats.norm.pdf(-besterror[l], diff, np.sqrt(np.diag(obsvar)[l] + ppvar[l]))
+            #p2 = 1 - scipy.stats.norm.cdf(besterror[l], diff, np.sqrt(np.diag(obsvar)[l] + ppvar[l]))
+            #i2 = diff - besterror[l]
+            #r2 = (np.sqrt(np.diag(obsvar)[l]))*scipy.stats.norm.pdf(besterror[l], diff, np.sqrt(np.diag(obsvar)[l] + ppvar[l]))            
+            
+            diff = obs[0, l] - ppmean[l]
+
+            sumvar = np.diag(obsvar)[l] + ppvar[l]
+            p2 = 1 - scipy.stats.norm.cdf((besterror[l] - diff)/np.sqrt(sumvar), 0, 1)
+            i2 = (diff - besterror[l])
+            pdfval = scipy.stats.norm.pdf((besterror[l] - diff)/np.sqrt(sumvar), 0, 1)        
+            r2 = np.sqrt(sumvar)*pdfval
+
+            p1 = scipy.stats.norm.cdf((-besterror[l] - diff)/np.sqrt(sumvar), 0, 1)
+            i1 = (-diff -besterror[l])
+            pdfval = scipy.stats.norm.pdf((-besterror[l] - diff)/np.sqrt(sumvar), 0, 1)
+            r1 = np.sqrt(sumvar)*pdfval
+
+            pimp[cd_id] += -1*((p1*i1 + r1) + (p2*i2 + r2))
+
+
+    idc = np.argmax(pimp)
+    ctheta         = clist[idc, :].reshape((1, p))
+    theta_acq.append(ctheta)
     theta_acq = np.array(theta_acq).reshape((n, p))
 
     return theta_acq  
