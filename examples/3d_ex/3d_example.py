@@ -45,11 +45,12 @@ al_3d = designer(data_cls=cls_3d,
                  args={'mini_batch': args.minibatch, 
                        'n_init_thetas': 20,
                        'nworkers': args.nworkers,
-                       'AL': args.al_func,
+                       'AL': 'pi',#args.al_func,
                        'seed_n0': args.seed_n0,
                        'prior': 'uniform',
                        'data_test': test_data,
-                       'max_evals': 220})
+                       'max_evals': 220,
+                       'emutype': 'PC'})
 
 save_output(al_3d, cls_3d.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
 
@@ -58,6 +59,14 @@ if show:
     theta_al = al_3d._info['theta']
     TV       = al_3d._info['TV']
     HD       = al_3d._info['HD']
+    AE       = al_3d._info['AE']
+    time     = al_3d._info['time']
+    
+    
+    plt.scatter(np.arange(len(AE[20:])), AE[20:])
+    #plt.yscale('log')
+    plt.ylabel('AE')
+    plt.show()
     
     sns.pairplot(pd.DataFrame(theta_al))
     plt.show()

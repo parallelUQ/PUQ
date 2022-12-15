@@ -102,19 +102,22 @@ al_fresco = designer(data_cls=cls_fresco,
                  args={'mini_batch': args.minibatch, 
                        'n_init_thetas': 32,
                        'nworkers': args.nworkers,
-                       'AL': args.al_func,
+                       'AL': 'ei', #args.al_func,
                        'seed_n0': args.seed_n0,
                        'prior': 'uniform',
                        'data_test': test_data,
-                       'max_evals': 132})
+                       'max_evals': 1050,
+                       'emutype': 'PC'})
 
 save_output(al_fresco, cls_fresco.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
 
-show = False
+show = True
 if show:
     theta_al = al_fresco._info['theta']
     TV       = al_fresco._info['TV']
     HD       = al_fresco._info['HD']
+    AE       = al_fresco._info['AE']
+    time     = al_fresco._info['time']
     
     sns.pairplot(pd.DataFrame(theta_al))
     plt.show()
@@ -123,6 +126,16 @@ if show:
     plt.ylabel('MAD')
     plt.show()
 
+    plt.scatter(np.arange(len(AE[32:])), AE[32:])
+    #plt.yscale('log')
+    plt.ylabel('AE')
+    plt.show()
+    
+    plt.scatter(np.arange(len(time[34:])), time[34:])
+    #plt.yscale('log')
+    plt.ylabel('Time')
+    plt.show()
+    
     map_parameters = [49.2849, 0.9070, 3.3944]
     fig, ax = plt.subplots(3, 3, figsize=(10, 10))
     font = {'family' : 'normal',
