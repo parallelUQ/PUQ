@@ -1,6 +1,6 @@
 import numpy as np
 from PUQ.designmethods.gen_funcs.acquisition_funcs_support import get_emuvar, multiple_pdfs
-from PUQ.designmethods.gen_funcs.acquisition_funcs import maxvar, eivar, maxexp, hybrid, rnd, pi, ei
+from PUQ.designmethods.gen_funcs.acquisition_funcs import maxvar, eivar, maxexp, rnd, pi, ei, hybrid_ei, hybrid_pi
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
@@ -20,6 +20,8 @@ def fit(fitinfo, data_cls, args):
     max_evals = args['max_evals']
     test_data = args['data_test']
     emutype = args['emutype']
+    candsize = args['candsize']
+    refsize = args['refsize']
     
     out = data_cls.out
     sim_f = data_cls.sim
@@ -59,6 +61,8 @@ def fit(fitinfo, data_cls, args):
             'test_data': test_data,
             'prior': prior,
             'emutype': emutype,
+            'candsize': candsize,
+            'refsize': refsize,
         },
     }
 
@@ -107,6 +111,8 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         test_data       = gen_specs['user']['test_data']
         p_dist          = gen_specs['user']['prior']
         emutype         = gen_specs['user']['emutype']
+        candsize        = gen_specs['user']['candsize']
+        refsize         = gen_specs['user']['refsize']
         
         obsvar          = synth_info.obsvar
         data            = synth_info.real_data
@@ -251,6 +257,8 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                               theta_limits, 
                                               prior_func,
                                               emutype,
+                                              candsize,
+                                              refsize,
                                               thetatest,
                                               posttest)
 

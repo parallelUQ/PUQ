@@ -1,26 +1,26 @@
-import seaborn as sns
-import pandas as pd
-import scipy.stats as sps
 import numpy as np
-import matplotlib.pyplot as plt
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
+import pandas as pd
+import scipy.stats as sps
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-class bimodal:
+class holder:
     def __init__(self):
 
-        self.data_name   = 'bimodal'
-        self.thetalimits = np.array([[-6, 6], [-4, 8]])
-        self.obsvar      = np.array([[(1/np.sqrt(0.2))*np.sqrt(0.2), 0], [0, (1/np.sqrt(0.75))*np.sqrt(0.75)]])
-        self.real_data   = np.array([[0, 2-2]], dtype='float64')
-        self.out     = [('f', float, (2,))]
-        self.d           = 2
+        self.data_name   = 'holder'
+        self.thetalimits = np.array([[-10, 10], [-10, 10]])
+        self.obsvar      = np.array([[50]], dtype='float64') 
+        self.real_data   = np.array([[-19.208502567767606]], dtype='float64') 
+        self.out     = [('f', float)]
         self.p           = 2
+        self.d           = 1
         self.x           = np.arange(0, self.d)[:, None]
         self.real_x      = np.arange(0, self.d)[:, None]
 
     def function(self, theta1, theta2):
-        f = np.array([(theta2 - theta1**2)*np.sqrt(np.sqrt(0.2)), (theta2 - theta1 - 2)*np.sqrt(np.sqrt(0.75))])
+        f = -np.abs(np.sin(theta1) * np.cos(theta2) * np.exp(np.abs(1 - (np.sqrt(theta1**2 + theta2**2)/np.pi))))
         return f
     
     def sim(self, H, persis_info, sim_specs, libE_info):
@@ -34,67 +34,76 @@ class bimodal:
         return H_o, persis_info
 
 args        = parse_arguments()
-cls_bimodal = bimodal()
+cls_holder = holder()
 
 # # # Create a mesh for test set # # # 
-xpl = np.linspace(cls_bimodal.thetalimits[0][0], cls_bimodal.thetalimits[0][1], 50)
-ypl = np.linspace(cls_bimodal.thetalimits[1][0], cls_bimodal.thetalimits[1][1], 50)
+xpl = np.linspace(cls_holder.thetalimits[0][0], cls_holder.thetalimits[0][1], 50)
+ypl = np.linspace(cls_holder.thetalimits[1][0], cls_holder.thetalimits[1][1], 50)
 Xpl, Ypl = np.meshgrid(xpl, ypl)
 th = np.vstack([Xpl.ravel(), Ypl.ravel()])
-setattr(cls_bimodal, 'theta', th.T)
+setattr(cls_holder, 'theta', th.T)
 
-al_banana_test = designer(data_cls=cls_bimodal, 
+al_holder_test = designer(data_cls=cls_holder, 
                             method='SEQUNIFORM', 
                             args={'mini_batch': 4, 
                                   'n_init_thetas': 10,
                                   'nworkers': 5,
                                   'max_evals': th.shape[1]})
 
-ftest = al_banana_test._info['f']
-thetatest = al_banana_test._info['theta']
+ftest = al_holder_test._info['f']
+thetatest = al_holder_test._info['theta']
 
 ptest = np.zeros(thetatest.shape[0])
 for i in range(ftest.shape[0]):
-    mean = ftest[i, :] 
-    rnd = sps.multivariate_normal(mean=mean, cov=cls_bimodal.obsvar)
-    ptest[i] = rnd.pdf(cls_bimodal.real_data)
-            
+    mean = ftest[i] 
+    rnd = sps.multivariate_normal(mean=mean, cov=cls_holder.obsvar)
+    ptest[i] = rnd.pdf(cls_holder.real_data)
+
+fig, ax = plt.subplots()    
+cp = ax.contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap='RdGy')
+fig.colorbar(cp, ax=ax)
+ax.set_xlabel(r'$\theta_1$', fontsize=16)
+ax.set_ylabel(r'$\theta_2$', fontsize=16)
+ax.tick_params(axis='both', labelsize=16)
+plt.show()
+       
 test_data = {'theta': thetatest, 
              'f': ftest,
              'p': ptest} 
 # # # # # # # # # # # # # # # # # # # # # 
 
-al_bimodal = designer(data_cls=cls_bimodal, 
+al_holder = designer(data_cls=cls_holder, 
                       method='SEQCAL', 
                       args={'mini_batch': args.minibatch, 
                             'n_init_thetas': 10,
                             'nworkers': args.nworkers,
-                            'AL': 'ei', #args.al_func,
-                            'seed_n0': 8, #args.seed_n0,
+                            'AL': 'hybrid_pi', #args.al_func,
+                            'seed_n0': args.seed_n0,
                             'prior': 'uniform',
                             'data_test': test_data,
-                            'max_evals': 100,
+                            'max_evals': 200,
                             'emutype': 'PC',
-                            'candsize': args.candsize,
-                            'refsize': args.refsize})#})
+                            'candsize': args.candsize, 
+                            'refsize': args.refsize})
 
-save_output(al_bimodal, cls_bimodal.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
+save_output(al_holder, cls_holder.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
 
 show = True
 if show:
-    theta_al = al_bimodal._info['theta']
-    TV       = al_bimodal._info['TV']
-    HD       = al_bimodal._info['HD']
-    AE       = al_bimodal._info['AE']
-    time     = al_bimodal._info['time']
+    theta_al = al_holder._info['theta']
+    f_al     = al_holder._info['f']
+    TV       = al_holder._info['TV']
+    HD       = al_holder._info['HD']
+    AE       = al_holder._info['AE']
+    time     = al_holder._info['time']
     
     sns.pairplot(pd.DataFrame(theta_al))
     plt.show()
     plt.scatter(np.arange(len(TV[10:])), TV[10:])
     plt.yscale('log')
-    plt.ylabel('TV')
+    plt.ylabel('MAD')
     plt.show()
-    
+
     plt.scatter(np.arange(len(AE[10:])), AE[10:])
     plt.yscale('log')
     plt.ylabel('AE')
@@ -113,3 +122,5 @@ if show:
     ax.set_ylabel(r'$\theta_2$', fontsize=16)
     ax.tick_params(axis='both', labelsize=16)
     plt.show()
+    
+

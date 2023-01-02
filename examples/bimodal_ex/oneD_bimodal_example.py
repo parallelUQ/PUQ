@@ -1,26 +1,26 @@
-import seaborn as sns
-import pandas as pd
-import scipy.stats as sps
 import numpy as np
-import matplotlib.pyplot as plt
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
+import pandas as pd
+import scipy.stats as sps
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 class bimodal:
     def __init__(self):
 
         self.data_name   = 'bimodal'
         self.thetalimits = np.array([[-6, 6], [-4, 8]])
-        self.obsvar      = np.array([[(1/np.sqrt(0.2))*np.sqrt(0.2), 0], [0, (1/np.sqrt(0.75))*np.sqrt(0.75)]])
-        self.real_data   = np.array([[0, 2-2]], dtype='float64')
-        self.out     = [('f', float, (2,))]
-        self.d           = 2
+        self.obsvar      = np.array([[1]], dtype='float64') #np.array([[(1/np.sqrt(0.2))*np.sqrt(0.2), 0], [0, (1/np.sqrt(0.75))*np.sqrt(0.75)]])
+        self.real_data   = np.array([[0]], dtype='float64') #np.array([[0, 2-2]], dtype='float64')
+        self.out     = [('f', float)]
         self.p           = 2
+        self.d           = 1
         self.x           = np.arange(0, self.d)[:, None]
         self.real_x      = np.arange(0, self.d)[:, None]
 
     def function(self, theta1, theta2):
-        f = np.array([(theta2 - theta1**2)*np.sqrt(np.sqrt(0.2)), (theta2 - theta1 - 2)*np.sqrt(np.sqrt(0.75))])
+        f = (0.2)*(theta2 - theta1**2)**2 + 0.75*(theta2 - theta1 - 2)**2
         return f
     
     def sim(self, H, persis_info, sim_specs, libE_info):
@@ -55,7 +55,7 @@ thetatest = al_banana_test._info['theta']
 
 ptest = np.zeros(thetatest.shape[0])
 for i in range(ftest.shape[0]):
-    mean = ftest[i, :] 
+    mean = ftest[i] 
     rnd = sps.multivariate_normal(mean=mean, cov=cls_bimodal.obsvar)
     ptest[i] = rnd.pdf(cls_bimodal.real_data)
             
@@ -69,20 +69,21 @@ al_bimodal = designer(data_cls=cls_bimodal,
                       args={'mini_batch': args.minibatch, 
                             'n_init_thetas': 10,
                             'nworkers': args.nworkers,
-                            'AL': 'ei', #args.al_func,
-                            'seed_n0': 8, #args.seed_n0,
+                            'AL': 'hybrid', #args.al_func,
+                            'seed_n0': args.seed_n0,
                             'prior': 'uniform',
                             'data_test': test_data,
-                            'max_evals': 100,
+                            'max_evals': 400,
                             'emutype': 'PC',
-                            'candsize': args.candsize,
-                            'refsize': args.refsize})#})
+                            'candsize': 1000, #args.candsize,
+                            'refsize': args.refsize})
 
 save_output(al_bimodal, cls_bimodal.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
 
 show = True
 if show:
     theta_al = al_bimodal._info['theta']
+    f_al = al_bimodal._info['f']
     TV       = al_bimodal._info['TV']
     HD       = al_bimodal._info['HD']
     AE       = al_bimodal._info['AE']
@@ -92,9 +93,9 @@ if show:
     plt.show()
     plt.scatter(np.arange(len(TV[10:])), TV[10:])
     plt.yscale('log')
-    plt.ylabel('TV')
+    plt.ylabel('MAD')
     plt.show()
-    
+
     plt.scatter(np.arange(len(AE[10:])), AE[10:])
     plt.yscale('log')
     plt.ylabel('AE')
@@ -113,3 +114,5 @@ if show:
     ax.set_ylabel(r'$\theta_2$', fontsize=16)
     ax.tick_params(axis='both', labelsize=16)
     plt.show()
+    
+

@@ -34,6 +34,16 @@ def parse_arguments():
                         default='eivar',
                         type=str,
                         help='Acquisition function.') 
+    parser.add_argument("-candsize",
+                        metavar='N2',
+                        default=100,
+                        type=int,
+                        help='Candidate size.') 
+    parser.add_argument("-refsize",
+                        metavar='N2',
+                        default=100,
+                        type=int,
+                        help='Reference list size.') 
     args = parser.parse_args()
     return args
 

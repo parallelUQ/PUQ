@@ -73,7 +73,10 @@ al_unidentifiable = designer(data_cls=cls_unidentifiable,
                                    'seed_n0': args.seed_n0,
                                    'prior': 'uniform',
                                    'data_test': test_data,
-                                   'max_evals': 210})
+                                   'max_evals': 210,
+                                   'emutype': 'PC',
+                                   'candsize': args.candsize,
+                                   'refsize': args.refsize})
 
 save_output(al_unidentifiable, cls_unidentifiable.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
 

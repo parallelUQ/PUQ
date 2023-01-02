@@ -1,26 +1,25 @@
-import seaborn as sns
-import pandas as pd
-import scipy.stats as sps
 import numpy as np
-import matplotlib.pyplot as plt
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
-
+import pandas as pd
+import scipy.stats as sps
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 class banana:
     def __init__(self):
         self.data_name   = 'banana'
         self.thetalimits = np.array([[-20, 20], [-10, 5]])
-        self.obsvar      = np.array([[10**2/10**2, 0], [0, 1]]) 
-        self.real_data   = np.array([[1-1, 3-3]], dtype='float64')  
-        self.out         = [('f', float, (2,))]
+        self.obsvar      = np.array([[1]], dtype='float64') # np.array([[10**2, 0], [0, 1]]) 
+        self.real_data   = np.array([[0]], dtype='float64') # np.array([[1, 3]], dtype='float64')  
+        self.out         = [('f', float)] # [('f', float, (2,))]
         self.p           = 2
-        self.d           = 2
+        self.d           = 1 # 2
         self.x           = np.arange(0, self.d)[:, None]
         self.real_x      = np.arange(0, self.d)[:, None]
         
     def function(self, theta1, theta2):
-        f                = np.array([(theta1-1)/10, theta2 + 0.03*theta1**2-3])
+        f                = (1/100)*(theta1 - 1)**2 + (theta2 + 0.03* theta1**2 - 3)**2 # np.array([theta1, theta2 + 0.03*theta1**2])
         return f
     
     def sim(self, H, persis_info, sim_specs, libE_info):
@@ -55,7 +54,7 @@ thetatest = al_banana_test._info['theta']
 
 ptest = np.zeros(thetatest.shape[0])
 for i in range(ftest.shape[0]):
-    mean = ftest[i, :] 
+    mean = ftest[i] 
     rnd = sps.multivariate_normal(mean=mean, cov=cls_banana.obsvar)
     ptest[i] = rnd.pdf(cls_banana.real_data)
             
@@ -69,19 +68,22 @@ al_banana = designer(data_cls=cls_banana,
                      args={'mini_batch': args.minibatch, 
                            'n_init_thetas': 10,
                            'nworkers': args.nworkers,
-                           'AL': 'ei', #args.al_func,
+                           'AL': 'pi', #args.al_func,
                            'seed_n0': args.seed_n0,
                            'prior': 'uniform',
                            'data_test': test_data,
-                           'max_evals': 1000,
+                           'max_evals': 200,
                            'emutype': 'PC',
-                           'candsize': 1000})
+                           'candsize': args.candsize,
+                           'refsize': args.refsize})
 
 save_output(al_banana, cls_banana.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
+
 
 show = True
 if show:
     theta_al = al_banana._info['theta']
+    f_al = al_banana._info['f']
     TV       = al_banana._info['TV']
     HD       = al_banana._info['HD']
     AE       = al_banana._info['AE']
@@ -113,3 +115,4 @@ if show:
     ax.tick_params(axis='both', labelsize=16)
     plt.show()
     
+

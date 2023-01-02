@@ -1,49 +1,49 @@
-import seaborn as sns
-import pandas as pd
-import scipy.stats as sps
 import numpy as np
-import matplotlib.pyplot as plt
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
+import pandas as pd
+import scipy.stats as sps
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-
-class banana:
+class unidentifiable:
     def __init__(self):
-        self.data_name   = 'banana'
-        self.thetalimits = np.array([[-20, 20], [-10, 5]])
-        self.obsvar      = np.array([[10**2/10**2, 0], [0, 1]]) 
-        self.real_data   = np.array([[1-1, 3-3]], dtype='float64')  
-        self.out         = [('f', float, (2,))]
+
+        self.data_name   = 'unidentifiable'
+        self.thetalimits = np.array([[-8, 8], [-8, 8]])
+        self.obsvar      = np.array([[1]], dtype='float64') # np.array([[1/0.01, 0], [0, 1]]) 
+        self.real_data   = np.array([[0]], dtype='float64') # np.array([[0, 0]], dtype='float64')  
+        self.out     = [('f', float)] # [('f', float, (2,))]
+        self.d           = 1
         self.p           = 2
-        self.d           = 2
         self.x           = np.arange(0, self.d)[:, None]
         self.real_x      = np.arange(0, self.d)[:, None]
         
     def function(self, theta1, theta2):
-        f                = np.array([(theta1-1)/10, theta2 + 0.03*theta1**2-3])
+        f                =  (0.01)*theta1**2 + theta2**2 # np.array([theta1, theta2])
         return f
     
     def sim(self, H, persis_info, sim_specs, libE_info):
         """
-        Wraps the banana function
+        Wraps the unidentifiable function
         """
-        function        = sim_specs['user']['function']
-        H_o             = np.zeros(1, dtype=sim_specs['out'])
-        H_o['f']        = function(H['thetas'][0][0], H['thetas'][0][1])
-
+        function         = sim_specs['user']['function']
+        H_o              = np.zeros(1, dtype=sim_specs['out'])
+        H_o['f']         = function(H['thetas'][0][0], H['thetas'][0][1])
+        
         return H_o, persis_info
 
 args        = parse_arguments()
-cls_banana  = banana()
+cls_unidentifiable  = unidentifiable()
 
 # # # Create a mesh for test set # # # 
-xpl = np.linspace(cls_banana.thetalimits[0][0], cls_banana.thetalimits[0][1], 50)
-ypl = np.linspace(cls_banana.thetalimits[1][0], cls_banana.thetalimits[1][1], 50)
+xpl = np.linspace(cls_unidentifiable.thetalimits[0][0], cls_unidentifiable.thetalimits[0][1], 50)
+ypl = np.linspace(cls_unidentifiable.thetalimits[1][0], cls_unidentifiable.thetalimits[1][1], 50)
 Xpl, Ypl = np.meshgrid(xpl, ypl)
 th = np.vstack([Xpl.ravel(), Ypl.ravel()])
-setattr(cls_banana, 'theta', th.T)
+setattr(cls_unidentifiable, 'theta', th.T)
 
-al_banana_test = designer(data_cls=cls_banana, 
+al_banana_test = designer(data_cls=cls_unidentifiable, 
                             method='SEQUNIFORM', 
                             args={'mini_batch': 4, 
                                   'n_init_thetas': 10,
@@ -55,16 +55,16 @@ thetatest = al_banana_test._info['theta']
 
 ptest = np.zeros(thetatest.shape[0])
 for i in range(ftest.shape[0]):
-    mean = ftest[i, :] 
-    rnd = sps.multivariate_normal(mean=mean, cov=cls_banana.obsvar)
-    ptest[i] = rnd.pdf(cls_banana.real_data)
+    mean = ftest[i] 
+    rnd = sps.multivariate_normal(mean=mean, cov=cls_unidentifiable.obsvar)
+    ptest[i] = rnd.pdf(cls_unidentifiable.real_data)
             
 test_data = {'theta': thetatest, 
              'f': ftest,
              'p': ptest} 
 # # # # # # # # # # # # # # # # # # # # # 
 
-al_banana = designer(data_cls=cls_banana, 
+al_uni = designer(data_cls=cls_unidentifiable, 
                      method='SEQCAL', 
                      args={'mini_batch': args.minibatch, 
                            'n_init_thetas': 10,
@@ -73,19 +73,22 @@ al_banana = designer(data_cls=cls_banana,
                            'seed_n0': args.seed_n0,
                            'prior': 'uniform',
                            'data_test': test_data,
-                           'max_evals': 1000,
+                           'max_evals': 200,
                            'emutype': 'PC',
-                           'candsize': 1000})
+                           'candsize': args.candsize,
+                           'refsize': args.refsize})
 
-save_output(al_banana, cls_banana.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
+save_output(al_uni, cls_unidentifiable.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
+
 
 show = True
 if show:
-    theta_al = al_banana._info['theta']
-    TV       = al_banana._info['TV']
-    HD       = al_banana._info['HD']
-    AE       = al_banana._info['AE']
-    time     = al_banana._info['time']
+    theta_al = al_uni._info['theta']
+    f_al = al_uni._info['f']
+    TV       = al_uni._info['TV']
+    HD       = al_uni._info['HD']
+    AE       = al_uni._info['AE']
+    time     = al_uni._info['time']
     
     sns.pairplot(pd.DataFrame(theta_al))
     plt.show()
@@ -113,3 +116,4 @@ if show:
     ax.tick_params(axis='both', labelsize=16)
     plt.show()
     
+
