@@ -61,7 +61,7 @@ for i in range(ftest.shape[0]):
 
 fig, ax = plt.subplots()    
 cp = ax.contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap='RdGy')
-fig.colorbar(cp, ax=ax)
+#fig.colorbar(cp, ax=ax)
 ax.set_xlabel(r'$\theta_1$', fontsize=16)
 ax.set_ylabel(r'$\theta_2$', fontsize=16)
 ax.tick_params(axis='both', labelsize=16)
@@ -77,14 +77,14 @@ al_holder = designer(data_cls=cls_holder,
                       args={'mini_batch': args.minibatch, 
                             'n_init_thetas': 10,
                             'nworkers': args.nworkers,
-                            'AL': 'hybrid_pi', #args.al_func,
-                            'seed_n0': args.seed_n0,
+                            'AL': 'hybrid_ei', #args.al_func,
+                            'seed_n0': 2, #args.seed_n0,
                             'prior': 'uniform',
                             'data_test': test_data,
                             'max_evals': 200,
                             'emutype': 'PC',
-                            'candsize': args.candsize, 
-                            'refsize': args.refsize})
+                            'candsize': 1000, #args.candsize, 
+                            'refsize': 1000}) #args.refsize})
 
 save_output(al_holder, cls_holder.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
 

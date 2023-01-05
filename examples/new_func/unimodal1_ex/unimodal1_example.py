@@ -60,7 +60,13 @@ for i in range(ftest.shape[0]):
     rnd = sps.multivariate_normal(mean=mean, cov=cls_unimodal1.obsvar)
     ptest[i] = rnd.pdf(cls_unimodal1.real_data)
 
-       
+
+fig, ax = plt.subplots()    
+cp = ax.contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap='RdGy')
+ax.set_xlabel(r'$\theta_1$', fontsize=16)
+ax.set_ylabel(r'$\theta_2$', fontsize=16)
+ax.tick_params(axis='both', labelsize=16)
+plt.show()
 test_data = {'theta': thetatest, 
              'f': ftest,
              'p': ptest} 

@@ -76,14 +76,14 @@ al_unimodal3 = designer(data_cls=cls_unimodal3,
                       args={'mini_batch': args.minibatch, 
                             'n_init_thetas': 10,
                             'nworkers': args.nworkers,
-                            'AL': args.al_func,
-                            'seed_n0': args.seed_n0,
+                            'AL': 'ei', #args.al_func,
+                            'seed_n0': 3, #args.seed_n0,
                             'prior': 'uniform',
                             'data_test': test_data,
                             'max_evals': 200,
                             'emutype': 'PC',
-                            'candsize': args.candsize,
-                            'refsize': args.refsize})#args.refsize})
+                            'candsize': 1000, #args.candsize,
+                            'refsize': 1000})#args.refsize})#args.refsize})
 
 save_output(al_unimodal3, cls_unimodal3.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
 
