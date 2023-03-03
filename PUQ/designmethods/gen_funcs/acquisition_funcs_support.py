@@ -84,7 +84,7 @@ def compute_eivar_fig(obsvar, summatrix2,
     return (np.sum(rndpdf2/np.sqrt(denum2)) - np.sum(part2))*(1/(2*np.pi**(0.5)))
 
 
-def compute_eivar(summatrix, emuphi, emumean, emuvar, obs, is_cov):
+def compute_eivar(summatrix, emuphi, emumean, emuvar, obs, is_cov, pdf_test):
 
     # See Eq. 31 
     covmat1 = (summatrix + emuphi)*0.5
@@ -94,7 +94,9 @@ def compute_eivar(summatrix, emuphi, emumean, emuvar, obs, is_cov):
 
     denum   = multiple_determinants(covmat2)
     part2   = rndpdf/np.sqrt(denum)
-    # print(part2.shape)
+    part2   = part2*(pdf_test**2)
+    
+    #print(np.sum(part2))
     return - np.sum(part2)
     
 def multiple_pdfs(x, means, covs):
