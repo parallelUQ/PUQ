@@ -57,7 +57,7 @@ ptest        = sps.norm.pdf(cls_sinlin.real_data, ftest, np.sqrt(cls_sinlin.obsv
 emupred_test = emu.predict(x=cls_sinlin.x, theta=thetatest)
 emupred_tr   = emu.predict(x=cls_sinlin.x, theta=theta)
 
-posttesthat, postvar = post.predict(thetatest)
+posttesthat, posttestvar = post.predict(thetatest)
 posttrhat, posttrvar = post.predict(theta)
 
 # Figure 2 (a)
@@ -79,8 +79,8 @@ fig, ax = plt.subplots()
 ax.plot(thetatest, ptest, color='black')
 ax.plot(thetatest, posttesthat, color='blue', linestyle='dashed', linewidth=2.5)
 plt.fill_between(thetatest.flatten(), 
-                 (posttesthat - np.sqrt(postvar)).flatten(), 
-                 (posttesthat + np.sqrt(postvar)).flatten(), alpha=0.3)
+                 (posttesthat - np.sqrt(posttestvar)).flatten(), 
+                 (posttesthat + np.sqrt(posttestvar)).flatten(), alpha=0.3)
 ax.scatter(theta.T, posttrhat, color='red', s=60)
 ax.set_xlabel(r'$\theta$', fontsize=ft)
 ax.set_ylabel(r'$p(y|\theta)$', fontsize=ft)

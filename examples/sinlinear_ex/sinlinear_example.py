@@ -1,11 +1,10 @@
 import seaborn as sns
 import pandas as pd
 import scipy.stats as sps
-from generate_test_data import generate_test_data
 import numpy as np
 import matplotlib.pyplot as plt
 from PUQ.design import designer
-from PUQ.designmethods.utils import parse_arguments, save_output
+from PUQ.designmethods.utils import parse_arguments
 
 
 class sinlinear:
@@ -37,7 +36,17 @@ class sinlinear:
     
 args        = parse_arguments()
 cls_sinlin  = sinlinear()
-test_data   = generate_test_data(cls_sinlin)
+
+# # # Create a mesh for test set # # # 
+thetatest    = np.arange(-10, 10, 0.0025)[:, None]
+ftest        = cls_sinlin.function(thetatest)
+ptest        = sps.norm.pdf(cls_sinlin.real_data, ftest, np.sqrt(cls_sinlin.obsvar))
+
+
+test_data = {'theta': thetatest, 
+             'f': ftest,
+             'p': ptest.T} 
+# # # # # # # # # # # # # # # # # # # # # 
 
 al_banana = designer(data_cls=cls_sinlin, 
                      method='SEQCAL', 
@@ -64,15 +73,14 @@ if show:
     plt.ylabel('MAD')
     plt.show()
 
-    
     fig, ax = plt.subplots()
-    ax.plot(test_data['theta'][:, 0], test_data['p'], color='black')
+    ax.plot(test_data['theta'][:, 0], test_data['p'].flatten(), color='black')
     ax.set_xlabel(r'$\theta$')
     ax.set_ylabel(r'$p(y|\theta)$')
     plt.show()
     
     fig, ax = plt.subplots()
-    ax.plot(test_data['theta'][:, 0], test_data['f'], color='black')
+    ax.plot(test_data['theta'][:, 0], test_data['f'].flatten(), color='black')
     ax.set_xlabel(r'$\theta$')
     ax.set_ylabel(r'$\eta(\theta)$')
     plt.show()    
