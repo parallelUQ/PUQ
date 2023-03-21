@@ -19,7 +19,7 @@ def rnd(n,
          posttest=None,
          type_init=None):
         
-        theta_acq = prior_func(n, thetalimits, None)
+        theta_acq = prior_func.rnd(n, None)
         return theta_acq
         
 def hybrid(n, 
