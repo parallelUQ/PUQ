@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 from contextlib import contextmanager
 from PUQ.design import designer
+from PUQ.prior import prior_dist
 
 class unimodal:
     def __init__(self):
@@ -36,6 +37,7 @@ class unimodal:
 
 
 cls_unimodal = unimodal()
+prior_func      = prior_dist(dist='uniform')(a=cls_unimodal.thetalimits[:, 0], b=cls_unimodal.thetalimits[:, 1])
 
 @contextmanager
 def does_not_raise():
@@ -61,4 +63,5 @@ def test_none_input(input1,  expectation):
                               'seed_n0': 1, 
                               'prior': 'uniform',
                               'data_test': None,
-                              'max_evals': 60}) is not None
+                              'max_evals': 60,
+                              'type_init': None}) is not None
