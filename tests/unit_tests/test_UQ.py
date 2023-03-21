@@ -61,7 +61,7 @@ def test_none_input(input1,  expectation):
                               'nworkers': 2, 
                               'AL': input1, 
                               'seed_n0': 1, 
-                              'prior': 'uniform',
+                              'prior': prior_func,
                               'data_test': None,
                               'max_evals': 60,
                               'type_init': None}) is not None
