@@ -38,7 +38,8 @@ setup(
                       'scipy',
                       'libensemble',
                       'sklearn',
-                      'torch'
+                      'torch',
+                      'scikit-learn'
                       ],
     tests_require=["pytest", "pytest-cov", "flake8"],
     extras_require={'docs': ['sphinx', 'sphinxcontrib.bibtex', 'sphinx_rtd_theme']},
