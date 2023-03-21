@@ -8,6 +8,7 @@ from libensemble.alloc_funcs.start_only_persistent import only_persistent_gens a
 from libensemble.libE import libE
 from libensemble.tools import parse_args, save_libE_output, add_unique_random_streams
 from PUQ.prior import prior_dist
+from smt.sampling_methods import LHS
 
 def fit(fitinfo, data_cls, args):
 
@@ -19,6 +20,7 @@ def fit(fitinfo, data_cls, args):
     prior = args['prior']
     max_evals = args['max_evals']
     test_data = args['data_test']
+    
     
     out = data_cls.out
     sim_f = data_cls.sim
@@ -55,6 +57,7 @@ def fit(fitinfo, data_cls, args):
             'synth_cls': data_cls,
             'test_data': test_data,
             'prior': prior,
+            'type_init': args['type_init'],
         },
     }
 
@@ -99,18 +102,19 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         seed            = gen_specs['user']['seed_n0']
         synth_info      = gen_specs['user']['synth_cls']
         test_data       = gen_specs['user']['test_data']
-        p_dist          = gen_specs['user']['prior']
+        prior_func      = gen_specs['user']['prior']
+        type_init       = gen_specs['user']['type_init']
         
         obsvar          = synth_info.obsvar
         data            = synth_info.real_data
         theta_limits    = synth_info.thetalimits
         
-        prior_func      = prior_dist(dist=p_dist)
+        #prior_func      = prior_dist(dist=p_dist)
         
-        thetatest, posttest, ftest = None, None, None
+        thetatest, posttest, ftest, priortest = None, None, None, None
         
         if test_data is not None:
-            thetatest, posttest, ftest = test_data['theta'], test_data['p'], test_data['f']
+            thetatest, posttest, ftest, priortest = test_data['theta'], test_data['p'], test_data['f'], test_data['p_prior']
         
 
         true_fevals = np.reshape(data[0, :], (1, data.shape[1]))
@@ -177,14 +181,20 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                                    emumeanT[:, real_x.flatten()], 
                                                    var_obsvar1[:, real_x, real_x.T])
                     
-                    TV = np.mean(np.abs(posttest - posttesthat))
+                    TV = np.mean(np.abs(posttest - posttesthat*priortest))
                     HD = np.sqrt(0.5*np.mean((np.sqrt(posttesthat) - np.sqrt(posttest))**2))     
 
             if first_iter:
                 print('Selecting theta for the first iteration...\n')
 
                 n_init = max(n_workers-1, n0)
-                theta  = prior_func(n_init, theta_limits, seed)
+
+                if type_init == 'LHS':
+                    sampling = LHS(xlimits=theta_limits, random_state=seed)
+                    theta = sampling(n_init)
+                else:
+                    theta  = prior_func.rnd(n_init, seed) 
+                    
                 fevals, pending, prev_pending, complete, prev_complete = create_arrays(n_x, n_init)
                             
                 H_o    = np.zeros(len(theta), dtype=gen_specs['out'])
@@ -209,7 +219,8 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                               theta_limits, 
                                               prior_func,
                                               thetatest,
-                                              posttest)
+                                              priortest,
+                                              type_init)
 
                     theta, fevals, pending, prev_pending, complete, prev_complete = \
                         pad_arrays(n_x, new_theta, theta, fevals, pending, prev_pending, complete, prev_complete)

@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
+from PUQ.prior import prior_dist
 
 class bimodal:
     def __init__(self):
@@ -25,7 +26,7 @@ class bimodal:
     
     def sim(self, H, persis_info, sim_specs, libE_info):
         """
-        Wraps the banana function
+        Wraps the bimodal function
         """
         function = sim_specs['user']['function']
         H_o = np.zeros(1, dtype=sim_specs['out'])
@@ -43,15 +44,15 @@ Xpl, Ypl = np.meshgrid(xpl, ypl)
 th = np.vstack([Xpl.ravel(), Ypl.ravel()])
 setattr(cls_bimodal, 'theta', th.T)
 
-al_banana_test = designer(data_cls=cls_bimodal, 
+al_bimodal_test = designer(data_cls=cls_bimodal, 
                             method='SEQUNIFORM', 
                             args={'mini_batch': 4, 
                                   'n_init_thetas': 10,
                                   'nworkers': 5,
                                   'max_evals': th.shape[1]})
 
-ftest = al_banana_test._info['f']
-thetatest = al_banana_test._info['theta']
+ftest = al_bimodal_test._info['f']
+thetatest = al_bimodal_test._info['theta']
 
 ptest = np.zeros(thetatest.shape[0])
 for i in range(ftest.shape[0]):
@@ -61,19 +62,22 @@ for i in range(ftest.shape[0]):
             
 test_data = {'theta': thetatest, 
              'f': ftest,
-             'p': ptest} 
+             'p': ptest,
+             'p_prior': 1} 
 # # # # # # # # # # # # # # # # # # # # # 
+prior_func      = prior_dist(dist='uniform')(a=cls_bimodal.thetalimits[:, 0], b=cls_bimodal.thetalimits[:, 1])
 
 al_bimodal = designer(data_cls=cls_bimodal, 
                       method='SEQCAL', 
                       args={'mini_batch': args.minibatch, 
                             'n_init_thetas': 10,
                             'nworkers': args.nworkers,
-                            'AL': args.al_func,
+                            'AL': 'maxexp', #args.al_func,
                             'seed_n0': args.seed_n0,
-                            'prior': 'uniform',
+                            'prior': prior_func,
                             'data_test': test_data,
-                            'max_evals': 210})
+                            'max_evals': 210,
+                            'type_init': None})
 
 save_output(al_bimodal, cls_bimodal.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
 

@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
+from PUQ.prior import prior_dist
 
 class unidentifiable:
     def __init__(self):
@@ -61,8 +62,10 @@ for i in range(ftest.shape[0]):
             
 test_data = {'theta': thetatest, 
              'f': ftest,
-             'p': ptest} 
+             'p': ptest,
+             'p_prior': 1} 
 # # # # # # # # # # # # # # # # # # # # # 
+prior_func      = prior_dist(dist='uniform')(a=cls_unidentifiable.thetalimits[:, 0], b=cls_unidentifiable.thetalimits[:, 1])
 
 al_unidentifiable = designer(data_cls=cls_unidentifiable, 
                              method='SEQCAL', 
@@ -71,9 +74,10 @@ al_unidentifiable = designer(data_cls=cls_unidentifiable,
                                    'nworkers': args.nworkers,
                                    'AL': args.al_func,
                                    'seed_n0': args.seed_n0,
-                                   'prior': 'uniform',
+                                   'prior': prior_func,
                                    'data_test': test_data,
-                                   'max_evals': 210})
+                                   'max_evals': 210,
+                                   'type_init': None})
 
 save_output(al_unidentifiable, cls_unidentifiable.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
 

@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments
-
+from PUQ.prior import prior_dist
 
 class sinlinear:
     def __init__(self):
@@ -45,8 +45,10 @@ ptest        = sps.norm.pdf(cls_sinlin.real_data, ftest, np.sqrt(cls_sinlin.obsv
 
 test_data = {'theta': thetatest, 
              'f': ftest,
-             'p': ptest.T} 
+             'p': ptest.T,
+             'p_prior': 1} 
 # # # # # # # # # # # # # # # # # # # # # 
+prior_func      = prior_dist(dist='uniform')(a=cls_sinlin.thetalimits[:, 0], b=cls_sinlin.thetalimits[:, 1])
 
 al_banana = designer(data_cls=cls_sinlin, 
                      method='SEQCAL', 
@@ -55,9 +57,10 @@ al_banana = designer(data_cls=cls_sinlin,
                            'nworkers': args.nworkers,
                            'AL': args.al_func,
                            'seed_n0': args.seed_n0,
-                           'prior': 'uniform',
+                           'prior': prior_func,
                            'data_test': test_data,
-                           'max_evals': 20})
+                           'max_evals': 20,
+                           'type_init': None})
 
 
 show = True

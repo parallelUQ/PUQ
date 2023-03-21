@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
-
+from PUQ.prior import prior_dist
 
 class banana:
     def __init__(self):
@@ -61,8 +61,10 @@ for i in range(ftest.shape[0]):
             
 test_data = {'theta': thetatest, 
              'f': ftest,
-             'p': ptest} 
+             'p': ptest,
+             'p_prior': 1} 
 # # # # # # # # # # # # # # # # # # # # # 
+prior_func      = prior_dist(dist='uniform')(a=cls_banana.thetalimits[:, 0], b=cls_banana.thetalimits[:, 1])
 
 al_banana = designer(data_cls=cls_banana, 
                      method='SEQCAL', 
@@ -71,9 +73,10 @@ al_banana = designer(data_cls=cls_banana,
                            'nworkers': args.nworkers,
                            'AL': args.al_func,
                            'seed_n0': args.seed_n0,
-                           'prior': 'uniform',
+                           'prior': prior_func,
                            'data_test': test_data,
-                           'max_evals': 210})
+                           'max_evals': 210,
+                           'type_init': None})
 
 save_output(al_banana, cls_banana.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
 

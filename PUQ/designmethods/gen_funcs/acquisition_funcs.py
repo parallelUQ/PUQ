@@ -3,8 +3,8 @@
 import numpy as np
 from sklearn.metrics import pairwise_distances
 from PUQ.designmethods.gen_funcs.acquisition_funcs_support import compute_postvar, compute_eivar, multiple_pdfs, get_emuvar
+from smt.sampling_methods import LHS
 
-plotting = False
 def rnd(n, 
          x, 
          real_x,
@@ -16,7 +16,8 @@ def rnd(n,
          thetalimits, 
          prior_func, 
          thetatest=None, 
-         posttest=None):
+         posttest=None,
+         type_init=None):
         
         theta_acq = prior_func(n, thetalimits, None)
         return theta_acq
@@ -32,7 +33,8 @@ def hybrid(n,
            thetalimits, 
            prior_func, 
            thetatest=None, 
-           posttest=None):
+           posttest=None,
+           type_init=None):
     
     # Update emulator for uncompleted jobs.
     idnan    = np.isnan(fevals).any(axis=0).flatten()
@@ -49,8 +51,12 @@ def hybrid(n,
     coef      = (2**d_real)*(np.sqrt(np.pi)**d_real)*np.sqrt(np.prod(diags))
     
     # Create a candidate list
-    clist = prior_func(100*n, thetalimits, None)
-
+    n_clist = 100*n
+    if type_init == 'LHS':
+        sampling = LHS(xlimits=thetalimits)
+        clist = sampling(n_clist)
+    else:
+        clist   = prior_func.rnd(n_clist, None)
     # Project into (0, 1)
     theta_sd = (theta - thetalimits[:, 0])/(thetalimits[:, 1] - thetalimits[:, 0])
     theta_cand_sd = (clist - thetalimits[:, 0])/(thetalimits[:, 1] - thetalimits[:, 0])
@@ -110,7 +116,8 @@ def maxvar(n,
            thetalimits, 
            prior_func, 
            thetatest=None, 
-           posttest=None):
+           posttest=None,
+           type_init=None):
     
     # Update emulator for uncompleted jobs.
     idnan            = np.isnan(fevals).any(axis=0).flatten()
@@ -127,8 +134,13 @@ def maxvar(n,
     coef             = (2**d_real)*(np.sqrt(np.pi)**d_real)*np.sqrt(np.prod(diags))
     
     # Create a candidate list.
-    clist = prior_func(100*n, thetalimits, None)
-
+    n_clist = 100*n
+    if type_init == 'LHS':
+        sampling = LHS(xlimits=thetalimits)
+        clist = sampling(n_clist)
+    else:
+        clist   = prior_func.rnd(n_clist, None)
+        
     # Acquire n thetas.
     for i in range(n):
         emupredict     = emu.predict(x, clist)
@@ -169,8 +181,10 @@ def eivar(n,
           thetalimits, 
           prior_func, 
           thetatest=None, 
-          posttest=None):
+          posttest=None,
+          type_init=None):
     
+
     # Update emulator for uncompleted jobs.
     idnan    = np.isnan(fevals).any(axis=0).flatten()
     theta_uc = theta[idnan, :]
@@ -188,8 +202,13 @@ def eivar(n,
     else:
         n_clist = 100*int(n) #100*int(np.ceil(np.log(n)))
 
-    clist   = prior_func(n_clist, thetalimits, None)
 
+    if type_init == 'LHS':
+        sampling = LHS(xlimits=thetalimits)
+        clist = sampling(n_clist)
+    else:
+        clist   = prior_func.rnd(n_clist, None)
+    
     for i in range(n):
         emupredict     = emu.predict(x, thetatest)
         emumean        = emupredict.mean()   
@@ -212,7 +231,7 @@ def eivar(n,
                                       emumeanT[:, real_x.flatten()], 
                                       emuvar[real_x, :, real_x.T], 
                                       obs, 
-                                      is_cov)
+                                      is_cov, posttest)
             acq_func.append(posteivar)
 
         idc = np.argmin(acq_func)   
@@ -239,7 +258,8 @@ def maxexp(n,
         thetalimits,
         prior_func,
         thetatest=None,
-        posttest=None):
+        posttest=None,
+        type_init=None):
 
     # Update emulator for uncompleted jobs.
     idnan    = np.isnan(fevals).any(axis=0).flatten()
@@ -251,8 +271,15 @@ def maxexp(n,
     theta_acq, f_acq = [], []
     d, p    = x.shape[0], theta.shape[1]
     obsvar3d  = obsvar.reshape(1, d, d)
-    clist = prior_func(100*n, thetalimits, None)
-
+    
+    # Create a candidate list.
+    n_clist = 100*n
+    if type_init == 'LHS':
+        sampling = LHS(xlimits=thetalimits)
+        clist = sampling(n_clist)
+    else:
+        clist   = prior_func.rnd(n_clist, None)
+        
     theta_sd = (theta - thetalimits[:, 0])/(thetalimits[:, 1] - thetalimits[:, 0])
     theta_cand_sd = (clist - thetalimits[:, 0])/(thetalimits[:, 1] - thetalimits[:, 0])
 

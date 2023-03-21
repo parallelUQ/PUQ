@@ -9,23 +9,18 @@ from PUQ.prior import prior_dist
 
 class unimodal:
     def __init__(self):
-        self.data_name   = 'unimodal'
-        self.thetalimits = np.array([[-4, 4], [-4, 4]])
-        self.obsvar      = np.array([[4]], dtype='float64')
-        self.real_data   = np.array([[-6]], dtype='float64')
-        self.out         = [('f', float)]
-        self.d           = 1
+        self.data_name   = 'unimodal1'
+        self.thetalimits = np.array([[-2, 5], [-2, 5]])
+        self.obsvar      = np.array([[2]], dtype='float64') 
+        self.real_data   = np.array([[0]], dtype='float64') 
+        self.out     = [('f', float)]
         self.p           = 2
+        self.d           = 1
         self.x           = np.arange(0, self.d)[:, None]
         self.real_x      = np.arange(0, self.d)[:, None]
-        
+
     def function(self, theta1, theta2):
-        """
-        Wraps the unimodal function
-        """
-        thetas           = np.array([theta1, theta2]).reshape((1, 2))
-        S                = np.array([[1, 0.5], [0.5, 1]])
-        f                = (thetas @ S) @ thetas.T
+        f = theta1**2 + theta2**2
         return f
     
     def sim(self, H, persis_info, sim_specs, libE_info):
@@ -57,26 +52,34 @@ al_unimodal_test = designer(data_cls=cls_unimodal,
 
 ftest = al_unimodal_test._info['f']
 thetatest = al_unimodal_test._info['theta']
-ptest = sps.norm.pdf(cls_unimodal.real_data-ftest, 0, np.sqrt(cls_unimodal.obsvar)) 
+
+# 1=(5-3)/2, -2.5=(-2-3)/2
+# (-2, 5)
+prior_func      = prior_dist(dist='truncnorm')(a=[-2.5, -2.5], b=[1, 1], loc=[3, 3], scale=[2, 2])
+plt.hist(prior_func.rnd(1000000)[:, 0])
+plt.show()
+like_test       = sps.norm.pdf(cls_unimodal.real_data-ftest, 0, np.sqrt(cls_unimodal.obsvar)) 
+prior_test      = prior_func.pdf(thetatest)
+post_test       = like_test*prior_test
+
 
 test_data = {'theta': thetatest, 
              'f': ftest,
-             'p': ptest,
-             'p_prior': 1} 
+             'p': post_test,
+             'p_prior': prior_test} 
 # # # # # # # # # # # # # # # # # # # # # 
-prior_func      = prior_dist(dist='uniform')(a=cls_unimodal.thetalimits[:, 0], b=cls_unimodal.thetalimits[:, 1])
 
 al_unimodal = designer(data_cls=cls_unimodal, 
                        method='SEQCAL', 
-                       args={'mini_batch': 1, #args.minibatch, 
+                       args={'mini_batch': 1,
                              'n_init_thetas': 10,
-                             'nworkers': 2, #args.nworkers,
+                             'nworkers': 2, 
                              'AL': 'eivar',
-                             'seed_n0': 6, #args.seed_n0, #6
+                             'seed_n0': 6,
                              'prior': prior_func,
-                             'data_test': test_data, #test_data,
-                             'max_evals': 210,
-                             'type_init': None})
+                             'data_test': test_data, 
+                             'max_evals': 60,
+                             'type_init':'LHS'})
 
 save_output(al_unimodal, cls_unimodal.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
 
@@ -92,27 +95,23 @@ if show:
     plt.yscale('log')
     plt.ylabel('MAD')
     plt.show()
-    
+
+
+
     fig, ax = plt.subplots()    
-    cp = ax.contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap='RdGy')
+    levels = np.array([0.0001, 0.0005, 0.001, 0.003, 0.005, 0.008]) # np.arange(0.0001, 0.005, 0.001)
+    cp1 = ax.contour(Xpl, Ypl, like_test.reshape(50, 50)/np.sum(like_test), 20, colors='gray', alpha=0.5)
+    cp2 = ax.contour(Xpl, Ypl, prior_test.reshape(50, 50)/np.sum(prior_test), 20, colors='red', alpha=0.5, levels=levels)
+    ax.clabel(cp2, inline=1, fontsize=10)
+    # ax.clabel(cp2, fontsize=10, inline=1, manual=[(4, 2), (4, 1), (4, -1)])
+    cp3 = ax.contour(Xpl, Ypl, post_test.reshape(50, 50)/np.sum(post_test), 20, colors='green', alpha=0.5)
     ax.scatter(theta_al[10:, 0], theta_al[10:, 1], c='black', marker='+', zorder=2)
     ax.scatter(theta_al[0:10, 0], theta_al[0:10, 1], zorder=2, marker='o', facecolors='none', edgecolors='blue')
-    ax.set_xlabel(r'$\theta_1$', fontsize=16)
-    ax.set_ylabel(r'$\theta_2$', fontsize=16)
-    ax.tick_params(axis='both', labelsize=16)
-    plt.show()
-    
-    from smt.sampling_methods import LHS
-    lb1 = -4
-    ub1 = 4
-    xlimits = np.array([[lb1, ub1], [lb1, ub1]])
-    sampling = LHS(xlimits=xlimits, random_state=2)
-    n = 50
-    x = sampling(n)
-    fig, ax = plt.subplots()    
-    cp = ax.contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap='RdGy')
-    ax.scatter(x[:, 0], x[:, 1], zorder=2, marker='+', c='black')
-    ax.set_xlabel(r'$\theta_1$', fontsize=16)
-    ax.set_ylabel(r'$\theta_2$', fontsize=16)
-    ax.tick_params(axis='both', labelsize=16)
+    lines = [cp1.collections[0], cp2.collections[0], cp3.collections[0]]
+    labels = [r'$p(y|\theta)$', r'$p(\theta)$', r'$p(\theta|y)$']
+    ax.legend(lines, labels, bbox_to_anchor=(1, -0.2), ncol=3, prop={'size': 16})
+
+    ax.set_xlabel(r'$\theta_1$', fontsize=18)
+    ax.set_ylabel(r'$\theta_2$', fontsize=18)
+    ax.tick_params(axis='both', labelsize=18)
     plt.show()
