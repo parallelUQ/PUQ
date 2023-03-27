@@ -36,8 +36,16 @@ class performanceModel(object):
                                                                              batch=self.batch, 
                                                                              sim_times=sim_times, 
                                                                              a_time=a_time)
+        endjob = [job['end'] for job in self.job_list]
+        self.end_time = max(endjob)
  
-    
+    def complete(self, acclevel):
+        threshold = [a for a in self.acc if a <= acclevel][0]
+        id_thr = np.where(self.acc == threshold)[0][0]
+        
+        endjob = np.sort([job['end'] for job in self.job_list])[id_thr]
+        return endjob
+        
     def summarize(self):
         print('Done with ' + str(self.worker) + ' workers' + ' and batch size ' +  str(self.batch) + '\n' )
         print('# of parameters acquired: ' + str(self.n) + '\n')

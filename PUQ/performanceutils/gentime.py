@@ -33,6 +33,8 @@ def regress(*args, n, batch):
     return ytest
 
 def get_batched_time(n, b, time):
-    time = time[0::b]
-    time = np.repeat(time, b)
-    return time
+    timenew = np.repeat(0.01, n)
+    timenew[0::b] = time[0::b]
+    #time = time[0::b]
+    #time = np.repeat(time, b)
+    return timenew

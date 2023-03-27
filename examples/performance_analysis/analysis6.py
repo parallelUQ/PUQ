@@ -1,5 +1,5 @@
 from PUQ.performance import performanceModel
-from PUQ.performanceutils.utils import plot_accuracy, plot_accuracy2
+from PUQ.performanceutils.utils import plot_accuracy, plot_accuracy2, plot_workers
 import numpy as np
 from result_read import get_rep_data   
 import matplotlib.pyplot as plt 
@@ -15,48 +15,7 @@ labelf = ['hybrid_ei', 'hybrid_ei', 'hybrid_ei', 'rnd']
 path = '/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/'
 
 
-result = []
-for mid, m in enumerate(label):
-    
-    PM = performanceModel(worker=1, batch=1, n=n)
-    
-    ## ##
-    filename = path + 'performanceAnalytics/new_fun_all/new_examples/' + example + '/' + label[mid]
-    avgae, avgtime = get_rep_data(s, w, b, rep, filename, labelf[mid])
-    ## ##    
-    
-    ## ##
-    xt    = np.arange(0, len(avgtime))
-    xtest = np.arange(0, n)
-    PM.gen_gentime(xt, avgtime, xtest, typeGen='regress')
-    ## ##  
-    
-    ## ##
-    PM.gen_simtime(0.0001, 0.0001, typeSim='normal')
-    ## ##
-    
-    ## ##
-    minl = np.min(avgae)
-    maxl = np.max(avgae)
-    lnew = [(litem - 0)/(maxl - 0) for litem in avgae]
-
-    x_a  = np.log(np.arange(1, len(lnew)+1)) 
-    y_a  = np.log(lnew)
-    xtest_a  = np.log(np.arange(1, n+1))
-    PM.gen_accuracy(x_a, y_a, xtest_a, typeAcc='regress')
-    PM.acc = np.exp(PM.acc)
-    ## ##
-    
-    PM.simulate()
-    
-    PM.summarize()
-    result.append(PM)
-
-plot_accuracy2(result, n=n, acclevel=0.01, labellist=[r'$\mathcal{A}_1$', r'$\mathcal{A}_2$', r'$\mathcal{A}_3$', r'$\mathcal{A}_4$'], logscale=True)
-
-
-
-n = 2048
+n = 512
 label = 'hybrid_ei_c1000/'
 batches = [1, 4, 16, 64]
 timeparams = [1]
@@ -81,7 +40,7 @@ for sim in [10, 50, 100]:
         ## ##  
         
         ## ##
-        PM.gen_simtime(sim, 0.1, typeSim='normal')
+        PM.gen_simtime(sim, 0.1*sim, typeSim='normal')
         ## ##
         
         ## ##
@@ -98,7 +57,9 @@ for sim in [10, 50, 100]:
         
         PM.simulate()
         
+        plot_workers(PM, PM.job_list, PM.stage_list)
+        
         PM.summarize()
         result.append(PM)
     
-    plot_accuracy(result, n=n, acclevel=0.00001, labellist=['1', '4', '16', '64'], worker=64, logscale=True)
+    plot_accuracy(result, n=n, acclevel=0.01, labellist=['1', '4', '16', '64'], worker=64, logscale=True)

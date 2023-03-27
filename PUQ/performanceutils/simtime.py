@@ -13,3 +13,10 @@ def normal(*args, n):
     time = np.random.normal(loc=a, scale=b, size=n)
     time[time < 0] = 0.00001
     return time
+
+def constant(*args, n):
+    a = args[0]
+
+    time = a*np.repeat(1, n) 
+
+    return time
