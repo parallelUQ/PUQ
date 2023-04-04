@@ -108,10 +108,10 @@ if show:
     ax.scatter(theta_al[10:, 0], theta_al[10:, 1], c='black', marker='+', zorder=2)
     ax.scatter(theta_al[0:10, 0], theta_al[0:10, 1], zorder=2, marker='o', facecolors='none', edgecolors='blue')
     lines = [cp1.collections[0], cp2.collections[0], cp3.collections[0]]
-    labels = [r'$p(y|\theta)$', r'$p(\theta)$', r'$p(\theta|y)$']
-    ax.legend(lines, labels, bbox_to_anchor=(1, -0.2), ncol=3, prop={'size': 16})
+    labels = [r'$p(y|\theta)$', r'$p(\theta)$', r'$\tilde{p}(\theta|y)$']
+    ax.legend(lines, labels, bbox_to_anchor=(1, -0.25), ncol=3, prop={'size': 18})
 
-    ax.set_xlabel(r'$\theta_1$', fontsize=18)
-    ax.set_ylabel(r'$\theta_2$', fontsize=18)
-    ax.tick_params(axis='both', labelsize=18)
+    ax.set_xlabel(r'$\theta_1$', fontsize=22)
+    ax.set_ylabel(r'$\theta_2$', fontsize=22)
+    ax.tick_params(axis='both', labelsize=22)
     plt.show()
