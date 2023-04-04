@@ -1,5 +1,5 @@
 from PUQ.performance import performanceModel
-from PUQ.performanceutils.utils import plot_accuracy, plot_accuracy2
+from PUQ.performanceutils.utils import plot_accuracy, plot_accuracy2, plot_workers, plot_acc, plot_acqtime, plot_endtime, plot_errorend
 import numpy as np
 from result_read import get_rep_data   
 import matplotlib.pyplot as plt 
@@ -14,8 +14,9 @@ label = ['hybrid_ei_c1000/', 'hybrid_ei_c100/', 'hybrid_ei_c10/', 'rnd/']
 labelf = ['hybrid_ei', 'hybrid_ei', 'hybrid_ei', 'rnd']
 path = '/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/'
 
-
+acclevel = 0.01
 result = []
+worker = 1
 for mid, m in enumerate(label):
     
     PM = performanceModel(worker=1, batch=1, n=n)
@@ -48,57 +49,17 @@ for mid, m in enumerate(label):
     ## ##
     
     PM.simulate()
-    
     PM.summarize()
+    PM.complete(acclevel)
     result.append(PM)
 
-plot_accuracy2(result, n=n, acclevel=0.01, labellist=[r'$\mathcal{A}_1$', r'$\mathcal{A}_2$', r'$\mathcal{A}_3$', r'$\mathcal{A}_4$'], logscale=True)
+lbl = [r'$\mathcal{A}_1$', r'$\mathcal{A}_2$', r'$\mathcal{A}_3$', r'$\mathcal{A}_4$']
+#plot_accuracy2(result, n=n, acclevel=0.01, labellist=[r'$\mathcal{A}_1$', r'$\mathcal{A}_2$', r'$\mathcal{A}_3$', r'$\mathcal{A}_4$'], logscale=True)
+
+fig, axes = plt.subplots(2, 2, figsize=(22, 20)) 
+plot_acc(axes[0, 0], n, acclevel, result, labellist=lbl, logscale=True, fontsize=25)
+plot_acqtime(axes[0, 1], n, acclevel, result, labellist=lbl, logscale=True, fontsize=25)
+plot_endtime(axes[1, 0], n, acclevel, result, labellist=lbl, worker=worker, logscale=True, fontsize=25)
+plot_errorend(axes[1, 1], n, acclevel, result, labellist=lbl, worker=worker, logscale=True, fontsize=25)
 
 
-
-n = 2048
-label = 'hybrid_ei_c1000/'
-batches = [1, 4, 16, 64]
-timeparams = [1]
-scale_list = [1, 1.25, 1.5, 1.75]
-for sim in [10, 50, 100]:
-    result = []
-    for mid, b in enumerate(batches):
-        if b == 1:
-            cons = 1
-        else:
-            cons             = np.arange(scale_list[mid], 1, -(scale_list[mid]-1)/n)[0:n] 
-            
-        PM = performanceModel(worker=64, batch=b, n=n)
-        
-        ## ##
-        filename = path + 'performanceAnalytics/new_fun_all/new_examples/' + example + '/' + label
-        avgae, avgtime = get_rep_data(s, w, 1, rep, filename, 'hybrid_ei')
-        ## ##    
-        
-        ## ##
-        PM.gen_gentime(timeparams[0], typeGen='constant')
-        ## ##  
-        
-        ## ##
-        PM.gen_simtime(sim, 0.1, typeSim='normal')
-        ## ##
-        
-        ## ##
-        minl = np.min(avgae)
-        maxl = np.max(avgae)
-        lnew = [(litem - 0)/(maxl - 0) for litem in avgae]
-    
-        x_a      = np.log(np.arange(1, len(lnew)+1)) 
-        y_a      = np.log(lnew)
-        xtest_a  = np.log(np.arange(1, n+1))
-        PM.gen_accuracy(x_a, y_a, xtest_a, typeAcc='regress')
-        PM.acc = cons*np.exp(PM.acc)
-        ## ##
-        
-        PM.simulate()
-        
-        PM.summarize()
-        result.append(PM)
-    
-    plot_accuracy(result, n=n, acclevel=0.00001, labellist=['1', '4', '16', '64'], worker=64, logscale=True)

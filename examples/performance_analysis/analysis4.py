@@ -27,7 +27,7 @@ PM.gen_accuracy(x_a, y_a, xtest_a, typeAcc='regress')
 fitted_acc = np.exp(PM.acc)
 ### ### ### ### ### ### 
 
-repno = 30
+repno = 1
 varlist = [1, 5, 25]
 acc  = 0.00001
 

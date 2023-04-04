@@ -1,6 +1,16 @@
 import numpy as np
 import scipy
 
+def batched(*args, n, batch):
+    acclist = args[0]
+    #print(acclist)
+    accu     = [acclist[idacc] for idacc in np.arange(batch-1, n, batch)]
+    accu_all = np.repeat(accu[0:-1], batch)
+    accu_all = np.concatenate((np.repeat(1, batch-1), accu_all))
+    accu_all = np.concatenate((accu_all, np.array([accu[-1]])))
+    #print(accu_all)
+    return accu_all
+    
 def exponential(*args, n, batch):
     a = args[0]
     b = args[1]

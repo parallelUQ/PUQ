@@ -30,6 +30,10 @@ def regress(*args, n, batch):
     Xtest = np.concatenate((xtest, xtest**2), axis=1)
     reg   = LinearRegression().fit(X, y)
     ytest = reg.predict(Xtest)
+    
+    if batch > 1:
+        ytest = get_batched_time(n, batch, ytest)
+        
     return ytest
 
 def get_batched_time(n, b, time):

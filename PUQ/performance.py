@@ -21,7 +21,7 @@ class performanceModel(object):
     
     def gen_accuracy(self, *args, typeAcc='exponential'):
         self.accmethod = eval('accuracy.' + typeAcc)
-        self.acc = self.accmethod(*args, n=self.n, batch=self.batch)     
+        self.acc = self.accmethod(*args, n=self.n, batch=self.batch)   
         return    
         
     def simulate(self, sim_times=None, a_time=None):
@@ -40,11 +40,45 @@ class performanceModel(object):
         self.end_time = max(endjob)
  
     def complete(self, acclevel):
+        
+
         threshold = [a for a in self.acc if a <= acclevel][0]
         id_thr = np.where(self.acc == threshold)[0][0]
+   
+        endjob = [job['end'] for job in self.job_list]
         
-        endjob = np.sort([job['end'] for job in self.job_list])[id_thr]
-        return endjob
+        job_end = np.sort(endjob)[id_thr-1]
+        print(job_end)
+        print(id_thr)
+        for job in self.job_list:
+            if job['end'] == job_end:
+                stage_id = job['stage']
+
+        stage_end = np.max([job['end'] for job in self.stage_list[stage_id]['jobs']])
+        print(stage_id)
+        print(stage_end)
+
+        self.complete_time = np.max([job_end, stage_end]) 
+        #print(self.complete_time)
+        count_finish_job = 0
+        for job in self.job_list:
+            if job['end'] <= self.complete_time:
+                count_finish_job += 1
+                
+        self.complete_no = count_finish_job
+        self.acc_threshold = threshold
+        
+        #sortedjobs = np.argsort(endjob)
+        #for sid, s in enumerate(sortedjobs):
+        #    self.job_list[s]['endid'] = sid
+        #    self.job_list[s]['acc'] = self.acc[sid]
+     
+
+        self.completed_stage = stage_id + 1
+        self.total_acq_time = np.sum([stage['end'] - stage['start'] for stage in self.stage_list if stage['end'] <= self.complete_time])
+
+
+        return 
         
     def summarize(self):
         print('Done with ' + str(self.worker) + ' workers' + ' and batch size ' +  str(self.batch) + '\n' )

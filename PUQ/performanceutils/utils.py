@@ -7,25 +7,38 @@ def find_threshold(acc_level, acc_list):
     return threshold, id_thr
 
 def plot_workers(PM, joblist, acqlist):
+    wk = np.zeros(PM.worker)
+    complete_stage = 0
+    total_acq_time = 0
     fig, ax = plt.subplots()
     for jid, job in enumerate(joblist):
-        ax.hlines(y = job['worker']+1, xmin = job['start'], xmax = job['end'], linewidth=1)
-        ax.vlines(x = job['start'], ymin = job['worker']+1-0.25, ymax = job['worker']+1+0.25, linestyles='dashed' , linewidth=1)
-        ax.vlines(x = job['end'], ymin = job['worker']+1-0.25, ymax = job['worker']+1+0.25, linestyles='dashed' , linewidth=1)
-    
+        if job['end'] <= PM.complete_time:
+            ax.hlines(y = job['worker']+1, xmin = job['start'], xmax = job['end'], color='b', linewidth=1)
+            ax.vlines(x = job['start'], ymin = job['worker']+1-0.25, ymax = job['worker']+1+0.25, color='b', linestyles='dashed' , linewidth=1)
+            ax.vlines(x = job['end'], ymin = job['worker']+1-0.25, ymax = job['worker']+1+0.25, color='b', linestyles='dashed' , linewidth=1)
+            
+            wk[job['worker']] += (job['end'] - job['start'])
         
     for ida, acq in enumerate(acqlist):
-        ax.hlines(y = 0, xmin = acq['start'], xmax = acq['end'], color='r', linewidth=1)
-        ax.vlines(x = acq['start'], ymin = 0-0.25, ymax = 0+0.25, linestyles='dashed', color='r', linewidth=1)
-        ax.vlines(x = acq['end'], ymin = 0-0.25, ymax = 0+0.25, linestyles='dashed', color='r', linewidth=1)
+        if acq['end'] <= PM.complete_time:
+            ax.hlines(y = 0, xmin = acq['start'], xmax = acq['end'], color='r', linewidth=1)
+            ax.vlines(x = acq['start'], ymin = 0-0.25, ymax = 0+0.25, linestyles='dashed', color='r', linewidth=1)
+            ax.vlines(x = acq['end'], ymin = 0-0.25, ymax = 0+0.25, linestyles='dashed', color='r', linewidth=1)
+            complete_stage += 1
+            total_acq_time += (acq['end'] - acq['start'])
       
-    plt.xlabel('Time')
-    plt.ylabel('Worker')
-    txt1 = 'End:' + str(np.round(PM.end_time, 1)) + '\n' 
-    txt2 = '# of stages:' + str(PM.stage_list[-1]['id']) + '\n' 
-    txt3 = 'mean (idle):' + str(np.round(np.mean(PM.worker_list[:, 0]))) + '\n' 
-    txt4 = 'std (idle):' + str(np.round(np.std(PM.worker_list[:, 0])))
-    plt.figtext(0.95, 0.2, txt1 + txt2 + txt3 + txt4, fontname="DejaVu Sans Mono")
+        
+    plt.xlabel('Time', fontsize=18)
+    plt.ylabel('Worker', fontsize=18)
+    txt1 = 'Completion:' + str(np.round(PM.complete_time, 1)) + '\n' 
+    txt2 = '# of jobs:' + str(np.round(PM.complete_no, 1)) + '\n' 
+    
+    txt3 = '# of stages:' + str(PM.completed_stage) + '\n' 
+    txt4 = 'Acq time:' + str(np.round(PM.total_acq_time , 2)) + '\n' 
+    
+    txt5 = 'mean (idle):' + str(np.round(PM.complete_time - np.mean(wk))) + '\n' 
+    txt6 = 'std (idle):' + str(np.round(np.std(wk)))
+    plt.figtext(0.95, 0.2, txt1 + txt2 + txt3 + txt4 + txt5 + txt6, fontname="DejaVu Sans Mono", fontsize=18)
     #plt.xlim(0, sorted(endjob)[-1])
     plt.show()
     
@@ -80,7 +93,7 @@ def plot_accuracy(result, n, acclevel, labellist, worker=1, logscale=True):
         axes[2].hlines(y=endtime[id_list[endid]], xmin=0, xmax = id_list[endid], linewidth=2, color=clist[endid], linestyles='dashed')
     #axes[2].legend(bbox_to_anchor=(1.2, -0.1), ncol=5, fontsize=30)
     axes[2].set_xlabel("# of parameters", fontsize=30)
-    axes[2].set_ylabel("End time", fontsize=30)
+    axes[2].set_ylabel("Completion time", fontsize=30)
     if logscale:
         axes[2].set_xscale('log')
         axes[2].set_yscale('log')
@@ -101,7 +114,7 @@ def plot_accuracy(result, n, acclevel, labellist, worker=1, logscale=True):
         axes[3].set_yscale('log')
     axes[3].set_xlim([np.min([end[worker] for end in endlist]), np.max(endlist)])
     axes[3].set_ylim([np.min(accuracylist), np.max([acc[worker] for acc in accuracylist])])
-    axes[3].set_xlabel("End time", fontsize=30)
+    axes[3].set_xlabel("Completion time", fontsize=30)
     axes[3].set_ylabel("Error", fontsize=30)
     axes[3].tick_params(axis='both', which='major', labelsize=25)
     plt.show()
@@ -157,7 +170,7 @@ def plot_accuracy2(result, n, acclevel, labellist, worker=1, logscale=True):
         axes[1, 0].hlines(y=endtime[id_list[endid]], xmin=0, xmax = id_list[endid], linewidth=2, color=clist[endid], linestyles='dashed')
     #axes[2].legend(bbox_to_anchor=(1.2, -0.1), ncol=5, fontsize=30)
     axes[1, 0].set_xlabel("# of parameters", fontsize=30)
-    axes[1, 0].set_ylabel("End time", fontsize=30)
+    axes[1, 0].set_ylabel("Completion time", fontsize=30)
     if logscale:
         axes[1, 0].set_xscale('log')
         axes[1, 0].set_yscale('log')
@@ -178,7 +191,90 @@ def plot_accuracy2(result, n, acclevel, labellist, worker=1, logscale=True):
         axes[1, 1].set_yscale('log')
     axes[1, 1].set_xlim([np.min([end[worker] for end in endlist]), np.max(endlist)])
     axes[1, 1].set_ylim([np.min(accuracylist), np.max([acc[worker] for acc in accuracylist])])
-    axes[1, 1].set_xlabel("End time", fontsize=30)
+    axes[1, 1].set_xlabel("Completion time", fontsize=30)
     axes[1, 1].set_ylabel("Error", fontsize=30)
     axes[1, 1].tick_params(axis='both', which='major', labelsize=25)
     plt.show()
+    
+
+def plot_acc(axes, n, acclevel, rlist, labellist, logscale=False, fontsize=18):
+    clist = ['blue', 'red', 'green', 'magenta', 'orange', 'dimgrey', 'lime', 'dimgrey', 'lime']
+    #fig, axes = plt.subplots(1, 1, figsize=(4, 4)) 
+    
+    for accid, res in enumerate(rlist):
+        axes.plot(np.arange(1, n+1), res.acc, label=labellist[accid], color=clist[accid])
+        axes.vlines(x=res.complete_no, ymin=0, ymax=res.acc_threshold, linewidth=2, color=clist[accid], linestyles='dashed')
+    axes.hlines(y=acclevel, xmin=0, xmax=n, linewidth=2, color = 'k')
+    axes.set_xlabel("# of parameters", fontsize=fontsize)
+    axes.set_ylabel("Error", fontsize=fontsize)
+    axes.tick_params(axis='both', which='major', labelsize=fontsize-5)  
+    if logscale:
+        axes.set_xscale('log')
+        axes.set_yscale('log')    
+
+def plot_acqtime(axes, n, acclevel, rlist, labellist, logscale=False, fontsize=18):
+    clist = ['blue', 'red', 'green', 'magenta', 'orange', 'dimgrey', 'lime', 'dimgrey', 'lime']
+    #fig, axes = plt.subplots(1, 1, figsize=(4, 4)) 
+    
+    for accid, res in enumerate(rlist):
+        axes.plot(np.arange(1, n+1), np.cumsum(res.gentime), label=labellist[accid], color=clist[accid])
+        # axes.vlines(x=res.complete_no, ymin=0, ymax=res.acc_threshold, linewidth=2, color=clist[accid], linestyles='dashed')
+    # axes.hlines(y=acclevel, xmin=0, xmax=n, linewidth=2, color = 'k')
+    axes.set_xlabel("# of parameters", fontsize=fontsize)
+    axes.set_ylabel("Acquisition time", fontsize=fontsize)
+    axes.tick_params(axis='both', which='major', labelsize=fontsize-5)
+    if logscale:
+        axes.set_xscale('log')
+        axes.set_yscale('log') 
+        
+def plot_endtime(axes, n, acclevel, rlist, labellist, worker, logscale=False, fontsize=18):
+    clist = ['blue', 'red', 'green', 'magenta', 'orange', 'dimgrey', 'lime', 'dimgrey', 'lime']
+    #fig, axes = plt.subplots(1, 1, figsize=(4, 4)) 
+    
+    minworker = []
+    maxtime = 0
+    for endid, res in enumerate(rlist):
+        endtime = np.sort([job['end'] for job in res.job_list])
+        minworker.append(endtime[worker])
+        if maxtime < np.max(endtime):
+            maxtime = np.max(endtime)
+        axes.plot(np.arange(1, n+1), endtime, label=labellist[endid], color=clist[endid])
+        axes.vlines(x=res.complete_no, ymin=0, ymax = endtime[res.complete_no], linewidth=2, color=clist[endid], linestyles='dashed')
+        axes.hlines(y=endtime[res.complete_no], xmin=0, xmax=res.complete_no, linewidth=2, color=clist[endid], linestyles='dashed')
+
+    axes.set_xlabel("# of parameters", fontsize=fontsize)
+    axes.set_ylabel("Completion time", fontsize=fontsize)
+    if logscale:
+        axes.set_xscale('log')
+        axes.set_yscale('log')
+    axes.set_xlim([worker, n])
+    axes.set_ylim([np.min(minworker), maxtime])
+    axes.tick_params(axis='both', which='major', labelsize=fontsize-5)
+    
+def plot_errorend(axes, n, acclevel, rlist, labellist, worker, logscale=False, fontsize=18):
+    clist = ['blue', 'red', 'green', 'magenta', 'orange', 'dimgrey', 'lime', 'dimgrey', 'lime']
+    #fig, axes = plt.subplots(1, 1, figsize=(4, 4)) 
+    minworker = []
+    maxtime = 0
+    minacc = 10
+    for endid, res in enumerate(rlist):
+        endtime = np.sort([job['end'] for job in res.job_list])
+        minworker.append(endtime[worker])
+        if maxtime < np.max(endtime):
+            maxtime = np.max(endtime)
+        if minacc > np.min(res.acc):
+            minacc = np.min(res.acc)
+        axes.plot(endtime, res.acc, label=labellist[endid], color=clist[endid])
+        axes.vlines(x=endtime[res.complete_no], ymin=0, ymax=acclevel, linewidth=2, color=clist[endid], linestyles='dashed')
+        
+    axes.hlines(y=acclevel, xmin=0, xmax=maxtime, linewidth=2, color = 'k')
+
+    if logscale:
+        axes.set_xscale('log')
+        axes.set_yscale('log')
+    axes.set_xlim([np.min(minworker), maxtime])
+    axes.set_ylim([minacc, np.max([res.acc[worker] for res in rlist])])
+    axes.set_xlabel("Completion time", fontsize=fontsize)
+    axes.set_ylabel("Error", fontsize=fontsize)
+    axes.tick_params(axis='both', which='major', labelsize=fontsize-5)    
+    
