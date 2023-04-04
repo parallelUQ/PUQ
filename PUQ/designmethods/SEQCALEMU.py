@@ -1,6 +1,6 @@
 import numpy as np
 from PUQ.designmethods.gen_funcs.acquisition_funcs_support import get_emuvar, multiple_pdfs
-from PUQ.designmethods.gen_funcs.acquisition_funcs import maxvar, eivar, maxexp, hybrid, rnd, imse
+from PUQ.designmethods.gen_funcs.acquisition_funcs import ei
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
@@ -9,6 +9,7 @@ from libensemble.libE import libE
 from libensemble.tools import parse_args, save_libE_output, add_unique_random_streams
 from PUQ.prior import prior_dist
 from smt.sampling_methods import LHS
+import scipy.stats as sps
 
 def fit(fitinfo, data_cls, args):
 
@@ -165,6 +166,20 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                                                  np.sum(complete),
                                                                  np.prod(pending.shape)))
                 
+                
+                like_fevals = np.zeros(theta.shape[0])
+                for i in range(theta.shape[0]):
+                    mean = fevals[:, i] 
+                    if len(mean) > 1:
+                        rnd = sps.multivariate_normal(mean=mean, cov=obsvar)
+                        like_fevals[i] = rnd.pdf(true_fevals)
+                    else:
+                        rnd = sps.norm(mean, np.sqrt(obsvar))
+                        like_fevals[i] = rnd.pdf(true_fevals)
+                    
+                emu_post       = fit_emulator(np.arange(0, 1)[:, None], theta, like_fevals.reshape((1, theta.shape[0])), theta_limits)
+                                
+                                
                 emu            = fit_emulator(x, theta, fevals, theta_limits)
                 prev_pending   = pending.copy()
                 update_model   = False
@@ -211,9 +226,9 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                     new_theta = acquisition_f(mini_batch, 
                                               x,
                                               real_x,
-                                              emu, 
+                                              emu_post, 
                                               theta, 
-                                              fevals, 
+                                              like_fevals, 
                                               true_fevals, 
                                               obsvar, 
                                               theta_limits, 
