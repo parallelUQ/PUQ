@@ -4,7 +4,7 @@ import numpy as np
 from result_read import get_rep_data   
 import matplotlib.pyplot as plt 
 
-n = 512
+n = 1024
 w = 2
 b = 1
 rep = 30
@@ -71,7 +71,7 @@ if show:
 show = True
 if show:
 
-    n = 512
+    n = 1024
     label = 'hybrid_ei_c1000/'
     batches = [1, 2, 4, 8, 16, 32, 64, 128, 256]
     timeparams = [1]
