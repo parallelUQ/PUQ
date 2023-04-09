@@ -37,7 +37,6 @@ setup(
                       'numpy',
                       'scipy',
                       'libensemble',
-                      'sklearn',
                       'torch',
                       'scikit-learn',
                       'smt'
