@@ -1,12 +1,16 @@
-import seaborn as sns
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as sps
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
+from smt.sampling_methods import LHS
 
+###### ###### ###### ######
+###### FIGURE 1 ######
+###### ###### ###### ######
+
+# Define the simulation model
 class unimodal:
     def __init__(self):
         self.data_name   = 'unimodal'
@@ -21,7 +25,7 @@ class unimodal:
         
     def function(self, theta1, theta2):
         """
-        Wraps the unimodal function
+        Unimodal function
         """
         thetas           = np.array([theta1, theta2]).reshape((1, 2))
         S                = np.array([[1, 0.5], [0.5, 1]])
@@ -57,62 +61,51 @@ al_unimodal_test = designer(data_cls=cls_unimodal,
 
 ftest = al_unimodal_test._info['f']
 thetatest = al_unimodal_test._info['theta']
-ptest = sps.norm.pdf(cls_unimodal.real_data-ftest, 0, np.sqrt(cls_unimodal.obsvar)) 
+ptest = sps.norm.pdf(cls_unimodal.real_data, ftest, np.sqrt(cls_unimodal.obsvar)) 
 
 test_data = {'theta': thetatest, 
              'f': ftest,
              'p': ptest,
              'p_prior': 1} 
 # # # # # # # # # # # # # # # # # # # # # 
+
+# Define a uniform prior
 prior_func      = prior_dist(dist='uniform')(a=cls_unimodal.thetalimits[:, 0], b=cls_unimodal.thetalimits[:, 1])
 
+# Run the sequential experimental design with 10 initial sample for 50 acquired points
 al_unimodal = designer(data_cls=cls_unimodal, 
                        method='SEQCAL', 
-                       args={'mini_batch': 1, #args.minibatch, 
+                       args={'mini_batch': 1,
                              'n_init_thetas': 10,
-                             'nworkers': 2, #args.nworkers,
+                             'nworkers': 2,
                              'AL': 'eivar',
-                             'seed_n0': 1, #args.seed_n0, #6
+                             'seed_n0': 1, 
                              'prior': prior_func,
-                             'data_test': test_data, #test_data,
+                             'data_test': test_data, 
                              'max_evals': 60,
                              'type_init': None})
 
-save_output(al_unimodal, cls_unimodal.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
+# Obtain acquired points
+theta_al = al_unimodal._info['theta']
 
-show = True
-if show:
-    theta_al = al_unimodal._info['theta']
-    TV       = al_unimodal._info['TV']
-    HD       = al_unimodal._info['HD']
-    
-    sns.pairplot(pd.DataFrame(theta_al))
-    plt.show()
-    plt.scatter(np.arange(len(TV[10:])), TV[10:])
-    plt.yscale('log')
-    plt.ylabel('MAD')
-    plt.show()
-    
-    fig, ax = plt.subplots()    
-    cp = ax.contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap='RdGy')
-    ax.scatter(theta_al[10:, 0], theta_al[10:, 1], c='black', marker='+', zorder=2)
-    ax.scatter(theta_al[0:10, 0], theta_al[0:10, 1], zorder=2, marker='o', facecolors='none', edgecolors='blue')
-    ax.set_xlabel(r'$\theta_1$', fontsize=16)
-    ax.set_ylabel(r'$\theta_2$', fontsize=16)
-    ax.tick_params(axis='both', labelsize=16)
-    plt.show()
-    
-    from smt.sampling_methods import LHS
-    lb1 = -4
-    ub1 = 4
-    xlimits = np.array([[lb1, ub1], [lb1, ub1]])
-    sampling = LHS(xlimits=xlimits, random_state=2)
-    n = 50
-    x = sampling(n)
-    fig, ax = plt.subplots()    
-    cp = ax.contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap='RdGy')
-    ax.scatter(x[:, 0], x[:, 1], zorder=2, marker='+', c='black')
-    ax.set_xlabel(r'$\theta_1$', fontsize=16)
-    ax.set_ylabel(r'$\theta_2$', fontsize=16)
-    ax.tick_params(axis='both', labelsize=16)
-    plt.show()
+# Observe the acquired points
+fig, ax = plt.subplots()    
+cp = ax.contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap='RdGy')
+ax.scatter(theta_al[10:, 0], theta_al[10:, 1], c='black', marker='+', zorder=2)
+ax.scatter(theta_al[0:10, 0], theta_al[0:10, 1], zorder=2, marker='o', facecolors='none', edgecolors='blue')
+ax.set_xlabel(r'$\theta_1$', fontsize=16)
+ax.set_ylabel(r'$\theta_2$', fontsize=16)
+ax.tick_params(axis='both', labelsize=16)
+plt.show()
+
+# Observe LHS sample
+xlimits = np.array([[-4, 4], [-4, 4]])
+sampling = LHS(xlimits=xlimits, random_state=2)
+x = sampling(50)
+fig, ax = plt.subplots()    
+cp = ax.contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap='RdGy')
+ax.scatter(x[:, 0], x[:, 1], zorder=2, marker='+', c='black')
+ax.set_xlabel(r'$\theta_1$', fontsize=16)
+ax.set_ylabel(r'$\theta_2$', fontsize=16)
+ax.tick_params(axis='both', labelsize=16)
+plt.show()
