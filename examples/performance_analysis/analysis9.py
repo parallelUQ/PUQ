@@ -5,7 +5,7 @@ from PUQ.performance import performanceModel
 from PUQ.performanceutils.utils import find_threshold, plot_workers, plot_acc, plot_acqtime, plot_endtime, plot_errorend
 ### ### ### ### ### ### 
 
-repno = 30
+repno = 1
 varlist = [1]
 acclevel = 0.2
 
@@ -14,6 +14,7 @@ scale_list = [1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8]
 #scale_list = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5]
 n = 2048
 worker  = 256
+n0 = 256
 batches = [1, 2, 4, 8, 16, 32, 64, 128, 256]
 simmeans = [2, 4, 16]
 
@@ -31,7 +32,7 @@ result = []
 sim_mean = 1
 var = 1
 for mid, m in enumerate(genparams):
-    PM = performanceModel(worker=256, batch=1, n=n)
+    PM = performanceModel(worker=256, batch=1, n=n, n0=n0)
     PM.gen_gentime(genparams[mid][0], typeGen='constant')
     PM.gen_simtime(sim_mean, sim_mean*var, typeSim='normal')
     
@@ -46,7 +47,7 @@ plot_acc(axes[0, 0], n, acclevel, result, labellist=['M1', 'M2', 'M3'], logscale
 plot_acqtime(axes[0, 1], n, acclevel, result, labellist=['M1', 'M2', 'M3'], logscale=False, fontsize=25)
 plot_endtime(axes[1, 0], n, acclevel, result, labellist=['M1', 'M2', 'M3'], worker=worker, logscale=False, fontsize=25)
 plot_errorend(axes[1, 1], n, acclevel, result, labellist=['M1', 'M2', 'M3'], worker=worker, logscale=False, fontsize=25)
-
+plt.show()
 
 
 
@@ -66,7 +67,7 @@ for sid, sim_mean in enumerate(simmeans):
                     else:
                         cons             = np.arange(scale_list[id_b], 1, -(scale_list[id_b]-1)/n)[0:n] 
                         
-                    PM = performanceModel(worker=worker, batch=b, n=n)
+                    PM = performanceModel(worker=worker, batch=b, n=n, n0=worker)
                     #PM.gen_gentime(genparams[aid][0], genparams[aid][1], typeGen='linear')
                     PM.gen_gentime(genparams[aid][0], typeGen='constant')
                     PM.gen_simtime(sim_mean, sim_mean*var, typeSim='normal')

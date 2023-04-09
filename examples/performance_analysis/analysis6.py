@@ -1,5 +1,5 @@
 from PUQ.performance import performanceModel
-from PUQ.performanceutils.utils import plot_accuracy, plot_accuracy2, plot_workers, plot_acc, plot_acqtime, plot_endtime, plot_errorend
+from PUQ.performanceutils.utils import plot_workers, plot_acc, plot_acqtime, plot_endtime, plot_errorend
 import numpy as np
 from result_read import get_rep_data   
 import matplotlib.pyplot as plt 
@@ -26,7 +26,7 @@ x_a      = np.log(np.arange(1, len(lnew)+1))
 y_a      = np.log(lnew)
 xtest_a  = np.log(np.arange(1, n+1))
 
-PM = performanceModel(worker=64, batch=1, n=n)
+PM = performanceModel(worker=64, batch=1, n=n, n0=0)
 PM.gen_accuracy(x_a, y_a, xtest_a, typeAcc='regress')
 fitted_accuracy = np.exp(PM.acc)
 plt.plot(fitted_accuracy)
@@ -51,7 +51,7 @@ if show:
             else:
                 cons             = np.arange(scale_list[mid], 1, -(scale_list[mid]-1)/n)[0:n] 
                 
-            PM = performanceModel(worker=worker, batch=b, n=n)
+            PM = performanceModel(worker=worker, batch=b, n=n, n0=worker)
             PM.gen_gentime(timeparams[0], typeGen='constant')
             PM.gen_simtime(sim, 0.1*sim, typeSim='normal')
             PM.gen_accuracy(cons*fitted_accuracy, typeAcc='batched')
@@ -60,11 +60,9 @@ if show:
             PM.complete(acclevel)
             result.append(PM)
         
-        #plot_accuracy(result, n=n, acclevel=acclevel, labellist=['1', '4', '16', '64'], worker=64, logscale=True)
-
         fig, axes = plt.subplots(2, 2, figsize=(22, 20)) 
         plot_acc(axes[0, 0], n, acclevel, result, labellist=lab, logscale=True, fontsize=25)
-        plot_acqtime(axes[0, 1], n, acclevel, result, labellist=lab, logscale=True, fontsize=25)
+        plot_acqtime(axes[0, 1], n, acclevel, result, labellist=lab, logscale=True, fontsize=25, n0=worker)
         plot_endtime(axes[1, 0], n, acclevel, result, labellist=lab, worker=worker, logscale=True, fontsize=25)
         plot_errorend(axes[1, 1], n, acclevel, result, labellist=lab, worker=worker, logscale=True, fontsize=25)
         
@@ -85,19 +83,17 @@ if show:
             else:
                 cons             = np.arange(scale_list[mid], 1, -(scale_list[mid]-1)/n)[0:n] 
                 
-            PM = performanceModel(worker=worker, batch=b, n=n)
+            PM = performanceModel(worker=worker, batch=b, n=n, n0=worker)
             PM.gen_gentime(0.1, 0.1, typeGen='linear')
             PM.gen_simtime(sim, sim*0.1, typeSim='normal')
             PM.gen_accuracy(cons*fitted_accuracy, typeAcc='batched')
             PM.simulate()
             PM.summarize()
             PM.complete(acclevel)
-            #plot_workers(PM, PM.job_list, PM.stage_list)
             result.append(PM)
         
-        #plot_accuracy(result, n=n, acclevel=acclevel, labellist=['1', '4', '16', '64'], worker=64, logscale=True)   
         fig, axes = plt.subplots(2, 2, figsize=(22, 20)) 
-        plot_acc(axes[0, 0], n, acclevel, result, labellist=lab, logscale=True, fontsize=25)
-        plot_acqtime(axes[0, 1], n, acclevel, result, labellist=lab, logscale=True, fontsize=25)
-        plot_endtime(axes[1, 0], n, acclevel, result, labellist=lab, worker=worker, logscale=False, fontsize=25)
-        plot_errorend(axes[1, 1], n, acclevel, result, labellist=lab, worker=worker, logscale=False, fontsize=25)
+        plot_acc(axes[0, 0], n, acclevel, result, labellist=lab, logscale=True, fontsize=25, n0=worker)
+        plot_acqtime(axes[0, 1], n, acclevel, result, labellist=lab, logscale=True, fontsize=25, n0=worker)
+        plot_endtime(axes[1, 0], n, acclevel, result, labellist=lab, worker=worker, logscale=True, fontsize=25)
+        plot_errorend(axes[1, 1], n, acclevel, result, labellist=lab, worker=worker, logscale=True, fontsize=25)

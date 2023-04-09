@@ -22,7 +22,7 @@ x_a  = np.log(np.arange(1, len(lnew)+1))
 y_a  = np.log(lnew)
 xtest_a  = np.log(np.arange(1, n+1))
 
-PM = performanceModel(worker=1, batch=1, n=n)
+PM = performanceModel(worker=1, batch=1, n=n, n0=0)
 PM.gen_accuracy(x_a, y_a, xtest_a, typeAcc='regress')
 fitted_acc = np.exp(PM.acc)
 ### ### ### ### ### ### 
@@ -67,7 +67,7 @@ for scaleid, scale in enumerate(acqscale):
                     else:
                         cons             = np.arange(scale_list[id_b], 1, -(scale_list[id_b]-1)/n)[0:n] 
                         
-                    PM = performanceModel(worker=worker, batch=b, n=n)
+                    PM = performanceModel(worker=worker, batch=b, n=n, n0=worker)
   
                     ## ##
                     PM.gen_gentime(1*scale, 1*scale, typeGen='linear')
@@ -81,13 +81,13 @@ for scaleid, scale in enumerate(acqscale):
                     PM.complete(acclevel)
                     PM.simulate()
                     PM.summarize()
-                    plot_workers(PM, PM.job_list, PM.stage_list)
+                    plot_workers(PM, PM.jobs, PM.stages)
                     res.append(PM)
              
                     
             fig, axes = plt.subplots(2, 2, figsize=(22, 20)) 
-            plot_acc(axes[0, 0], n, acclevel, res, labellist=lab, logscale=True, fontsize=25)
-            plot_acqtime(axes[0, 1], n, acclevel, res, labellist=lab, logscale=True, fontsize=25)
+            plot_acc(axes[0, 0], n, acclevel, res, labellist=lab, logscale=True, fontsize=25, n0=worker)
+            plot_acqtime(axes[0, 1], n, acclevel, res, labellist=lab, logscale=True, fontsize=25, n0=worker)
             plot_endtime(axes[1, 0], n, acclevel, res, labellist=lab, worker=worker, logscale=True, fontsize=25)
             plot_errorend(axes[1, 1], n, acclevel, res, labellist=lab, worker=worker, logscale=True, fontsize=25)
             axes[1, 1].legend(bbox_to_anchor=(0.6, -0.2), ncol=len(lab), fontsize=25)

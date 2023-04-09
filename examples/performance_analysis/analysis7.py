@@ -22,12 +22,12 @@ x_a  = np.log(np.arange(1, len(lnew)+1))
 y_a  = np.log(lnew)
 xtest_a  = np.log(np.arange(1, n+1))
 
-PM = performanceModel(worker=1, batch=1, n=n)
+PM = performanceModel(worker=1, batch=1, n=n, n0=0)
 PM.gen_accuracy(x_a, y_a, xtest_a, typeAcc='regress')
 fitted_acc = np.exp(PM.acc)
 ### ### ### ### ### ### 
 
-repno = 2
+repno = 1
 varlist = [0.1, 10]
 acclevel  = 0.00001
 
@@ -44,32 +44,6 @@ clist = ['b', 'r', 'g', 'm', 'y', 'c']
 mlist = ['P', 'p', '*', 'o', 's', 'h']
 linelist = ['-', '--', '-.', ':', '-.', ':'] 
 thrlist = []
-sid = 0
-
-for id_b, b in enumerate(batches):
-    if b == 1:
-        cons = 1
-    else:
-        cons             = np.arange(scale_list[id_b], 1, -(scale_list[id_b]-1)/n)[0:n]     
-    PM = performanceModel(worker=worker, batch=b, n=n)
-    PM.gen_gentime(1, 1, typeGen='linear')
-    PM.gen_simtime(1, 0.1, typeSim='normal')
-    PM.gen_accuracy(cons*fitted_acc, typeAcc='batched')
-    PM.simulate()
-    PM.summarize()
-    PM.complete(acclevel)
-    thrlist.append(PM.complete_no)
-
-fig, axes = plt.subplots(1, 1, figsize=(5, 5)) 
-axes.plot(batches, thrlist, marker=mlist[sid], markersize=10, linestyle=linelist[sid], linewidth=3.0, color=clist[sid])
-axes.set_xscale('log')   
-axes.set_yscale('log')   
-axes.set_xticks(batches)
-axes.set_xticklabels(batches, fontsize=14)
-axes.tick_params(axis='both', which='major', labelsize=14)
-axes.set_xlabel('b', fontsize=16)
-plt.show()
-
 
 lab = ['b=1', 'b=2', 'b=4', 'b=8', 'b=16', 'b=32', 'b=64', 'b=128', 'b=256']
 
@@ -87,7 +61,7 @@ for scaleid, scale in enumerate(acqscale):
                     else:
                         cons             = np.arange(scale_list[id_b], 1, -(scale_list[id_b]-1)/n)[0:n] 
                         
-                    PM = performanceModel(worker=worker, batch=b, n=n)
+                    PM = performanceModel(worker=worker, batch=b, n=n, n0=worker)
   
                     ## ##
                     PM.gen_gentime(1*scale, 1*scale, typeGen='linear')

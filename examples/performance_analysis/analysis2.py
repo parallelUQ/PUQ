@@ -1,5 +1,5 @@
 from PUQ.performance import performanceModel
-from PUQ.performanceutils.utils import plot_accuracy, plot_accuracy2, plot_workers, plot_acc, plot_acqtime, plot_endtime, plot_errorend
+from PUQ.performanceutils.utils import plot_workers, plot_acc, plot_acqtime, plot_endtime, plot_errorend
 import numpy as np
 from result_read import get_rep_data   
 import matplotlib.pyplot as plt 
@@ -19,7 +19,7 @@ result = []
 worker = 1
 for mid, m in enumerate(label):
     
-    PM = performanceModel(worker=1, batch=1, n=n)
+    PM = performanceModel(worker=1, batch=1, n=n, n0=0)
     
     ## ##
     filename = path + 'performanceAnalytics/new_fun_all/new_examples/' + example + '/' + label[mid]

@@ -1,79 +1,132 @@
 from PUQ.performance import performanceModel
-from PUQ.performanceutils.utils import plot_accuracy
 import matplotlib.pyplot as plt
+from PUQ.performanceutils.utils import plot_acc, plot_acqtime, plot_endtime, plot_errorend
 import numpy as np
 
-# Batch version
-timeparams = [[1, 1], [0.8, 0.8], [0.6, 0.6]]
+timeparams = [0.008, 0.006, 0.004]
 accparams = [[-1, 0.2], [-1, 0.3], [-1, 0.4]]
+acclevel = 0.1
 result = []
+n = 2048
+worker = 1
+n0 = 0
 for mid, m in enumerate(timeparams):
-    
-    PM = performanceModel(worker=64, batch=1, n=2048)
-    
-    PM.gen_gentime(timeparams[mid][0], timeparams[mid][1], typeGen='linear')
-
-    PM.gen_simtime(25, 0.0001, typeSim='normal')
+    PM = performanceModel(worker=1, batch=1, n=n, n0=n0)
+    PM.gen_gentime(timeparams[mid], typeGen='constant')
+    PM.gen_simtime(0.0001, 0.0001, typeSim='normal')
     PM.gen_accuracy(accparams[mid][0], accparams[mid][1], typeAcc='exponential')
-    
     PM.simulate()
-    
     PM.summarize()
+    PM.complete(acclevel)
     result.append(PM)
 
-plot_accuracy(result, n=2048, acclevel=0.1, labellist=['b=1', 'b=4', 'b=16'], logscale=False)
+labs = [r'$\mathcal{A}_1$', '$\mathcal{A}_2$', '$\mathcal{A}_3$']
+fig, axes = plt.subplots(1, 1, figsize=(5, 5)) 
+plot_acc(axes, n, acclevel, result, labellist=labs, logscale=False, fontsize=20)
+axes.legend(bbox_to_anchor=(1, -0.2), ncol=len(labs), fontsize=15)
+plt.show()
 
-# Batch version
-timeparams = [[1, 1], [0.8, 0.8], [0.6, 0.6]]
-accparams = [[-1, 0.05], [-1, 0.06], [-1, 0.07]]
-batches = [1, 2, 4, 8, 16, 32, 64]
+#####
+
+scale_list = [1, 1.1, 1.2]
+acclevel = 0.2
 result = []
-acclevel=0.1
-scale_list = [1, 1.25, 1.5, 1.75, 2, 2.25, 2.5]
 n = 2048
+n0 = 128
+batches = [1, 64, 128]
+for bid, b in enumerate(batches):
+    if b == 1:
+        cons = 1
+    else:
+        cons             = np.arange(scale_list[bid], 1, -(scale_list[bid]-1)/n)[0:n] 
+                        
+    PM = performanceModel(worker=128, batch=b, n=n, n0=n0)
+    PM.gen_gentime(0.1, typeGen='constant')
+    PM.gen_simtime(1, 1, typeSim='normal', seed=1)
+    PM.gen_accuracy(-1, 0.2, typeAcc='exponential')
+    PM.acc = cons*PM.acc
+    PM.simulate()
+    PM.summarize()
+
+    PM.complete(acclevel)
+    result.append(PM)
+
+labs = ['$b=1$', '$b=64$', '$b=128$']
+fig, axes = plt.subplots(1, 1, figsize=(5, 5)) 
+plot_acc(axes, n, acclevel, result, labellist=labs, logscale=False, fontsize=20, n0=n0)
+axes.legend(bbox_to_anchor=(1, -0.2), ncol=len(labs), fontsize=15)
+plt.show()
 
 fig, axes = plt.subplots(1, 1, figsize=(5, 5)) 
-for mid, m in enumerate(timeparams):
-    result = []
-    resultPM = []
-    for bid, b in enumerate(batches):
+plot_acqtime(axes, n, acclevel, result, labellist=labs, logscale=False, fontsize=20, ind=True, n0=n0)
+axes.legend(bbox_to_anchor=(1, -0.2), ncol=len(labs), fontsize=15)
+plt.show()
 
-        if b == 1:
-            cons = 1
-        else:
-            cons             = np.arange(scale_list[bid], 1, -(scale_list[bid]-1)/n)[0:n] 
-                
-        PM = performanceModel(worker=64, batch=b, n=n)
-        
-        PM.gen_gentime(timeparams[mid][0], timeparams[mid][1], typeGen='linear')
-    
-        PM.gen_simtime(10, 0.1, typeSim='normal')
-        PM.gen_accuracy(accparams[mid][0], accparams[mid][1], typeAcc='exponential')
-        PM.acc = cons*PM.acc 
-        
-        PM.simulate()
-        
-        PM.summarize()
-        
-        endtime = PM.complete(acclevel=acclevel)
-        
-        result.append(endtime)
-        resultPM.append(PM)
-    plot_accuracy(resultPM, n=n, acclevel=acclevel, labellist=[str(b) for b in batches], logscale=True, worker=64)
+fig, axes = plt.subplots(1, 1, figsize=(5, 5)) 
+plot_acqtime(axes, n, acclevel, result, labellist=labs, logscale=False, fontsize=20, ind=False, n0=n0)
+axes.legend(bbox_to_anchor=(1, -0.2), ncol=len(labs), fontsize=15)
+plt.show()
 
-    
-    axes.plot(batches, result, label='M'+str(mid))
-axes.set_xticks(batches)
-axes.set_xticklabels(batches, fontsize=14)
-axes.tick_params(axis='both', which='major', labelsize=14)
-axes.set_xscale('log')   
-axes.set_yscale('log') 
+cons1             = np.arange(scale_list[bid], 1, -(scale_list[bid]-1)/n)[0:n] 
+cons2             = np.arange(scale_list[bid], 1, -(scale_list[bid]-1)/n)[0:n] 
+#####
+scale_list = [1, 1.1, 1.2]
+acclevel = 0.2
+result = []
+n = 2048
+n0 = 128
+batches = [1, 64]
+for bid, b in enumerate(batches):
+    if b == 1:
+        cons = 1
+    else:
+        cons             = np.arange(scale_list[bid], 1, -(scale_list[bid]-1)/n)[0:n] 
+                        
+    PM = performanceModel(worker=128, batch=b, n=n, n0=n0)
+    PM.gen_gentime(0.01, 0.1, typeGen='linear')
+    PM.gen_simtime(1, 1, typeSim='normal', seed=1)
+    PM.gen_accuracy(-1, 0.2, typeAcc='exponential')
+    PM.acc = cons*PM.acc
+    PM.simulate()
+    PM.summarize()
 
-handles, labels = axes.get_legend_handles_labels()
-fig.legend(handles, labels, loc='upper center', title_fontsize=18,
-           bbox_to_anchor=(0.5, 0.05), 
-           ncol=4, 
-           prop={'size': 16},
-           fancybox=True, 
-           shadow=True)   
-plt.show()      
+    PM.complete(acclevel)
+    result.append(PM)
+
+labs = ['b=1', 'b=64', 'b=128']
+
+fig, axes = plt.subplots(1, 1, figsize=(5, 5)) 
+plot_acqtime(axes, n, acclevel, result, labellist=labs, logscale=False, fontsize=20, ind=True, n0=n0)
+axes.legend(bbox_to_anchor=(1, -0.2), ncol=len(labs), fontsize=15)
+plt.show()
+
+
+scale_list = [1, 1.1, 1.2]
+acclevel = 0.2
+result = []
+n = 2048
+n0 = 128
+batches = [1, 64]
+for bid, b in enumerate(batches):
+    if b == 1:
+        cons = 1
+    else:
+        cons             = np.arange(scale_list[bid], 1, -(scale_list[bid]-1)/n)[0:n] 
+                        
+    PM = performanceModel(worker=128, batch=b, n=n, n0=n0)
+    PM.gen_gentime(0.01, 0.1, 0.1, typeGen='quadratic')
+    PM.gen_simtime(1, 1, typeSim='normal', seed=1)
+    PM.gen_accuracy(-1, 0.2, typeAcc='exponential')
+    PM.acc = cons*PM.acc
+    PM.simulate()
+    PM.summarize()
+
+    PM.complete(acclevel)
+    result.append(PM)
+
+labs = ['b=1', 'b=64']
+
+fig, axes = plt.subplots(1, 1, figsize=(5, 5)) 
+plot_acqtime(axes, n, acclevel, result, labellist=labs, logscale=False, fontsize=20, ind=True, n0=n0)
+axes.legend(bbox_to_anchor=(1, -0.2), ncol=len(labs), fontsize=15)
+plt.show()

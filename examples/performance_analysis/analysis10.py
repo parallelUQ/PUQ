@@ -10,10 +10,9 @@ varlist = [0.1, 1]
 acclevel = 0.2
 scale_list = [1.2, 1.4, 1.6, 1.8, 2]
 n = 2048
-workers  = [16, 32, 64, 128, 256]
+workers  = [16, 32, 64, 128, 256, 512]
 batches  = [4, 8, 16]
 simmeans = [1, 2, 4, 16]
-
 accparams = [[-1, 0.2], [-1, 0.3], [-1, 0.4]]
 accparams = [[-1, 0.2]]
 genparams = [[0.2, 0.2], [0.08, 0.02], [0.02, 0.002]]
@@ -32,9 +31,9 @@ for sid, sim_mean in enumerate(simmeans):
                     else:
                         cons             = np.arange(scale_list[id_b], 1, -(scale_list[id_b]-1)/n)[0:n] 
                         
-                    PM = performanceModel(worker=w, batch=b, n=n)
+                    PM = performanceModel(worker=w, batch=b, n=n, n0=w)
                     PM.gen_gentime(genparams[0][0], typeGen='constant')
-                    PM.gen_simtime(sim_mean, sim_mean*var, typeSim='normal')
+                    PM.gen_simtime(sim_mean, sim_mean*var, typeSim='normal', seed=r)
                     PM.gen_accuracy(accparams[0][0], accparams[0][1], typeAcc='exponential')
                     PM.gen_accuracy(cons*PM.acc, typeAcc='batched')
                     PM.simulate()
@@ -70,7 +69,7 @@ for varid, var in enumerate(varlist):
             axes[sid].set_xticklabels(workers, fontsize=14)
             axes[sid].tick_params(axis='both', which='major', labelsize=14)
             axes[sid].set_xlabel('# of workers', fontsize=16)
-        axes[sid].plot(workers, [1, 1/2, 1/4, 1/8, 1/16], color='b', linewidth=4)
+        axes[sid].plot(workers, [1, 1/2, 1/4, 1/8, 1/16, 1/32], color='b', linewidth=4)
     axes[0].set_ylabel('Completion time (scaled)', fontsize=16)
     if varid == len(varlist)-1:
         handles, labels = axes[0].get_legend_handles_labels()

@@ -1,29 +1,36 @@
 import numpy as np
 import scipy
+import matplotlib.pyplot as plt 
 
-def batched(*args, n, batch):
+def batched(*args, n, batch, ninit):
     acclist = args[0]
-    #print(acclist)
-    accu     = [acclist[idacc] for idacc in np.arange(batch-1, n, batch)]
+
+    nt = n - ninit
+    accu     = [acclist[idacc] for idacc in np.arange(batch-1, nt, batch)]
     accu_all = np.repeat(accu[0:-1], batch)
     accu_all = np.concatenate((np.repeat(1, batch-1), accu_all))
     accu_all = np.concatenate((accu_all, np.array([accu[-1]])))
-    #print(accu_all)
+    accu_all = np.concatenate((np.repeat(1, ninit), accu_all)) 
+    
     return accu_all
     
-def exponential(*args, n, batch):
+def exponential(*args, n, batch, ninit):
     a = args[0]
     b = args[1]
-    x = np.arange(0, n)/n
+    
+    nt = n - ninit
+    x = np.arange(0, nt)/nt
     accu = a*(x**b)
     accu = [litem + 1 for litem in accu]
     
+    #if batch > 1:
+    #    accu = get_batched_accuracy(nt, batch, accu)
+    
+    accu = np.concatenate((np.repeat(1, ninit), accu)) 
 
-    if batch > 1:
-        accu = get_batched_accuracy(n, batch, accu)
     return accu
 
-def regress(*args, n, batch):
+def regress(*args, n, batch, ninit):
     x = args[0]
     y = args[1]
     xtest = args[2]
