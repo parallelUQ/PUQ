@@ -1,30 +1,7 @@
-"""Contains supplemental methods for gen function in persistent_surmise_calib.py."""
+"""Contains supplemental methods for acquisitionn funcs."""
 
 import numpy as np
 import scipy.stats as sps
-
-
-def importance_sample(emu, x, thetatest, obs, obsvar3d, coef):
-    emupredict     = emu.predict(x, thetatest)
-    emumean        = emupredict.mean()   
-    emuvar, is_cov = get_emuvar(emupredict)
-    emumeanT       = emumean.T
-    emuvarT        = emuvar.transpose(1, 0, 2)
-    var_obsvar1    = emuvarT + obsvar3d 
-    var_obsvar2    = emuvarT + 0.5*obsvar3d 
-    postvar        = compute_postvar(obs, emumeanT, var_obsvar1, var_obsvar2, coef)
-    weights        = postvar/np.sum(postvar)
-    postmean       = multiple_pdfs(obs, emumeanT, var_obsvar1)
-    
-    # ids            = np.random.choice(np.arange(0, len(postvar)), p=weights, size=5000, replace=False)   
-    # weightssum     = (1/postvar)/np.sum(1/postvar)
-    weights        = postmean/np.sum(postmean)
-    ids            = np.random.choice(np.arange(0, len(postmean)), p=weights, size=5000, replace=False)   
-    # weightssum     = (1/postmean)/np.sum(1/postmean)
-    
-    #ids = np.random.choice(np.arange(0, len(thetatest)), size=5000, replace=False)   
-    weightssum = np.ones(len(thetatest))
-    return weightssum[ids], thetatest[ids, :]
     
 def compute_likelihood(emumean, emuvar, obs, obsvar, is_cov):
 
@@ -133,8 +110,6 @@ def multiple_determinants(covs):
     logdets    = np.sum(np.log(vals), axis=1)
     return np.exp(logdets)#dets#np.exp(logdets)
     
-
-
 def get_emuvar(emupredict):
     is_cov = False
     try:
@@ -145,31 +120,37 @@ def get_emuvar(emupredict):
     
     return emuvar, is_cov
 
-# def compute_eivar_p1(obsvar, emumean, emuvar, obs, is_cov):
-#     n_x = emumean.shape[0]
-#     if n_x > 1:
-#         diags = np.diag(obsvar)
-#     else:
-#         diags = 1*obsvar
-#     denum = (2**n_x)*(np.sqrt(np.pi)**n_x)*np.sqrt(np.prod(diags))
-
-#     part1 = compute_likelihood(emumean, emuvar, obs, 0.5*obsvar, is_cov)
-#     part1 = part1*(1/denum)
+def eivar_sup(clist, theta, theta_test, emu, data_cls):
     
-#     return part1
+    real_x         = data_cls.real_x
+    obs            = data_cls.real_data
+    obsvar         = data_cls.obsvar
+    obsvar3d       = obsvar.reshape(1, 1, 1)
+    x              = data_cls.x
+    emupred_test   = emu.predict(x=data_cls.x, theta=theta_test)
+    emumean        = emupred_test.mean()
+    emuvar, is_cov = get_emuvar(emupred_test)
+    emumeanT       = emumean.T
+    emuvarT        = emuvar.transpose(1, 0, 2)
+    var_obsvar1    = emuvarT + obsvar3d 
+    var_obsvar2    = emuvarT + 0.5*obsvar3d 
 
-# def compute_eivar(summatrix, emuphi, emumean, emuvar, obs, is_cov):
+    # Get the n_ref x d x d x n_cand phi matrix
+    emuphi4d      = emu.acquisition(x=x, 
+                                    theta1=theta_test, 
+                                    theta2=clist)
+    acq_func = []
+    
+    # Pass over all the candidates
+    for c_id in range(len(clist)):
+        posteivar = compute_eivar_fig(obsvar, 
+                                  var_obsvar2[:, real_x, real_x.T],
+                                  var_obsvar1[:, real_x, real_x.T], 
+                                  emuphi4d[:, real_x, real_x.T, c_id],
+                                  emumeanT[:, real_x.flatten()], 
+                                  emuvar[real_x, :, real_x.T], 
+                                  obs, 
+                                  is_cov)
+        acq_func.append(posteivar)
 
-#     n = emumean.shape[0]
-#     ### PART 2 of Eq. 31 ###
-#     part2 = np.zeros(n)
-#     covmat1 =  (summatrix + emuphi)*0.5
-#     covmat2 =  summatrix - emuphi
-
-#     for i in range(n):
-#         rndpdf = sps.multivariate_normal.pdf(obs, mean=emumean[i, :], cov=covmat1[i, :, :])
-#         #denum2 = coef*np.sqrt(np.linalg.det(covmat2[:, :, i]))
-#         denum2 = np.sqrt(np.linalg.det(covmat2[i, :, :]))
-#         part2[i] = rndpdf/denum2
-
-#     return - np.sum(part2)
+    return acq_func

@@ -1,5 +1,4 @@
 import numpy as np
-from PUQ.designmethods.gen_funcs.acquisition_funcs_support import get_emuvar, multiple_pdfs
 from PUQ.designmethods.gen_funcs.acquisition_funcs import maxvar, eivar, maxexp, hybrid, rnd, imse
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
@@ -7,8 +6,8 @@ from libensemble.tools.persistent_support import PersistentSupport
 from libensemble.alloc_funcs.start_only_persistent import only_persistent_gens as alloc_f
 from libensemble.libE import libE
 from libensemble.tools import parse_args, save_libE_output, add_unique_random_streams
-from PUQ.prior import prior_dist
 from smt.sampling_methods import LHS
+from PUQ.posterior import posterior
 
 def fit(fitinfo, data_cls, args):
 
@@ -72,7 +71,8 @@ def fit(fitinfo, data_cls, args):
     libE_specs = {'nworkers': nworkers, 'comms': 'local'}
     #libE_specs = {'nworkers': nworkers, 'comms': 'local', 'sim_dirs_make': True,
     #              'sim_dir_copy_files': [os.path.join(os.getcwd(), '48Ca_template.in')]}
-                                         
+                                  
+      
     persis_info = add_unique_random_streams({}, nworkers + 1)
 
     # Currently just allow gen to exit if mse goes below threshold value
@@ -109,18 +109,13 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         data            = synth_info.real_data
         theta_limits    = synth_info.thetalimits
         
-        #prior_func      = prior_dist(dist=p_dist)
-        
         thetatest, posttest, ftest, priortest = None, None, None, None
-        
         if test_data is not None:
             thetatest, posttest, ftest, priortest = test_data['theta'], test_data['p'], test_data['f'], test_data['p_prior']
         
 
         true_fevals = np.reshape(data[0, :], (1, data.shape[1]))
-
         n_x     = synth_info.d 
-        n_realx = true_fevals.shape[1]
         x       = synth_info.x
         real_x  = synth_info.real_x
 
@@ -129,8 +124,6 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         fevals, pending, prev_pending, complete, prev_complete = None, None, None, None, None
         first_iter = True
         tag = 0
-
-        obsvar3d   = obsvar.reshape(1, n_x, n_x)
         update_model = False
         acquisition_f = eval(AL)
         list_id = []
@@ -169,18 +162,10 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 prev_pending   = pending.copy()
                 update_model   = False
                 
+                # Obtain the accuracy on the test set
                 if test_data is not None:
-                    emupredict     = emu.predict(x=x, theta=thetatest)
-                    emumean        = emupredict.mean()
-                    emuvar, is_cov = get_emuvar(emupredict)
-                    emumeanT       = emumean.T
-                    emuvarT        = emuvar.transpose(1, 0, 2)
-                    var_obsvar1    = emuvarT + obsvar3d 
-    
-                    posttesthat    = multiple_pdfs(true_fevals, 
-                                                   emumeanT[:, real_x.flatten()], 
-                                                   var_obsvar1[:, real_x, real_x.T])
-                    
+                    post = posterior(data_cls=synth_info, emulator=emu)
+                    posttesthat, posttestvar = post.predict(thetatest)
                     TV = np.mean(np.abs(posttest - posttesthat*priortest))
                     HD = np.sqrt(0.5*np.mean((np.sqrt(posttesthat) - np.sqrt(posttest))**2))     
 
