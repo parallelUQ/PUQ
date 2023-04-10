@@ -10,11 +10,9 @@ The code can be found on our `Github project page <https://github.com/parallelUQ
 
 .. toctree::
    :caption: User Guide:
-   :maxdepth: 4
+   :maxdepth: 2
 	
    Quickstart<introduction>
-   understanding	
-   programming_surmise
 
 .. toctree::
    :maxdepth: 2
