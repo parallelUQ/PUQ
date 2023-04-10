@@ -7,7 +7,9 @@
 .. image:: https://github.com/parallelUQ/PUQ/actions/workflows/puq-ci.yml/badge.svg?/branch=main
     :target: https://github.com/parallelUQ/PUQ/actions
 
-|
+.. image:: https://readthedocs.org/projects/puq/badge/?version=latest
+    :target: https://puq.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
 
 ==================================================================================
 PUQ: Python package for parallel uncertainty quantification
