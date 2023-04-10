@@ -3,10 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to surmise's documentation!
+Welcome to Parallel Uncertainty Quantification's documentation!
 ====================================
 
-The code can be found on our `Github project page <https://github.com/surmising/surmise>`_. It is open source and provided under the MIT license.
+The code can be found on our `Github project page <https://github.com/parallelUQ/PUQ>`_. It is open source and provided under the MIT license.
 
 .. toctree::
    :caption: User Guide:
