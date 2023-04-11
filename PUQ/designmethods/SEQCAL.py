@@ -1,6 +1,7 @@
 import numpy as np
 from PUQ.designmethods.gen_funcs.acquisition_funcs_support import get_emuvar, multiple_pdfs
-from PUQ.designmethods.gen_funcs.acquisition_funcs import maxvar, eivar, maxexp, rnd, pi, ei, hybrid_ei, hybrid_pi
+from PUQ.designmethods.gen_funcs.acquisition_funcs import maxvar, eivar, maxexp, rnd
+from PUQ.designmethods.gen_funcs.acquisition_funcs_opt import pi, ei, hybrid_ei, hybrid_pi
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
@@ -158,6 +159,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                               obs_offset, 
                               theta_offset,
                               list_id)
+      
                 update_model = rebuild_condition(complete, prev_complete, n_theta=mini_batch, n_initial=n0)
                 
                 if not update_model:
@@ -177,52 +179,21 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                                                  np.sum(complete),
                                                                  np.prod(pending.shape)))
                 
-                
-                if emutype == 'nonPC':
-                    feval_emu       = fevals.T.flatten()[None, :]
-                    theta_emu       = np.repeat(theta, len(x), axis=0)
-                    xs              = np.repeat(x[None, :], len(theta), axis=0).flatten()
-                    theta_emu       = np.concatenate((theta_emu, xs[:, None]), axis=1)
-                    emu             = fit_emulator(np.arange(0, 1)[:, None], theta_emu, feval_emu, theta_limits)
-
-                else:
-                    emu            = fit_emulator(x, theta, fevals, theta_limits)
-                    
+                emu            = fit_emulator(x, theta, fevals, theta_limits)
                 prev_pending   = pending.copy()
                 update_model   = False
                 
                 if test_data is not None:
-                    if emutype == 'nonPC':
-                        thetatest1 = np.concatenate((thetatest, np.zeros(thetatest.shape[0])[:, None]), axis=1)
-                        thetatest2 = np.concatenate((thetatest, np.ones(thetatest.shape[0])[:, None]), axis=1)
-                        thetatest_emu = np.concatenate((thetatest1, thetatest2), axis=0)  
-                        
-                        emupredict1 = emu.predict(x=np.arange(0, 1)[:, None], theta=thetatest_emu)
-                        emumean1 = emupredict1.mean()
-                        emuvar1 = emupredict1.var()
-                        
-                        
-                        emumeanT = np.concatenate((emumean1[0, 0:2500][:, None], emumean1[0, 2500:5000][:, None]), axis=1)
-                        emuvarT1 = np.concatenate((emuvar1[0, 0:2500][:, None], emuvar1[0, 2500:5000][:, None]), axis=1)
-                           
-                        emuvarT = np.einsum('ij,ik->jik', emuvarT1.T, np.eye(emuvarT1.T.shape[0], dtype=emuvarT1.dtype))
-                        
-                        var_obsvar1    = emuvarT + obsvar3d 
-                        
-                        posttesthat    = multiple_pdfs(true_fevals, 
-                                                       emumeanT[:, real_x.flatten()], 
-                                                       var_obsvar1[:, real_x, real_x.T])
-                    else:
-                        emupredict     = emu.predict(x=x, theta=thetatest)
-                        emumean        = emupredict.mean()
-                        emuvar, is_cov = get_emuvar(emupredict)
-                        emumeanT       = emumean.T
-                        emuvarT        = emuvar.transpose(1, 0, 2)
-                        var_obsvar1    = emuvarT + obsvar3d 
-        
-                        posttesthat    = multiple_pdfs(true_fevals, 
-                                                       emumeanT[:, real_x.flatten()], 
-                                                       var_obsvar1[:, real_x, real_x.T])
+                    emupredict     = emu.predict(x=x, theta=thetatest)
+                    emumean        = emupredict.mean()
+                    emuvar, is_cov = get_emuvar(emupredict)
+                    emumeanT       = emumean.T
+                    emuvarT        = emuvar.transpose(1, 0, 2)
+                    var_obsvar1    = emuvarT + obsvar3d 
+    
+                    posttesthat    = multiple_pdfs(true_fevals, 
+                                                   emumeanT[:, real_x.flatten()], 
+                                                   var_obsvar1[:, real_x, real_x.T])
                         
                     TV = np.mean(np.abs(posttest - posttesthat))
                     HD = np.sqrt(0.5*np.mean((np.sqrt(posttesthat) - np.sqrt(posttest))**2))     
@@ -261,7 +232,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                               refsize,
                                               thetatest,
                                               posttest)
-
+    
                     theta, fevals, pending, prev_pending, complete, prev_complete = \
                         pad_arrays(n_x, new_theta, theta, fevals, pending, prev_pending, complete, prev_complete)
         
