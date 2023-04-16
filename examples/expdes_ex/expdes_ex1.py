@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import scipy.stats as sps
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
+from PUQ.prior import prior_dist
 
 class one_D:
     def __init__(self):
@@ -14,7 +15,6 @@ class one_D:
         
         xspace = np.array([0, 0.25, 0.5, 0.75, 1])
         thetaspace = np.pi/5
-  
         fevalno = np.zeros(len(xspace))
         for xid in range(len(xspace)):
             fevalno[xid] = np.sin(10*xspace[xid] - 5*thetaspace) + np.random.normal(0, 0.2, 1)
@@ -23,15 +23,13 @@ class one_D:
         self.out         = [('f', float)]
         self.d           = 1
         self.p           = 2
-
-        self.x           = xspace[:, None] # For acquisition
-        self.real_x      = xspace[:, None] # For acquisition
+        self.x           = xspace[:, None] 
+        self.real_x      = xspace[:, None]
         
     def function(self, x, theta):
         """
         Wraps the unimodal function
         """
-        #f = np.zeros(5)
         f = np.sin(10*x - 5*theta)
         return f
     
@@ -86,7 +84,11 @@ for i in range(ftest.shape[0]):
 test_data = {'theta': thetatest, 
              'f': ftest,
              'p': ptest,
-             'th': tpl[:, None]} 
+             'th': tpl[:, None],
+             'p_prior': 1} 
+
+prior_func      = prior_dist(dist='uniform')(a=cls_unimodal.thetalimits[:, 0], b=cls_unimodal.thetalimits[:, 1])
+
 # # # # # # # # # # # # # # # # # # # # # 
 
 
@@ -97,9 +99,10 @@ al_unimodal = designer(data_cls=cls_unimodal,
                              'nworkers': 2, #args.nworkers,
                              'AL': 'eivar_exp',
                              'seed_n0': 6, #args.seed_n0, #6
-                             'prior': 'uniform',
+                             'prior': prior_func,
                              'data_test': test_data,
-                             'max_evals': 100})
+                             'max_evals': 100,
+                             'type_init': None})
 
 xth = al_unimodal._info['theta']
 plt.plot(al_unimodal._info['TV'][10:])
@@ -113,4 +116,5 @@ plt.hist(xth[:, 0])
 plt.show()
 
 plt.hist(xth[:, 1])
+plt.axvline(x = np.pi/5, color = 'r')
 plt.show()

@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import scipy.stats as sps
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
+from PUQ.prior import prior_dist
 
 class one_D:
     def __init__(self):
@@ -84,7 +85,10 @@ for i in range(ftest.shape[0]):
 test_data = {'theta': thetatest, 
              'f': ftest,
              'p': ptest,
-             'th': tpl[:, None]} 
+             'th': tpl[:, None],             
+             'p_prior': 1} 
+
+prior_func      = prior_dist(dist='uniform')(a=cls_unimodal.thetalimits[:, 0], b=cls_unimodal.thetalimits[:, 1]) 
 # # # # # # # # # # # # # # # # # # # # # 
 
 al_unimodal = designer(data_cls=cls_unimodal, 
@@ -94,9 +98,10 @@ al_unimodal = designer(data_cls=cls_unimodal,
                              'nworkers': 2, #args.nworkers,
                              'AL': 'eivar_exp',
                              'seed_n0': 6, #args.seed_n0, #6
-                             'prior': 'uniform',
+                             'prior': prior_func,
                              'data_test': test_data,
-                             'max_evals': 100})
+                             'max_evals': 100,
+                             'type_init': None})
 
 xth = al_unimodal._info['theta']
 
