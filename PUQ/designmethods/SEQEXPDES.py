@@ -221,6 +221,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                               obsvar, 
                                               theta_limits, 
                                               prior_func,
+                                              thetatest,
                                               th_mesh,
                                               priortest,
                                               type_init)

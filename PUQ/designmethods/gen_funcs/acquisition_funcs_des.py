@@ -1,5 +1,5 @@
 import numpy as np
-from PUQ.surrogatemethods.PCGPexp import postphi
+from PUQ.surrogatemethods.PCGPexp import postphi, postphimat
 from smt.sampling_methods import LHS
 
 def eivar_exp(n, 
@@ -13,6 +13,7 @@ def eivar_exp(n,
           thetalimits, 
           prior_func,
           thetatest=None, 
+          thetamesh=None, 
           posttest=None,
           type_init=None):
     
@@ -38,14 +39,17 @@ def eivar_exp(n,
     eivar_max = -np.inf
     th_max = 0
     for xt_c in clist:
-        eivar_val = 0
-        for th_r in thetatest:
-            xt_ref = np.concatenate((x, np.repeat(th_r, len(x))[:, None]), axis=1)
-            eivar_val += postphi(emu._info, x, xt_ref, obs, obsvar, xt_c.reshape(1, 2))
-        
+        eivar_val = postphimat(emu._info, x, thetatest, obs, obsvar, xt_c.reshape(1, 2))
+        #eivar_val = 0
+        #for th_r in thetamesh:
+        #    xt_ref = np.concatenate((x, np.repeat(th_r, len(x))[:, None]), axis=1)
+        #    eivar_val += postphi(emu._info, x, xt_ref, obs, obsvar, xt_c.reshape(1, 2))
+        #print(eivar_val)
         if eivar_val > eivar_max:
             eivar_max = 1*eivar_val
             th_max = 1*xt_c
+        
+        
     
     print(th_max)
     th_cand = th_max.reshape(1, p)
