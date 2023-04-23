@@ -11,15 +11,29 @@ class one_D:
     def __init__(self):
         self.data_name   = 'one_D'
         self.thetalimits = np.array([[0, 1], [0, 1]])
-        self.obsvar      = np.array([[0.2**2, 0, 0, 0, 0], [0, 0.2**2, 0, 0, 0], [0, 0, 0.2**2, 0, 0], [0, 0, 0, 0.2**2, 0], [0, 0, 0, 0, 0.2**2]], dtype='float64') 
+        self.true_theta  = np.pi/5
+        self.sigma2      = 0.2**2
+        self.obsvar      = np.diag(np.repeat(self.sigma2, 5))
         
         xspace = np.array([0, 0.25, 0.5, 0.75, 1])
-        thetaspace = np.pi/5
-        fevalno = np.zeros(len(xspace))
-        for xid in range(len(xspace)):
-            fevalno[xid] = np.sin(10*xspace[xid] - 5*thetaspace) + np.random.normal(0, 0.2, 1)
-            
-        self.real_data   = np.array([fevalno], dtype='float64')
+        self.des = [{'x': 0, 'feval':[], 'rep': 2}, 
+                    {'x': 0.25, 'feval':[], 'rep': 2}, 
+                    {'x': 0.5, 'feval':[], 'rep': 2},
+                    {'x': 0.75, 'feval':[], 'rep': 2},
+                    {'x': 1, 'feval':[], 'rep': 2}]
+        nrep = 2
+        
+        fevalno = np.zeros((len(xspace), nrep))
+        for xid, e in enumerate(self.des):
+            for r in range(e['rep']):
+                fv = np.sin(10*xspace[xid] - 5*self.true_theta) + np.random.normal(0, np.sqrt(self.sigma2), 1)
+                e['feval'].append(fv)
+                fevalno[xid, r] = fv
+
+        
+        mean_feval = np.mean(fevalno, axis=1)    
+        self.real_data   = np.array([mean_feval], dtype='float64')
+        self.real_data_rep = fevalno
         self.out         = [('f', float)]
         self.d           = 1
         self.p           = 2
@@ -47,14 +61,16 @@ args         = parse_arguments()
 cls_unimodal = one_D()
     
 
-th_vec      = (np.arange(0, 1000, 10)/1000)[:, None]
+th_vec      = (np.arange(0, 100, 10)/100)[:, None]
 x_vec = (np.arange(0, 100, 1)/100)[:, None]
 fvec = np.zeros((len(th_vec), len(x_vec)))
 for t_id, t in enumerate(th_vec):
     for x_id, x in enumerate(x_vec):
         fvec[t_id, x_id] = cls_unimodal.function(x, t)
     plt.plot(x_vec, fvec[t_id, :]) 
-plt.scatter(cls_unimodal.x, cls_unimodal.real_data)
+    
+for i in range(cls_unimodal.real_data_rep.shape[1]):
+    plt.scatter(cls_unimodal.x, cls_unimodal.real_data_rep[:, i])
 plt.show()
 plt.plot(np.var(fvec, axis=0))
 plt.show()
@@ -94,7 +110,7 @@ prior_func      = prior_dist(dist='uniform')(a=cls_unimodal.thetalimits[:, 0], b
 
 
 al_unimodal = designer(data_cls=cls_unimodal, 
-                       method='SEQEXPDES', 
+                       method='SEQEXPDESBIAS', 
                        args={'mini_batch': 1, #args.minibatch, 
                              'n_init_thetas': 10,
                              'nworkers': 2, #args.nworkers,
@@ -103,12 +119,23 @@ al_unimodal = designer(data_cls=cls_unimodal,
                              'prior': prior_func,
                              'data_test': test_data,
                              'max_evals': 50,
-                             'type_init': None})
+                             'type_init': None,
+                             'unknown_var': True,
+                             'design': True})
 
 xth = al_unimodal._info['theta']
 plt.plot(al_unimodal._info['TV'][10:])
 plt.yscale('log')
 plt.show()
+
+plt.scatter(cls_unimodal.x, np.repeat(np.pi/5, len(cls_unimodal.x)), marker='o', color='black')
+plt.scatter(xth[0:10, 0], xth[0:10, 1], marker='*')
+plt.scatter(xth[10:, 0], xth[10:, 1], marker='+')
+plt.axhline(y = np.pi/5, color = 'r')
+plt.xlabel('x')
+plt.ylabel(r'$\theta$')
+plt.show()
+
 
 plt.scatter(xth[:, 0], xth[:, 1])
 plt.show()

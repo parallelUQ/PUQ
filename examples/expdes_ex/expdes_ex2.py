@@ -10,7 +10,7 @@ from PUQ.prior import prior_dist
 class one_D:
     def __init__(self):
         self.data_name   = 'one_D'
-        self.thetalimits = np.array([[-3, 3], [-3, 3]])
+        self.thetalimits = np.array([[-3, 3], [-1, 1]])
         self.obsvar      = np.array([[0.02**2, 0, 0], [0, 0.02**2, 0], [0, 0, 0.02**2]], dtype='float64') #np.array([[0.02**2, 0, 0, 0, 0], [0, 0.02**2, 0, 0, 0], [0, 0, 0.02**2, 0, 0], [0, 0, 0, 0.02**2, 0], [0, 0, 0, 0, 0.02**2]], dtype='float64') 
         
         xspace = np.array([-3,  0, 3])
@@ -49,7 +49,7 @@ args         = parse_arguments()
 cls_unimodal = one_D()
     
 
-th_vec      = (np.arange(-300, 300, 10)/100)[:, None]
+th_vec      = (np.arange(-100, 100, 10)/100)[:, None]
 x_vec = (np.arange(-300, 300, 1)/100)[:, None]
 fvec = np.zeros((len(th_vec), len(x_vec)))
 for t_id, t in enumerate(th_vec):
@@ -92,7 +92,7 @@ prior_func      = prior_dist(dist='uniform')(a=cls_unimodal.thetalimits[:, 0], b
 # # # # # # # # # # # # # # # # # # # # # 
 
 al_unimodal = designer(data_cls=cls_unimodal, 
-                       method='SEQEXPDES', 
+                       method='SEQEXPDESA', 
                        args={'mini_batch': 1, #args.minibatch, 
                              'n_init_thetas': 10,
                              'nworkers': 2, #args.nworkers,
@@ -100,17 +100,25 @@ al_unimodal = designer(data_cls=cls_unimodal,
                              'seed_n0': 6, #args.seed_n0, #6
                              'prior': prior_func,
                              'data_test': test_data,
-                             'max_evals': 100,
+                             'max_evals': 50,
                              'type_init': None})
 
 xth = al_unimodal._info['theta']
+plt.plot(al_unimodal._info['TV'][10:])
+plt.yscale('log')
+plt.show()
 
-plt.scatter(xth[:, 0], xth[:, 1])
+plt.scatter(xth[:, 0], xth[:, 1], marker='+')
+plt.axhline(y = 0, color = 'r')
+plt.xlabel('x')
+plt.ylabel(r'$\theta$')
 plt.show()
 
 plt.hist(xth[:, 1])
+plt.axvline(x = 0, color = 'r')
+plt.xlabel(r'$\theta$')
 plt.show()
 
-
 plt.hist(xth[:, 0])
+plt.xlabel(r'x')
 plt.show()

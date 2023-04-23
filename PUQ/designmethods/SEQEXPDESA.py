@@ -1,5 +1,5 @@
 import numpy as np
-from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp, maxtotvar_exp
+from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp, add_new_design
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
@@ -10,6 +10,8 @@ from smt.sampling_methods import LHS
 from PUQ.posterior import posterior
 from PUQ.surrogate import emulator
 import scipy.stats as sps
+from PUQ.surrogatemethods.PCGPexp import postvarmat
+import scipy.optimize as spo
 
 def fit(fitinfo, data_cls, args):
 
@@ -85,6 +87,7 @@ def fit(fitinfo, data_cls, args):
         sim_specs, gen_specs, exit_criteria, persis_info, alloc_specs=alloc_specs, libE_specs=libE_specs
     )
     
+
     fitinfo['f'] = H['f']
     fitinfo['theta'] = H['thetas']
     fitinfo['TV'] = H['TV']
@@ -111,6 +114,8 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         data            = synth_info.real_data
         theta_limits    = synth_info.thetalimits
         
+
+        
         thetatest, posttest, ftest, priortest = None, None, None, None
         if test_data is not None:
             thetatest, th_mesh, posttest, ftest, priortest = test_data['theta'], test_data['th'], test_data['p'], test_data['f'], test_data['p_prior']
@@ -122,6 +127,10 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         real_x  = synth_info.real_x
         n_x_des    = len(x)
         x_emu      = np.arange(0, 1)[:, None ]
+        
+        x_u = 1*x
+        true_fevals_u = 1*true_fevals
+        obsvar_u = 1*obsvar
         
         obs_offset, theta_offset, generated_no = 0, 0, 0
         TV, HD = 1000, 1000
@@ -166,6 +175,47 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                theta, 
                                fevals, 
                                method='PCGPexp')
+                
+                ####
+                new_field = True if (theta.shape[0] % 10) == 0 else False
+                
+                def obj_mle(parameter):
+                    xp = np.concatenate((x_u, np.repeat(parameter, len(x_u))[:, None]), axis=1)
+      
+                    #xp = np.concatenate((x_u, parameter))
+                    emupred = emu.predict(x=x_emu, theta=xp)
+                    mu_p = emupred.mean()
+                    var_p = emupred.var()
+                    
+                    covmat     = np.diag(var_p) + obsvar_u
+                    
+                    covmat_inv = np.linalg.inv(covmat)
+                    diff       = (true_fevals_u.flatten() - mu_p.flatten()).reshape((len(x_u), 1))
+                    obj        = 0.5*np.log(np.linalg.det(covmat)) + 0.5*(diff.T@covmat_inv@diff)
+                    return obj.flatten()
+                
+                bnd = ()
+                theta_init = []
+                for i in range(1, 2):
+                    bnd += ((theta_limits[i][0], theta_limits[i][1]),)
+                    theta_init.append((theta_limits[i][0] + theta_limits[i][1])/2)
+
+       
+                opval = spo.minimize(obj_mle,
+                                     theta_init,
+                                     method='L-BFGS-B',
+                                     options={'gtol': 0.01},
+                                     bounds=bnd)                
+
+                theta_mle = opval.x
+                print(theta_mle)
+                if new_field:
+                    x_u, obsvar_u, true_fevals_u = add_new_design(prior_func, emu, x_u, x_emu, theta_mle, th_mesh, true_fevals_u, obsvar_u)
+                    print(x_u)
+                    
+                    #xdesign_vec = np.tile(x.flatten(), len(th_mesh))
+                    #thetatest   = np.concatenate((xdesign_vec[:, None], np.repeat(th_mesh, len(x))[:, None]), axis=1)
+                    
                 prev_pending   = pending.copy()
                 update_model   = False
                 
@@ -174,7 +224,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                     emupredict     = emu.predict(x=x_emu, theta=thetatest)
                     emumean        = emupredict.mean()
                     emuvar         = emupredict.var()
-                    
+                  
                     emumean = emumean.reshape(len(th_mesh), n_x_des)
                     emuvar = emuvar.reshape(len(th_mesh), n_x_des)
                     posttesthat = np.zeros(len(th_mesh))
@@ -186,7 +236,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                     
                     TV = np.mean(np.abs(posttest - posttesthat*priortest))
                     HD = np.sqrt(0.5*np.mean((np.sqrt(posttesthat) - np.sqrt(posttest))**2))     
-
+                    
             if first_iter:
                 print('Selecting theta for the first iteration...\n')
 
@@ -209,16 +259,16 @@ def gen_f(H, persis_info, gen_specs, libE_info):
             else: 
                 if select_condition(complete, prev_complete, n_theta=mini_batch, n_initial=n0):
                     print('Selecting theta...\n')
-                
+        
                     prev_complete = complete.copy()
                     new_theta = acquisition_f(mini_batch, 
-                                              x,
+                                              x_u,
                                               real_x,
                                               emu, 
                                               theta, 
                                               fevals, 
-                                              true_fevals, 
-                                              obsvar, 
+                                              true_fevals_u, 
+                                              obsvar_u, 
                                               theta_limits, 
                                               prior_func,
                                               thetatest,
