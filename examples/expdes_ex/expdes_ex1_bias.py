@@ -62,6 +62,8 @@ cls_unimodal = one_D()
     
 
 th_vec      = (np.arange(0, 100, 10)/100)[:, None]
+
+th_vec = np.array([np.pi/5, 1])[:, None]
 x_vec = (np.arange(0, 100, 1)/100)[:, None]
 fvec = np.zeros((len(th_vec), len(x_vec)))
 for t_id, t in enumerate(th_vec):
@@ -118,9 +120,9 @@ al_unimodal = designer(data_cls=cls_unimodal,
                              'seed_n0': 6, #args.seed_n0, #6
                              'prior': prior_func,
                              'data_test': test_data,
-                             'max_evals': 50,
+                             'max_evals': 30,
                              'type_init': None,
-                             'unknown_var': True,
+                             'unknown_var': False,
                              'design': True})
 
 xth = al_unimodal._info['theta']

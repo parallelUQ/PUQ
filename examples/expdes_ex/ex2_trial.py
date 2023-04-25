@@ -13,9 +13,15 @@ class one_D:
         self.thetalimits = np.array([[-5, 5], [0, 1]])
         self.true_theta  = 0.5
         self.sigma2      = 0.05**2
-        self.obsvar      = np.diag(np.repeat(self.sigma2, 4))
-        xspace = np.array([-3, -1, 1, 3])
-        self.des = [{'x': -3, 'feval':[], 'rep': 5}, {'x': -1, 'feval':[], 'rep': 5}, {'x': 1, 'feval':[], 'rep': 5}, {'x': 3, 'feval':[], 'rep': 5}]
+        self.obsvar      = np.diag(np.repeat(self.sigma2, 7))
+        xspace = np.array([-5, -3, -1, 0, 1, 3, 5])
+        self.des = [{'x': -5, 'feval':[], 'rep': 5}, 
+                    {'x': -3, 'feval':[], 'rep': 5}, 
+                    {'x': -1, 'feval':[], 'rep': 5}, 
+                    {'x': 0, 'feval':[], 'rep': 5}, 
+                    {'x': 1, 'feval':[], 'rep': 5}, 
+                    {'x': 3, 'feval':[], 'rep': 5},
+                    {'x': 5, 'feval':[], 'rep': 5}]
         nrep = 5
         
         fevalno = np.zeros((len(xspace), nrep))
@@ -59,8 +65,8 @@ cls_unimodal = one_D()
 xs = np.concatenate([np.repeat(e['x'], e['rep']) for e in cls_unimodal.des])
 fs = np.concatenate([e['feval'] for e in cls_unimodal.des])
 
-#th_vec      = (np.arange(0, 100, 100)/100)[:, None]
-th_vec      = np.array([0.5])[:, None]
+th_vec      = (np.arange(0, 100, 1)/100)[:, None]
+#th_vec      = np.array([0, 0.5, 1])[:, None]
 x_vec = (np.arange(-500, 500, 1)/100)[:, None]
 fvec = np.zeros((len(th_vec), len(x_vec)))
 pvec = np.zeros((len(th_vec)))
@@ -74,21 +80,8 @@ for i in range(cls_unimodal.real_data_rep.shape[1]):
 plt.show()
 
 
-th_vec      = (np.arange(0, 100, 10)/100)[:, None]
-x_vec = np.array([-3, -1, 1, 3])[:, None]
-fvec = np.zeros((len(th_vec), len(x_vec)))
-pvec = np.zeros((len(th_vec)))
-for t_id, t in enumerate(th_vec):
-    for x_id, x in enumerate(x_vec):
-        fvec[t_id, x_id] = cls_unimodal.function(x, t)
-
-    pvec[t_id] = sps.multivariate_normal(mean=cls_unimodal.real_data.reshape(-1), cov=cls_unimodal.obsvar).pdf(fvec[t_id, :])
-plt.plot(th_vec, pvec)
-plt.show()
-
 # # # Create a mesh for test set # # # 
 tpl = np.linspace(cls_unimodal.thetalimits[1][0], cls_unimodal.thetalimits[1][1], 10)
-#tpl = np.array([0. ])#np.linspace(cls_unimodal.thetalimits[1][0], cls_unimodal.thetalimits[1][1], 5)
 xdesign_vec = np.tile(cls_unimodal.x.flatten(), len(tpl))
 thetatest   = np.concatenate((xdesign_vec[:, None], np.repeat(tpl, len(cls_unimodal.x))[:, None]), axis=1)
 setattr(cls_unimodal, 'theta', thetatest)
@@ -110,45 +103,39 @@ for i in range(ftest.shape[0]):
     rnd = sps.multivariate_normal(mean=mean, cov=cls_unimodal.obsvar)
     ptest[i] = rnd.pdf(cls_unimodal.real_data)
             
-test_data = {'theta': thetatest, 
-             'f': ftest,
-             'p': ptest,
-             'th': tpl[:, None],             
-             'p_prior': 1} 
-
-prior_func      = prior_dist(dist='uniform')(a=cls_unimodal.thetalimits[:, 0], b=cls_unimodal.thetalimits[:, 1]) 
-# # # # # # # # # # # # # # # # # # # # # 
-
-al_unimodal = designer(data_cls=cls_unimodal, 
-                       method='SEQEXPDESBIAS', 
-                       args={'mini_batch': 1, #args.minibatch, 
-                             'n_init_thetas': 20,
-                             'nworkers': 2, #args.nworkers,
-                             'AL': 'eivar_exp',
-                             'seed_n0': 6, #args.seed_n0, #6
-                             'prior': prior_func,
-                             'data_test': test_data,
-                             'max_evals': 100,
-                             'type_init': None,
-                             'unknown_var': False,
-                             'design': True})
-
-xth = al_unimodal._info['theta']
-plt.plot(al_unimodal._info['TV'][10:])
-plt.yscale('log')
+plt.plot(tpl, ptest)
 plt.show()
 
-plt.scatter(xth[:, 0], xth[:, 1], marker='+')
-plt.axhline(y = 0.5, color = 'r')
-plt.xlabel('x')
-plt.ylabel(r'$\theta$')
-plt.show()
 
-plt.hist(xth[:, 1])
-plt.axvline(x = 0.5, color = 'r')
-plt.xlabel(r'$\theta$')
-plt.show()
+ptest = np.zeros((tpl.shape[0], len(cls_unimodal.x)))
+ftest = ftest.reshape(len(tpl), len(cls_unimodal.x))
+for j in range(ftest.shape[1]):
+    for i in range(ftest.shape[0]):
 
-plt.hist(xth[:, 0])
-plt.xlabel(r'x')
-plt.show()
+        mean = ftest[i, j] 
+        rnd = sps.norm(loc=mean, scale=np.sqrt(cls_unimodal.sigma2))
+        ptest[i, j] = rnd.pdf(cls_unimodal.real_data[0][j])
+    
+    print(np.var(ptest[:, j]))
+    plt.plot(tpl, ptest[:, j])
+    plt.show()
+    
+    
+ptest = np.zeros((tpl.shape[0], len(cls_unimodal.x), len(cls_unimodal.x)))
+ftest = ftest.reshape(len(tpl), len(cls_unimodal.x))
+for j in range(ftest.shape[1]):
+    for k in range(ftest.shape[1]):
+        for i in range(ftest.shape[0]):
+            
+            mean1 = ftest[i, j] 
+            mean2 = ftest[i, k]
+            # mean = ftest[i, j] 
+            rnd = sps.multivariate_normal(mean=[mean1, mean2], cov=np.diag([cls_unimodal.sigma2, cls_unimodal.sigma2]))
+            # rnd = sps.norm(loc=mean, scale=np.sqrt(cls_unimodal.sigma2))
+            ptest[i, j, k] = rnd.pdf([cls_unimodal.real_data[0][j], cls_unimodal.real_data[0][k]])
+        
+        print(str(cls_unimodal.x[j]) + str(cls_unimodal.x[k]))
+        print(np.round(np.var(ptest[:, j, k]), 4))
+        plt.plot(tpl, ptest[:, j, k])
+        plt.title(str(cls_unimodal.x[j]) + str(cls_unimodal.x[k]))
+        plt.show()

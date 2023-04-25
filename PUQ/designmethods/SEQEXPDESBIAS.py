@@ -1,5 +1,5 @@
 import numpy as np
-from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp, add_new_design
+from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp, add_new_design, observe_design, eivar_new_exp
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
@@ -104,6 +104,9 @@ def bias_gp(parameter, emu, x_emu, des):
 
     emupredrep = emu.predict(x=x_emu, theta=xs_p)
     bias       = emupredrep.mean().reshape(-1) - fs.reshape(-1)
+    
+    print(xs)
+    print(bias)
     emubias = emulator(x_emu, 
                        xs[:, None], 
                        bias[None, :], 
@@ -130,14 +133,20 @@ def obj_mle(parameter, args):
     emupred = emu.predict(x=x_emu, theta=xp)
     mu_p    = emupred.mean()
     var_p   = emupred.var()
-    
- 
+    #cov_p   = emupred.covx()
+
+    #print(cov_p)
+    #print(var_p)
     covmat     = np.diag(var_p) + np.diag(var_hat.reshape(-1))
-    
+
+    #covmat     = cov_p + np.diag(var_hat.reshape(-1))
     covmat_inv = np.linalg.inv(covmat)
     diff       = (true_fevals_u.flatten() - mu_p.flatten()).reshape((len(x_u), 1))
    
-    obj        = 0.5*np.log(np.linalg.det(covmat)) + 0.5*(diff.T@covmat_inv@diff)
+    #obj        = 0.5*np.log(np.linalg.det(covmat)) + 0.5*(diff.T@covmat_inv@diff)
+    obj        = 0.5*(diff.T@diff)
+    
+    
     return obj.flatten()
                 
 def gen_f(H, persis_info, gen_specs, libE_info):
@@ -243,30 +252,33 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                          args=([emu, real_data_rep, x_u, x_emu, true_fevals_u, unknown_var, obsvar_u, des]))                
 
                     theta_mle = opval.x
-                    print(theta_mle)
-                    
-                    if unknown_var:
-                        emubias  = bias_gp(theta_mle, emu, x_emu, des)
-                        var_hat  = emubias.predict(x=x_emu, theta=x_u).var()
-                        obsvar_u = np.diag(var_hat.reshape(-1))
-                        #print(obsvar_u)
-                    
+                    print('mle param:', theta_mle)
+
                     if design == True:
                         new_field = True if (theta.shape[0] % 5) == 0 else False
                         if new_field:
-                            x_u, obsvar_u, true_fevals_u, des = add_new_design(prior_func, 
-                                                                               emu, 
-                                                                               x_u, 
-                                                                               x_emu, 
-                                                                               theta_mle, 
-                                                                               th_mesh, 
-                                                                               true_fevals_u, 
-                                                                               obsvar_u, 
-                                                                               synth_info, 
-                                                                               emubias, 
-                                                                               des)
+                            # des           = add_new_design(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubias, des)
+                            des           = eivar_new_exp(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubias, des)
+                            x_u           = np.array([e['x'] for e in des])[:, None]
+                            true_fevals_u = np.array([np.mean(e['feval']) for e in des])[None, :]
+                            reps          = [e['rep'] for e in des]
+
+                    if unknown_var:
+                        print(des)
+                        emubias  = bias_gp(theta_mle, emu, x_emu, des)
+                        var_hat  = emubias.predict(x=x_emu, theta=x_u).var()
+                        obsvar_u = np.diag(var_hat.reshape(-1))
+                    else:
+                        obsvar_u = np.diag(np.repeat(synth_info.sigma2, len(x_u)))
+                
                 
                 #print(x_u)
+                #print(des)
+                    #print(obsvar_u/reps)
+                    #obsvar_u = obsvar_u/reps
+                
+                print('x_u:', x_u)
+                #print(reps)
                 #print(des)
                 prev_pending   = pending.copy()
                 update_model   = False

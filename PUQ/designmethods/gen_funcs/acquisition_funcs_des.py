@@ -1,6 +1,7 @@
 import numpy as np
-from PUQ.surrogatemethods.PCGPexp import postphi, postphimat, postvarmat
+from PUQ.surrogatemethods.PCGPexp import postphi, postphimat, postvarmat, postpred, postphimat2
 from smt.sampling_methods import LHS
+import matplotlib.pyplot as plt
 
 def eivar_exp(n, 
           x, 
@@ -26,8 +27,8 @@ def eivar_exp(n,
         
     theta_acq = []
     n_x, p    = x.shape[0], theta.shape[1]
-    obsvar3d  = obsvar.reshape(1, n_x, n_x)
 
+    print(x)
     # Create a candidate list
     n_clist = 100*n
     if type_init == 'LHS':
@@ -61,52 +62,172 @@ def eivar_exp(n,
  
     return th_cand  
 
-def add_new_design(prior_func, emu, x, x_emu, theta_mle, th_mesh, true_fevals, obsvar, synth_info, emubias=None, des=None):
 
-    xclist   = prior_func.rnd(100, None)[:, 0]
-    totalvar = np.zeros(len(xclist))
+def eivar_new_exp(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubias=None, des=None):
     
-    for xcid, xc in enumerate(xclist):
-        x_cand    = xc.reshape(1, 1)
-        x_field   = np.concatenate((x, x_cand), axis=0)
+    # Update emulator for uncompleted jobs.
+    x_temp = np.array([e['x'] for e in des])[:, None]
+    f_temp = np.array([np.mean(e['feval']) for e in des])[None, :]
+    r_temp = [e['rep'] for e in des]
+    
+    # Create a candidate list
+    n_clist = 1000
+    clist   = prior_func.rnd(n_clist, None)
+    xclist  = clist[:, 0]
+
+    eivar_max = np.inf
+    th_max = 0
+    for x_c in xclist:
+        ###
+        x_cand    = x_c.reshape(1, 1)
+        x_field   = np.concatenate((x_temp, x_cand), axis=0)
+            
+        xdesign_vec = np.tile(x_field.flatten(), len(th_mesh))
+        thetatest   = np.concatenate((xdesign_vec[:, None], np.repeat(th_mesh, len(x_field))[:, None]), axis=1)
+        ###
         xt_mle    = np.concatenate((x_cand, np.array([theta_mle]).reshape(1, 1)), axis=1)
         y_temp    = emu.predict(x=x_emu, theta=xt_mle).mean()
-        y_field   = np.concatenate((true_fevals, y_temp), axis=1)
+        y_field   = np.concatenate((f_temp, y_temp), axis=1)
+        r_field   = r_temp + [1]
+        obsvar_field   = np.diag(np.repeat(synth_info.sigma2, y_field.shape[1]))
+        obsvar_field = obsvar_field/r_field
+        xt_c = np.array([x_c, theta_mle[0]])
+
+        eivar_val = postphimat2(emu._info, x_field, thetatest, y_field, obsvar_field, xt_c.reshape(1, 2))
+        if eivar_val < eivar_max:
+            eivar_max = 1*eivar_val
+            th_max = 1*xt_c
+            xnew = 1*x_c
+    #print(th_max)
+    #th_cand = th_max.reshape(1, 2)
+    #xnew    = xclist[minid]
+    print(xnew)
+    y_temp    = synth_info.function(xnew, synth_info.true_theta) + np.random.normal(0, np.sqrt(synth_info.sigma2), 1)
+    des.append({'x': xnew, 'feval':[y_temp], 'rep': 1})
+                
+    return des  
+
+
+def add_new_design(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubias=None, des=None):
+
+    x_temp = np.array([e['x'] for e in des])[:, None]
+    f_temp = np.array([np.mean(e['feval']) for e in des])[None, :]
+    r_temp = [e['rep'] for e in des]
+    
+    
+    xclist   = prior_func.rnd(100, None)[:, 0]
+    #print(xclist)
+    xclist   = np.concatenate((xclist, x_temp.reshape(-1)), axis=0) 
+    totalvar = np.zeros(len(xclist))
+
+    #print(r_temp)
+    #print(f_temp)
+    for xcid, xc in enumerate(xclist):
+        if xcid < 100:
+            x_cand    = xc.reshape(1, 1)
+            x_field   = np.concatenate((x_temp, x_cand), axis=0)
+            xt_mle    = np.concatenate((x_cand, np.array([theta_mle]).reshape(1, 1)), axis=1)
+            y_temp    = emu.predict(x=x_emu, theta=xt_mle).mean()
+            y_field   = np.concatenate((f_temp, y_temp), axis=1)
+            r_field   = r_temp + [1]
+        else:
+            x_cand    = xc.reshape(1, 1)
+            x_field   = 1*x_temp
+            xt_mle    = np.concatenate((x_cand, np.array([theta_mle]).reshape(1, 1)), axis=1)
+            y_temp    = emu.predict(x=x_emu, theta=xt_mle).mean()
+            y_field   = 1*f_temp 
+            r_field   = 1*r_temp
+            for eid, e in enumerate(des):
+                if x_cand == e['x']:
+                    y_field[0][eid] = (np.sum(e['feval']) + y_temp)/(e['rep'] + 1)
+                    r_field[eid] += 1
+        
         
         xdesign_vec = np.tile(x_field.flatten(), len(th_mesh))
         theta_ref   = np.concatenate((xdesign_vec[:, None], np.repeat(th_mesh, len(x_field))[:, None]), axis=1)
         
         if emubias == None:
-            obsvar_field   = np.diag(np.repeat(np.diag(obsvar)[0], y_field.shape[1]))
+            obsvar_field   = np.diag(np.repeat(synth_info.sigma2, y_field.shape[1]))
         else:
-            var_hat = emubias.predict(x=x_emu, theta=x_field.reshape(len(x_field), 1)).var()
+            var_hat      = emubias.predict(x=x_emu, theta=x_field.reshape(len(x_field), 1)).var()
             obsvar_field = np.diag(var_hat.reshape(-1))
+        
+        #print(r_field)
+        #print(x_field)
+        #print(y_field)
+        #print(obsvar_field/r_field)
+        obsvar_field = obsvar_field/r_field
+        totalvar[xcid] = postvarmat(emu._info, x_field, theta_ref, y_field, obsvar_field)
+                
+    plt.scatter(xclist, totalvar)
+    plt.show()
+    minid = np.argmax(totalvar)
+    #print(totalvar)
+    xnew      = xclist[minid]
+    print(xnew)
+    if minid >= 100:
+        for eid, e in enumerate(des):
+            if xnew == e['x']:
+                e['feval'].append(y_temp)
+                e['rep'] += 1
+    else:
+        y_temp    = synth_info.function(xnew, synth_info.true_theta) + np.random.normal(0, np.sqrt(synth_info.sigma2), 1)
+        des.append({'x': xnew, 'feval':[y_temp], 'rep': 1})
+
+
+    return des 
+
+def observe_design(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubias=None, des=None):
+
+    x_temp = np.array([e['x'] for e in des])[:, None]
+    f_temp = np.array([np.mean(e['feval']) for e in des])[None, :]
+    r_temp = [e['rep'] for e in des]
+    
+    
+    xclist   = prior_func.rnd(100, None)[:, 0]
+    #xclist   = np.concatenate((xclist, x_temp.reshape(-1)), axis=0) 
+    totalvar = np.zeros(len(xclist))
+
+
+    for xcid, xc in enumerate(xclist):
+        x_cand    = xc.reshape(1, 1)
+        x_field   = 1*x_cand #np.concatenate((x_temp, x_cand), axis=0)
+        xt_mle    = np.concatenate((x_cand, np.array([theta_mle]).reshape(1, 1)), axis=1)
+        y_temp    = emu.predict(x=x_emu, theta=xt_mle).mean()
+        y_field   = 1*y_temp #np.concatenate((f_temp, y_temp), axis=1)
+        r_field   = r_temp + [1]
 
         
-        totalvar[xcid] = postvarmat(emu._info, x_field, theta_ref, y_field, obsvar_field)
-    
-  
-    
-    
-    xnew      = xclist[np.argmin(totalvar)]
-    x         = np.concatenate((x, xnew.reshape(1, 1)), axis=0)
-    xt_mle    = np.concatenate((xnew.reshape(1, 1), np.array([theta_mle]).reshape(1, 1)), axis=1)
-    y_temp    = synth_info.function(xnew, synth_info.true_theta) + np.random.normal(0, np.sqrt(synth_info.sigma2), 1)
-    #print(y_temp)
-    #y_temp1    = emu.predict(x=x_emu, theta=xt_mle).mean()
+        xdesign_vec = np.tile(x_field.flatten(), len(th_mesh))
+        theta_ref   = np.concatenate((xdesign_vec[:, None], np.repeat(th_mesh, len(x_field))[:, None]), axis=1)
+        
+      
+        obsvar_field   = np.diag(np.repeat(synth_info.sigma2, y_field.shape[1]))
+       
 
-    true_fevals = np.concatenate((true_fevals, y_temp[:, None]), axis=1) 
-    
-    if emubias == None:     
-        obsvar      = np.diag(np.repeat(np.diag(obsvar)[0], y_field.shape[1]))
+        #obsvar_field = obsvar_field/r_field
+        print(obsvar_field)
+        #print(theta_ref)
+        postmean, postvar = postpred(emu._info, x_field, theta_ref, y_field, obsvar_field)
+        totalvar[xcid] = np.var(postmean)
+        #print(postmean.shape)
+    plt.scatter(xclist, totalvar)
+    plt.show()
+    minid = np.argmax(totalvar)
+  
+    xnew      = xclist[minid]
+    print(xnew)
+    if minid >= 100:
+        for eid, e in enumerate(des):
+            if xnew == e['x']:
+                e['feval'].append(y_temp)
+                e['rep'] += 1
     else:
-        var_hat = emubias.predict(x=x_emu, theta=x.reshape(len(x), 1)).var()
-        obsvar = np.diag(var_hat.reshape(-1))        
-    
-    des.append({'x': xnew, 'feval':[y_temp], 'rep': 1})
-    print(x)
-    return x, obsvar, true_fevals, des
-                    
+        y_temp    = synth_info.function(xnew, synth_info.true_theta) + np.random.normal(0, np.sqrt(synth_info.sigma2), 1)
+        des.append({'x': xnew, 'feval':[y_temp], 'rep': 1})
+
+
+    return des               
 
 def maxtotvar_exp(n, 
           x, 
