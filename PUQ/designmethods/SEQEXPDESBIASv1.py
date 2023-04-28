@@ -1,5 +1,5 @@
 import numpy as np
-from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp, add_new_design, observe_design, eivar_new_exp, eivar_new_exp2
+from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp, add_new_design, observe_design, eivar_new_exp
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
@@ -12,7 +12,6 @@ from PUQ.surrogate import emulator
 import scipy.stats as sps
 from PUQ.surrogatemethods.PCGPexp import postvarmat
 import scipy.optimize as spo
-import matplotlib.pyplot as plt
 
 def fit(fitinfo, data_cls, args):
 
@@ -97,20 +96,56 @@ def fit(fitinfo, data_cls, args):
     fitinfo['HD'] = H['HD']
     return
 
+def bias_gp(parameter, emu, x_emu, des):
+
+    xs = np.concatenate([np.repeat(e['x'], e['rep']) for e in des])
+    fs = np.concatenate([e['feval'] for e in des])
+    xs_p = np.concatenate((xs[:, None], np.repeat(parameter, len(xs))[:, None]), axis=1)
+
+    emupredrep = emu.predict(x=x_emu, theta=xs_p)
+    bias       = emupredrep.mean().reshape(-1) - fs.reshape(-1)
+    
+    print(xs)
+    print(bias)
+    emubias = emulator(x_emu, 
+                       xs[:, None], 
+                       bias[None, :], 
+                       method='PCGPexp')
+ 
+    return emubias
     
 def obj_mle(parameter, args):
     emu = args[0]
     x_u = args[2]
     x_emu = args[3]
     true_fevals_u = args[4]
-
+    unknown_var = args[5]
+    
+    des = args[7]
+    
+    if unknown_var:
+        emubias = bias_gp(parameter, emu, x_emu, des)
+        var_hat = emubias.predict(x=x_emu, theta=x_u).var()
+    else:
+        var_hat = np.diag(args[6])
     
     xp      = np.concatenate((x_u, np.repeat(parameter, len(x_u))[:, None]), axis=1)
     emupred = emu.predict(x=x_emu, theta=xp)
     mu_p    = emupred.mean()
     var_p   = emupred.var()
-    diff    = (true_fevals_u.flatten() - mu_p.flatten()).reshape((len(x_u), 1))
-    obj     = 0.5*(diff.T@diff)
+    #cov_p   = emupred.covx()
+
+    #print(cov_p)
+    #print(var_p)
+    covmat     = np.diag(var_p) + np.diag(var_hat.reshape(-1))
+
+    #covmat     = cov_p + np.diag(var_hat.reshape(-1))
+    covmat_inv = np.linalg.inv(covmat)
+    diff       = (true_fevals_u.flatten() - mu_p.flatten()).reshape((len(x_u), 1))
+   
+    #obj        = 0.5*np.log(np.linalg.det(covmat)) + 0.5*(diff.T@covmat_inv@diff)
+    obj        = 0.5*(diff.T@diff)
+    
     
     return obj.flatten()
                 
@@ -142,13 +177,8 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
         thetatest, posttest, ftest, priortest = None, None, None, None
         if test_data is not None:
-            thetatest, th_mesh, x_mesh, posttest, ftest, priortest = test_data['theta'], test_data['th'], test_data['xmesh'], test_data['p'], test_data['f'], test_data['p_prior']
+            thetatest, th_mesh, posttest, ftest, priortest = test_data['theta'], test_data['th'], test_data['p'], test_data['f'], test_data['p_prior']
         
-        xt_test      = np.concatenate((x_mesh, np.repeat(synth_info.true_theta, len(x_mesh))[:, None]), axis=1)
-         
-        x_extend = np.tile(x_mesh.flatten(), len(th_mesh))
-        xt_test2   = np.concatenate((x_extend[:, None], np.repeat(th_mesh, len(x_mesh))[:, None]), axis=1)
-        print(xt_test2)
 
         true_fevals = np.reshape(data[0, :], (1, data.shape[1]))
         n_x     = synth_info.d 
@@ -224,43 +254,52 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                     theta_mle = opval.x
                     print('mle param:', theta_mle)
 
-                    
                     if design == True:
-                        new_field = True if (theta.shape[0] % 10) == 0 else False
-                        
-                        
+                        new_field = True if (theta.shape[0] % 5) == 0 else False
                         if new_field:
-                            
-                            des           = eivar_new_exp2(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubias, des)
+                            # des           = add_new_design(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubias, des)
+                            des           = eivar_new_exp(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubias, des)
                             x_u           = np.array([e['x'] for e in des])[:, None]
                             true_fevals_u = np.array([np.mean(e['feval']) for e in des])[None, :]
                             reps          = [e['rep'] for e in des]
-                            
-                            pred2        = emu.predict(x=x_emu, theta=xt_test2)
-                            f2 = pred2.mean().reshape(len(th_mesh), len(x_mesh))
-                            
-                            for fe in f2:
-                                plt.plot(x_mesh, fe)
-                            plt.show()
-                            
-                            pred        = emu.predict(x=x_emu, theta=xt_test)
-                            mean_pred   = pred.mean()
-                            var_pred    = np.sqrt(pred.var())
-                            plt.plot(xt_test[:, 0], mean_pred.flatten())
-                            plt.scatter(x_u, true_fevals_u, color='red')
-                            plt.fill_between(xt_test[:, 0], mean_pred.flatten() + 2*var_pred.flatten(), mean_pred.flatten() - 2*var_pred.flatten(), alpha=0.5)
-                            plt.show()
-                            
 
-              
+                    if unknown_var:
+                        print(des)
+                        emubias  = bias_gp(theta_mle, emu, x_emu, des)
+                        var_hat  = emubias.predict(x=x_emu, theta=x_u).var()
+                        obsvar_u = np.diag(var_hat.reshape(-1))
+                    else:
                         obsvar_u = np.diag(np.repeat(synth_info.sigma2, len(x_u)))
-                        obsvar_u = obsvar_u/reps
-           
-                print(x_u)
-                #print(obsvar_u)
+                
+                
+                #print(x_u)
+                #print(des)
+                    #print(obsvar_u/reps)
+                    #obsvar_u = obsvar_u/reps
+                
+                print('x_u:', x_u)
+                #print(reps)
+                #print(des)
                 prev_pending   = pending.copy()
                 update_model   = False
                 
+                # Obtain the accuracy on the test set
+                if test_data is not None:
+                    emupredict     = emu.predict(x=x_emu, theta=thetatest)
+                    emumean        = emupredict.mean()
+                    emuvar         = emupredict.var()
+                  
+                    emumean = emumean.reshape(len(th_mesh), n_x_des)
+                    emuvar = emuvar.reshape(len(th_mesh), n_x_des)
+                    posttesthat = np.zeros(len(th_mesh))
+                    for i in range(emumean.shape[0]):
+                        mean = emumean[i, :] 
+                        var = emuvar[i, :] 
+                        rnd = sps.multivariate_normal(mean=mean, cov=obsvar + np.diag(var))
+                        posttesthat[i] = rnd.pdf(true_fevals)
+                    
+                    TV = np.mean(np.abs(posttest - posttesthat*priortest))
+                    HD = np.sqrt(0.5*np.mean((np.sqrt(posttesthat) - np.sqrt(posttest))**2))     
                     
             if first_iter:
                 print('Selecting theta for the first iteration...\n')

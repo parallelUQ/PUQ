@@ -809,7 +809,7 @@ def postphimat(fitinfo, x, theta, obs, obsvar, theta_cand):
         
         #predvars_ref[:, k] = infos[k]['sig2'] * np.abs(1 - np.sum(rVh_1 ** 2, 1))
         predvars_cand[:, k] = infos[k]['sig2'] * np.abs(1 - np.sum(rVh_4 ** 2, 1))
-        
+        predvars_cand[:, k] += infos[k]['nug']
         #cov_ref = infos[k]['sig2'] * (r_3.reshape((theta.shape[0], theta.shape[0])) - rVh_1 @ rVh_1.T)
         #cov_cand = infos[k]['sig2'] * (r_2.reshape((theta.shape[0], theta_cand.shape[0])) - rVh_1 @ rVh_4.T)
       
@@ -936,7 +936,7 @@ def postphimat2(fitinfo, x, theta, obs, obsvar, theta_cand):
         
         #predvars_ref[:, k] = infos[k]['sig2'] * np.abs(1 - np.sum(rVh_1 ** 2, 1))
         predvars_cand[:, k] = infos[k]['sig2'] * np.abs(1 - np.sum(rVh_4 ** 2, 1))
-        
+        predvars_cand[:, k] += infos[k]['nug']
         #cov_ref = infos[k]['sig2'] * (r_3.reshape((theta.shape[0], theta.shape[0])) - rVh_1 @ rVh_1.T)
         #cov_cand = infos[k]['sig2'] * (r_2.reshape((theta.shape[0], theta_cand.shape[0])) - rVh_1 @ rVh_4.T)
       

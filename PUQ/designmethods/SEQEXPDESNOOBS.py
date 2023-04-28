@@ -12,7 +12,6 @@ from PUQ.surrogate import emulator
 import scipy.stats as sps
 from PUQ.surrogatemethods.PCGPexp import postvarmat
 import scipy.optimize as spo
-import matplotlib.pyplot as plt
 
 def fit(fitinfo, data_cls, args):
 
@@ -142,24 +141,11 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
         thetatest, posttest, ftest, priortest = None, None, None, None
         if test_data is not None:
-            thetatest, th_mesh, x_mesh, posttest, ftest, priortest = test_data['theta'], test_data['th'], test_data['xmesh'], test_data['p'], test_data['f'], test_data['p_prior']
+            thetatest, th_mesh, posttest, ftest, priortest = test_data['theta'], test_data['th'], test_data['p'], test_data['f'], test_data['p_prior']
         
-        xt_test      = np.concatenate((x_mesh, np.repeat(synth_info.true_theta, len(x_mesh))[:, None]), axis=1)
-         
-        x_extend = np.tile(x_mesh.flatten(), len(th_mesh))
-        xt_test2   = np.concatenate((x_extend[:, None], np.repeat(th_mesh, len(x_mesh))[:, None]), axis=1)
-        print(xt_test2)
 
-        true_fevals = np.reshape(data[0, :], (1, data.shape[1]))
-        n_x     = synth_info.d 
-        x       = synth_info.x
-        real_x  = synth_info.real_x
-        n_x_des    = len(x)
+        n_x = 1
         x_emu      = np.arange(0, 1)[:, None ]
-        
-        x_u = 1*x
-        true_fevals_u = 1*true_fevals
-        obsvar_u = 1*obsvar
         
         obs_offset, theta_offset, generated_no = 0, 0, 0
         TV, HD = 1000, 1000
@@ -224,40 +210,20 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                     theta_mle = opval.x
                     print('mle param:', theta_mle)
 
-                    
                     if design == True:
-                        new_field = True if (theta.shape[0] % 10) == 0 else False
-                        
-                        
+                        new_field = True if (theta.shape[0] % 5) == 0 else False
                         if new_field:
-                            
+                            # des           = add_new_design(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubias, des)
+                            #des = observe_design(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info,  emubias, des)
                             des           = eivar_new_exp2(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubias, des)
                             x_u           = np.array([e['x'] for e in des])[:, None]
                             true_fevals_u = np.array([np.mean(e['feval']) for e in des])[None, :]
                             reps          = [e['rep'] for e in des]
-                            
-                            pred2        = emu.predict(x=x_emu, theta=xt_test2)
-                            f2 = pred2.mean().reshape(len(th_mesh), len(x_mesh))
-                            
-                            for fe in f2:
-                                plt.plot(x_mesh, fe)
-                            plt.show()
-                            
-                            pred        = emu.predict(x=x_emu, theta=xt_test)
-                            mean_pred   = pred.mean()
-                            var_pred    = np.sqrt(pred.var())
-                            plt.plot(xt_test[:, 0], mean_pred.flatten())
-                            plt.scatter(x_u, true_fevals_u, color='red')
-                            plt.fill_between(xt_test[:, 0], mean_pred.flatten() + 2*var_pred.flatten(), mean_pred.flatten() - 2*var_pred.flatten(), alpha=0.5)
-                            plt.show()
-                            
 
               
                         obsvar_u = np.diag(np.repeat(synth_info.sigma2, len(x_u)))
-                        obsvar_u = obsvar_u/reps
            
                 print(x_u)
-                #print(obsvar_u)
                 prev_pending   = pending.copy()
                 update_model   = False
                 
