@@ -1,5 +1,5 @@
 import numpy as np
-from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp, add_new_design, observe_design, eivar_new_exp, eivar_new_exp2
+from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp, eivar_new_exp
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
@@ -10,7 +10,6 @@ from smt.sampling_methods import LHS
 from PUQ.posterior import posterior
 from PUQ.surrogate import emulator
 import scipy.stats as sps
-from PUQ.surrogatemethods.PCGPexp import postvarmat
 import scipy.optimize as spo
 import matplotlib.pyplot as plt
 
@@ -231,7 +230,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                         
                         if new_field:
                             
-                            des           = eivar_new_exp2(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubias, des)
+                            des           = eivar_new_exp(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubias, des)
                             x_u           = np.array([e['x'] for e in des])[:, None]
                             true_fevals_u = np.array([np.mean(e['feval']) for e in des])[None, :]
                             reps          = [e['rep'] for e in des]

@@ -63,7 +63,7 @@ args         = parse_arguments()
 cls_unimodal = one_D()
     
 
-th_vec = np.array([np.pi/5, 1])[:, None]
+th_vec = (np.arange(0, 100, 2)/100)[:, None]
 x_vec = (np.arange(0, 100, 1)/100)[:, None]
 fvec = np.zeros((len(th_vec), len(x_vec)))
 for t_id, t in enumerate(th_vec):
