@@ -12,16 +12,18 @@ class one_D:
         self.data_name   = 'one_D'
         self.thetalimits = np.array([[0, 1], [0, 1]])
         self.true_theta  = np.pi/5
-        self.sigma2      = 0.1**2
-        self.obsvar      = np.diag(np.repeat(self.sigma2, 5))
+        self.sigma2      = 0.2**2
+        self.obsvar      = np.diag(np.repeat(self.sigma2, 1))
         
-        xspace = np.array([0, 0.25, 0.5, 0.75, 1])
-        self.des = [{'x': 0, 'feval':[], 'rep': 5}, 
-                    {'x': 0.25, 'feval':[], 'rep': 5}, 
-                    {'x': 0.5, 'feval':[], 'rep': 5},
-                    {'x': 0.75, 'feval':[], 'rep': 5},
-                    {'x': 1, 'feval':[], 'rep': 5}]
-        nrep = 5
+        nrep = 1
+        xspace = np.array([0.25, 0.5, 0.75])
+        xspace = np.array([0.5])
+        self.des = [#{'x': 0, 'feval':[], 'rep': nrep}, 
+                    {'x': 0.25, 'feval':[], 'rep': nrep}, 
+                    {'x': 0.5, 'feval':[], 'rep': nrep},
+                    {'x': 0.75, 'feval':[], 'rep': nrep}]
+                    #{'x': 1, 'feval':[], 'rep': nrep}]
+        self.des = [{'x': 0.5, 'feval':[], 'rep': nrep}]       
         
         fevalno = np.zeros((len(xspace), nrep))
         for xid, e in enumerate(self.des):
@@ -77,7 +79,7 @@ plt.show()
 
 
 th_vec      = (np.arange(0, 100, 10)/100)[:, None]
-x_vec = np.array([0, 0.25, 0.5, 0.75, 1])[:, None]
+x_vec = np.array([ 0.5])[:, None]
 fvec = np.zeros((len(th_vec), len(x_vec)))
 pvec = np.zeros((len(th_vec)))
 for t_id, t in enumerate(th_vec):
@@ -134,7 +136,7 @@ al_unimodal = designer(data_cls=cls_unimodal,
                              'seed_n0': 6, #args.seed_n0, #6
                              'prior': prior_func,
                              'data_test': test_data,
-                             'max_evals': 150,
+                             'max_evals': 100,
                              'type_init': None,
                              'unknown_var': False,
                              'design': True})

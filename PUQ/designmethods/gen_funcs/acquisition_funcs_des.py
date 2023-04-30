@@ -72,28 +72,31 @@ def eivar_new_exp(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubia
         x_cand    = x_c.reshape(1, 1)
         xt_mle    = np.concatenate((x_cand, np.array([theta_mle]).reshape(1, 1)), axis=1)
         y_temp    = emu.predict(x=x_emu, theta=xt_mle).mean()
-        if xid < n_clist:
-            x_field   = np.concatenate((x_temp, x_cand), axis=0)
-            y_field   = np.concatenate((f_temp, y_temp), axis=1)
-            r_field   = r_temp + [1]
+        x_field   = np.concatenate((x_temp, x_cand), axis=0)
+        y_field   = np.concatenate((f_temp, y_temp), axis=1)
+        
+        #if xid < n_clist:
+        #    x_field   = np.concatenate((x_temp, x_cand), axis=0)
+        #    y_field   = np.concatenate((f_temp, y_temp), axis=1)
+       #     r_field   = r_temp + [1]
 
-        else:
-            x_field   = 1*x_temp
-            y_field   = 1*f_temp 
-            r_field   = 1*r_temp
-            for eid, e in enumerate(des):
-                if x_cand == e['x']:
-                    y_field[0][eid] = (np.sum(e['feval']) + y_temp)/(e['rep'] + 1)
-                    r_field[eid] += 1
+       # else:
+       #     x_field   = 1*x_temp
+       #     y_field   = 1*f_temp 
+       #     r_field   = 1*r_temp
+       #     for eid, e in enumerate(des):
+       #         if x_cand == e['x']:
+       #             y_field[0][eid] = (np.sum(e['feval']) + y_temp)/(e['rep'] + 1)
+        #            r_field[eid] += 1
             
         obsvar_field   = np.diag(np.repeat(synth_info.sigma2, y_field.shape[1]))
-        obsvar_field   = obsvar_field/r_field
+        #obsvar_field   = obsvar_field/r_field
         xt_c           = np.array([x_c, theta_mle[0]])
         xdesign_vec    = np.tile(x_field.flatten(), len(th_mesh))
         thetatest      = np.concatenate((xdesign_vec[:, None], np.repeat(th_mesh, len(x_field))[:, None]), axis=1)
         eivar_val[xid] = postphimat2(emu._info, x_field, thetatest, y_field, obsvar_field, xt_c.reshape(1, 2))
 
-
+    eivar_val = np.log(eivar_val)
     minid = np.argmin(eivar_val)
     xnew  = xclist[minid]
     plt.scatter(xclist, eivar_val)
@@ -116,14 +119,13 @@ def eivar_new_exp2(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubi
     # Update emulator for uncompleted jobs.
     x_temp = np.array([e['x'] for e in des])[:, None]
     f_temp = np.array([np.mean(e['feval']) for e in des])[None, :]
+
     r_temp = [e['rep'] for e in des]
     
     # Create a candidate list
     n_clist = 100
     clist   = prior_func.rnd(n_clist, None)
     xclist  = clist[:, 0]
-    #xclist  = np.concatenate((xclist, x_temp.reshape(-1)), axis=0) 
- 
 
     x_ref     = np.linspace(synth_info.thetalimits[0][0], synth_info.thetalimits[0][1], 100)
     theta_ref = 1*th_mesh
@@ -136,20 +138,30 @@ def eivar_new_exp2(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubi
             x_cand    = x_r.reshape(1, 1)
             xt_mle    = np.concatenate((x_cand, np.array([theta_mle]).reshape(1, 1)), axis=1)
             y_temp    = emu.predict(x=x_emu, theta=xt_mle).mean()
-    
-            #x_field   = 1*x_cand
-            #y_field   = 1*y_temp
-            x_field   = np.concatenate((x_temp, x_cand), axis=0)
-            y_field   = np.concatenate((f_temp, y_temp), axis=1)
-        
+
             for eid, e in enumerate(des):
-                if x_c == e['x']:
+                if x_r == e['x']:
                     repno = 1*e['rep']
+                    r_field = 1*r_temp
+                    r_field[eid] += 1 
+                    
+                    x_field   = 1*x_temp # np.concatenate((x_temp, x_cand), axis=0)
+                    y_field   = 1*f_temp #np.concatenate((f_temp, y_temp), axis=1)
+                    y_field[0, eid] = (repno*y_field[0, eid] + y_temp)/(repno + 1)
                     break
                 else:
                     repno = 1
-                    
-            obsvar_field  = np.diag(np.repeat(synth_info.sigma2, y_field.shape[1]))/repno
+                    r_field = r_temp + [repno]
+                    x_field   = np.concatenate((x_temp, x_cand), axis=0)
+                    y_field   = np.concatenate((f_temp, y_temp), axis=1)
+                    #print(x_field.shape)
+                    #print(y_field.shape)
+  
+    
+  
+            obsvar_field  = np.diag(np.repeat(synth_info.sigma2, y_field.shape[1]))/r_field
+            
+            #print(obsvar_field)
  
             xt_c           = np.array([x_c, theta_mle[0]])
             xdesign_vec    = np.tile(x_field.flatten(), len(theta_ref))
@@ -162,6 +174,8 @@ def eivar_new_exp2(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubi
     xnew  = xclist[minid]
     plt.scatter(xclist[0:100], eivar_val[0:100])
     plt.show()
+    
+    
     if minid >= n_clist:
         for eid, e in enumerate(des):
             if xnew == e['x']:

@@ -12,11 +12,14 @@ class one_D:
         self.data_name   = 'one_D'
         self.thetalimits = np.array([[0, 1], [0, 1]])
         self.true_theta  = 0.5
-        self.sigma2      = 0.05**2
-        self.obsvar      = np.diag(np.repeat(self.sigma2, 4))
+        self.sigma2      = 0.1**2
+        self.obsvar      = np.diag(np.repeat(self.sigma2, 1))
         xspace = np.array([0.2, 0.4, 0.6, 0.8])
-        self.des = [{'x': 0.2, 'feval':[], 'rep': 5}, {'x': 0.4, 'feval':[], 'rep': 5}, {'x': 0.6, 'feval':[], 'rep': 5}, {'x': 0.8, 'feval':[], 'rep': 5}]
-        nrep = 5
+        xspace = np.array([0.5])
+        nrep = 1
+        #self.des = [{'x': 0.2, 'feval':[], 'rep': 5}, {'x': 0.4, 'feval':[], 'rep': 5}, {'x': 0.6, 'feval':[], 'rep': 5}, {'x': 0.8, 'feval':[], 'rep': 5}]
+        self.des = [{'x': 0.5, 'feval':[], 'rep': 1}]
+        
         
         fevalno = np.zeros((len(xspace), nrep))
         for xid, e in enumerate(self.des):
@@ -75,7 +78,7 @@ plt.show()
 
 
 th_vec      = (np.arange(0, 100, 10)/100)[:, None]
-x_vec = np.array([0.2, 0.4, 0.6, 0.8])[:, None]
+x_vec = np.array([0.5])[:, None]
 fvec = np.zeros((len(th_vec), len(x_vec)))
 pvec = np.zeros((len(th_vec)))
 for t_id, t in enumerate(th_vec):

@@ -257,6 +257,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                         obsvar_u = obsvar_u/reps
            
                 print(x_u)
+                print(reps)
                 #print(obsvar_u)
                 prev_pending   = pending.copy()
                 update_model   = False
