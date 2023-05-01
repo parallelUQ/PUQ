@@ -135,7 +135,7 @@ al_unimodal = designer(data_cls=cls_unimodal,
                              'seed_n0': 6, #args.seed_n0, #6
                              'prior': prior_func,
                              'data_test': test_data,
-                             'max_evals': 100,
+                             'max_evals': 50,
                              'type_init': None,
                              'unknown_var': False,
                              'design': True})

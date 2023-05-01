@@ -882,7 +882,140 @@ def postphimat2(fitinfo, x, theta, obs, obsvar, theta_cand):
     return eivar
 
 
+def postphimat3(fitinfo, theta, obs, obsvar, theta_cand):
 
+
+    n_x       = obs.shape[1] 
+    n_tot_ref = theta.shape[0]
+    n_ref     = int(n_tot_ref/n_x)
+    #n_cand    = theta_cand[0]
+    n_t       = fitinfo['theta'].shape[0]
+    
+    
+    predinfo = {}
+    infos = fitinfo['emulist']
+    predmean_ref = np.zeros((theta.shape[0], len(infos)))
+    predvars_ref = np.zeros((theta.shape[0], len(infos)))
+    predvars_cand = np.zeros((theta_cand.shape[0], len(infos)))
+
+    if predmean_ref.ndim < 1.5:
+        predmean_ref = predmean_ref.reshape((1, -1))
+        predvars_ref = predvars_ref.reshape((1, -1))
+
+    # n_ref x n_t
+    rsave_1 = np.array(np.ones(len(infos)), dtype=object)
+    # n_ref x n_cand
+    rsave_2 = np.array(np.ones(len(infos)), dtype=object)
+    # n_ref x n_ref
+    rsave_3 = np.array(np.ones(len(infos)), dtype=object)
+    # n_cand x n_t
+    rsave_4 = np.array(np.ones(len(infos)), dtype=object)
+
+    # loop over principal components
+    for k in range(0, len(infos)):
+        if infos[k]['hypind'] == k:
+            # covariance matrix between new theta and thetas from fit.
+            rsave_1[k] = __covmat(theta,
+                                fitinfo['theta'],
+                                infos[k]['hypcov'])
+            
+            rsave_2[k] = __covmat(theta,
+                                  theta_cand,
+                                  infos[k]['hypcov'])
+            rsave_3[k] = __covmat(theta,
+                                  theta,
+                                  infos[k]['hypcov'])
+            rsave_4[k] = __covmat(theta_cand,
+                                  fitinfo['theta'],
+                                  infos[k]['hypcov'])
+
+        # adjusted covariance matrix
+        r_1 = (1 - infos[k]['nug']) * np.squeeze(rsave_1[infos[k]['hypind']])
+        r_2 = (1 - infos[k]['nug']) * np.squeeze(rsave_2[infos[k]['hypind']])
+        r_3 = (1 - infos[k]['nug']) * np.squeeze(rsave_3[infos[k]['hypind']])
+        r_4 = (1 - infos[k]['nug']) * np.squeeze(rsave_4[infos[k]['hypind']])
+
+        try:
+            rVh_1 = r_1 @ infos[k]['Vh']
+            rVh_4 = r_4.reshape(1, len(fitinfo['theta'])) @ infos[k]['Vh']
+            
+        except Exception:
+            for i in range(0, len(infos)):
+                print((i, infos[i]['hypind']))
+            raise ValueError('Something went wrong with fitted components')
+
+
+        if rVh_1.ndim < 1.5:
+            rVh_1 = rVh_1.reshape((1, -1))
+            
+
+        id_row = np.arange(0, n_tot_ref)
+        id_col = np.arange(0, n_tot_ref).reshape(n_ref, n_x)
+        id_col = np.repeat(id_col, repeats=n_x, axis=0)
+        
+        r_3_3D = r_3[id_row[:, None], id_col].reshape(n_ref, n_x, n_x)
+        r_2_3D = r_2.reshape(n_ref, n_x, 1)
+    
+        rVh_1_3d = rVh_1.reshape(n_ref, n_x, n_t)
+        rVh_1_3dT = np.transpose(rVh_1_3d, (0, 2, 1))
+        cov3D = np.matmul(rVh_1_3d, rVh_1_3dT)
+        cov_ref_3D = infos[k]['sig2'] * (r_3_3D - cov3D)
+
+        
+        predmean_ref[:, k] = r_1 @ infos[k]['pw']
+        
+        rVh_4_3d = rVh_4.reshape(1, n_t, 1)
+        cov3D = np.matmul(rVh_1_3d, rVh_4_3d)
+        cov_cand_3D = infos[k]['sig2'] * (r_2_3D - cov3D)
+        
+        
+        #predvars_ref[:, k] = infos[k]['sig2'] * np.abs(1 - np.sum(rVh_1 ** 2, 1))
+        predvars_cand[:, k] = infos[k]['sig2'] * np.abs(1 - np.sum(rVh_4 ** 2, 1))
+        predvars_cand[:, k] += infos[k]['nug']
+        #cov_ref = infos[k]['sig2'] * (r_3.reshape((theta.shape[0], theta.shape[0])) - rVh_1 @ rVh_1.T)
+        #cov_cand = infos[k]['sig2'] * (r_2.reshape((theta.shape[0], theta_cand.shape[0])) - rVh_1 @ rVh_4.T)
+     
+
+    #print(predmean_ref.shape)
+    #print(predvars_cand.shape)
+    #print(cov_cand_3D.shape)
+    #print(cov_ref_3D.shape)
+    # calculate predictive mean and variance
+    #predinfo['mean'] = np.full((x.shape[0], int(theta.shape[0]/x.shape[0])), np.nan)
+    #predinfo['varcand'] = np.full((theta_cand.shape[0], theta_cand.shape[0]), np.nan)
+
+    pctscale     = (fitinfo['pcti'].T * fitinfo['standardpcinfo']['scale']).T
+    Smat3D       = cov_ref_3D*(pctscale[:, :] ** 2)
+    cov_cand_3D  = cov_cand_3D*(pctscale[:, :] ** 2)
+    cov_cand_3DT = np.transpose(cov_cand_3D, (0, 2, 1)) 
+    
+
+    predinfo['mean'] = ((predmean_ref @ pctscale.T) +
+                                    fitinfo['standardpcinfo']['offset']).T
+    predinfo['mean'] = predinfo['mean'].reshape(n_ref, n_x)
+    predinfo['varcand'] = ((fitinfo['standardpcinfo']['extravar'][:] +
+                                    predvars_cand @ (pctscale[:, :] ** 2).T)).T
+    
+    Phi3D        = (cov_cand_3D * cov_cand_3DT)/predinfo['varcand']
+    
+    #print(Phi3D.shape)
+    #print(predinfo['mean'].shape)
+    d     = 1*n_x#x.shape[0]
+    #eivar = 0
+    obsvar3D  = obsvar.reshape(1, n_x, n_x)
+    cov1 = 0.5*(Smat3D + obsvar3D + Phi3D)
+    cov2 = Smat3D + obsvar3D - Phi3D
+    cov3 = 0.5*obsvar3D + Smat3D
+    det2 = multiple_determinants(obsvar3D)
+
+    #obs_mult = np.repeat(obs, predinfo['mean'].shape[0], axis=0)
+    #print(predinfo['mean'].shape)
+    p2 = multiple_pdfs(obs, predinfo['mean'], cov3)
+    p1 = multiple_pdfs(obs, predinfo['mean'], cov1)
+    det1 = multiple_determinants(cov2)
+    eivar = np.sum((1/((2**d)*(np.sqrt(np.pi)**d)*np.sqrt(det2)))*p2) - np.sum((1/((2**d)*(np.sqrt(np.pi)**d)*np.sqrt(det1)))*p1)
+
+    return eivar
 
 
 def postpred(fitinfo, x, theta, obs, obsvar):
