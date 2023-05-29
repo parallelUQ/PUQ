@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PUQ.surrogate import emulator
 from PUQ.posterior import posterior
-from PUQ.designmethods.gen_funcs.acquisition_funcs_support import eivar_sup
+from PUQ.designmethods.gen_funcs.acquisition_funcs_support import get_emuvar, multiple_pdfs, compute_postvar, compute_eivar_fig
 
 class sinlinear:
     def __init__(self):
@@ -38,7 +38,6 @@ cls_sinlin  = sinlinear()
 theta   = np.array([-10, -8.7, -7.5, -5, -2.5, -1, 1, 2.5, 5, 7.5, 8.7, 10])[:, None]
 f       = cls_sinlin.function(theta)
 
-# Observe three stages
 for i in range(3):
 
     # Fit an emulator
@@ -55,6 +54,7 @@ for i in range(3):
     ftest        = cls_sinlin.function(thetatest)
     ptest        = sps.norm.pdf(cls_sinlin.real_data, ftest, np.sqrt(cls_sinlin.obsvar))
     
+    
     # Predict via the emulator
     emupred_test = emu.predict(x=cls_sinlin.x, theta=thetatest)
     emupred_tr   = emu.predict(x=cls_sinlin.x, theta=theta)
@@ -62,15 +62,52 @@ for i in range(3):
     posttesthat, posttestvar = post.predict(thetatest)
     posttrhat, posttrvar = post.predict(theta)
     
-    # Candidate list
-    clist          = np.arange(-10, 10.01, 0.1)[:, None]
     
-    # Obtain eivar for the parameters in the candidate and existing list
-    acq   = eivar_sup(clist, theta, thetatest, emu, cls_sinlin) 
-    acqtr = eivar_sup(theta, theta, thetatest, emu, cls_sinlin) 
-
-    # Figure 3 / 1st row
+    clist          = np.arange(-10, 10.01, 0.1)[:, None]
+    def compute_eivar_full(clist, theta, theta_test, emu):
+        
+        real_x         = cls_sinlin.real_x
+        obs            = cls_sinlin.real_data
+        obsvar         = cls_sinlin.obsvar
+        obsvar3d       = obsvar.reshape(1, 1, 1)
+        d_real         = real_x.shape[0]
+        x              = cls_sinlin.x
+        emupred_test   = emu.predict(x=cls_sinlin.x, theta=theta_test)
+        emumean        = emupred_test.mean()
+        emuvar, is_cov = get_emuvar(emupred_test)
+        emumeanT       = emumean.T
+        emuvarT        = emuvar.transpose(1, 0, 2)
+        var_obsvar1    = emuvarT + obsvar3d 
+        var_obsvar2    = emuvarT + 0.5*obsvar3d 
+        diags          = np.diag(obsvar[real_x, real_x.T])
+        coef           = (2**d_real)*(np.sqrt(np.pi)**d_real)*np.sqrt(np.prod(diags))
+        
+        
+        # Get the n_ref x d x d x n_cand phi matrix
+        emuphi4d      = emu.acquisition(x=x, 
+                                        theta1=theta_test, 
+                                        theta2=clist)
+        acq_func = []
+        
+        # Pass over all the candidates
+        for c_id in range(len(clist)):
+            posteivar = compute_eivar_fig(obsvar, 
+                                      var_obsvar2[:, real_x, real_x.T],
+                                      var_obsvar1[:, real_x, real_x.T], 
+                                      emuphi4d[:, real_x, real_x.T, c_id],
+                                      emumeanT[:, real_x.flatten()], 
+                                      emuvar[real_x, :, real_x.T], 
+                                      obs, 
+                                      is_cov)
+            acq_func.append(posteivar)
+    
+        return acq_func
+    
+    acq   = compute_eivar_full(clist, theta, thetatest, emu)
+    acqtr = compute_eivar_full(theta, theta, thetatest, emu)
+    
     ft = 20
+    # Figure 3 (a)/ 2nd row
     cand_theta = clist[np.argmin(acq)]
     fig, ax = plt.subplots()
     ax.plot(clist, acq, color='blue')
@@ -79,9 +116,10 @@ for i in range(3):
     ax.tick_params(axis='both', labelsize=ft)
     plt.scatter(cand_theta, np.min(acq), color='green', marker='*', s=200)
     plt.scatter(theta, acqtr, color='red', marker='o', s=60)
-    plt.show()   
+    plt.savefig('Figure3_1_' + str(i) + '.png')
+    # plt.show()   
     
-    # Figure 3 / 2nd row
+    
     fig, ax = plt.subplots()
     ax.plot(thetatest, ptest, color='black')
     ax.plot(thetatest, posttesthat, color='blue', linestyle='dashed', linewidth=2.5)
@@ -95,8 +133,10 @@ for i in range(3):
     ax.set_xlabel(r'$\theta$', fontsize=ft)
     ax.set_ylabel(r'$p(y|\theta)$', fontsize=ft)
     ax.tick_params(axis='both', labelsize=ft)
-    plt.show()
+    plt.savefig('Figure3_2_' + str(i) + '.png')
+    # plt.show()
     
-    # Include new parameter and feval onto the existing data
+    
+    
     theta = np.concatenate((theta, cand_theta.reshape(1, 1)))
     f = np.concatenate((f, cls_sinlin.function(cand_theta.reshape(1, 1))))
