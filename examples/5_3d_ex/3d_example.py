@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
+from PUQ.prior import prior_dist
 
 class gaussian3d:
     def __init__(self):
@@ -39,6 +40,10 @@ class gaussian3d:
 args        = parse_arguments()
 cls_3d      = gaussian3d()
 test_data   = generate_test_data(cls_3d)
+test_data['p_prior'] = 1
+    
+# # # # # # # # # # # # # # # # # # # # # 
+prior_func      = prior_dist(dist='uniform')(a=cls_3d.thetalimits[:, 0], b=cls_3d.thetalimits[:, 1])
 
 al_3d = designer(data_cls=cls_3d, 
                  method='SEQCAL', 
@@ -47,13 +52,14 @@ al_3d = designer(data_cls=cls_3d,
                        'nworkers': args.nworkers,
                        'AL': args.al_func,
                        'seed_n0': args.seed_n0,
-                       'prior': 'uniform',
+                       'prior': prior_func,
                        'data_test': test_data,
-                       'max_evals': 220})
+                       'max_evals': 220,
+                       'type_init': None})
 
 save_output(al_3d, cls_3d.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
 
-show = False
+show = True
 if show:
     theta_al = al_3d._info['theta']
     TV       = al_3d._info['TV']

@@ -57,7 +57,7 @@ al_unimodal_test = designer(data_cls=cls_unimodal,
 
 ftest = al_unimodal_test._info['f']
 thetatest = al_unimodal_test._info['theta']
-ptest = sps.norm.pdf(cls_unimodal.real_data-ftest, 0, np.sqrt(cls_unimodal.obsvar)) 
+ptest = sps.norm.pdf(cls_unimodal.real_data, ftest, np.sqrt(cls_unimodal.obsvar)) 
 
 test_data = {'theta': thetatest, 
              'f': ftest,

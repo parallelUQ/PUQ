@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
-
+from PUQ.prior import prior_dist
 
 class gaussian6d:
     def __init__(self):
@@ -43,6 +43,10 @@ class gaussian6d:
 args        = parse_arguments()
 cls_6d      = gaussian6d()
 test_data   = generate_test_data(cls_6d)
+test_data['p_prior'] = 1
+
+# # # # # # # # # # # # # # # # # # # # # 
+prior_func      = prior_dist(dist='uniform')(a=cls_6d.thetalimits[:, 0], b=cls_6d.thetalimits[:, 1])
 
 al_6d = designer(data_cls=cls_6d, 
                  method='SEQCAL', 
@@ -51,9 +55,10 @@ al_6d = designer(data_cls=cls_6d,
                        'nworkers': args.nworkers,
                        'AL': args.al_func,
                        'seed_n0': args.seed_n0,
-                       'prior': 'uniform',
+                       'prior': prior_func,
                        'data_test': test_data,
-                       'max_evals': 220})
+                       'max_evals': 220,
+                       'type_init': None})
 
 save_output(al_6d, cls_6d.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
 
