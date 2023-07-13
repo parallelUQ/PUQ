@@ -76,7 +76,7 @@ def fit(fitinfo, x, theta, f, epsilonPC=0.001,
     None.
 
     '''
-    print('Fitting...')
+    #print('Fitting...')
     f = f.T
     fitinfo['epsilonPC'] = epsilonPC
     hyp1 = lognugmean

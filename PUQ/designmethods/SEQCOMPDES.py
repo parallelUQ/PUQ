@@ -1,5 +1,6 @@
 import numpy as np
-from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp
+from PUQ.designmethods.gen_funcs.acquisition_funcs_support import multiple_pdfs
+from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp, eivar_new_exp, eivar_new_exp_mat
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
@@ -11,6 +12,7 @@ from PUQ.posterior import posterior
 from PUQ.surrogate import emulator
 import scipy.stats as sps
 import scipy.optimize as spo
+import matplotlib.pyplot as plt
 
 def fit(fitinfo, data_cls, args):
 
@@ -60,6 +62,8 @@ def fit(fitinfo, data_cls, args):
             'test_data': test_data,
             'prior': prior,
             'type_init': args['type_init'],
+            'unknown_var': args['unknown_var'],
+            'design': args['design']
         },
     }
 
@@ -93,7 +97,23 @@ def fit(fitinfo, data_cls, args):
     fitinfo['HD'] = H['HD']
     return
 
+    
+def obj_mle(parameter, args):
+    emu = args[0]
+    x_u = args[2]
+    x_emu = args[3]
+    true_fevals_u = args[4]
 
+    
+    xp      = np.concatenate((x_u, np.repeat(parameter, len(x_u))[:, None]), axis=1)
+    emupred = emu.predict(x=x_emu, theta=xp)
+    mu_p    = emupred.mean()
+    var_p   = emupred.var()
+    diff    = (true_fevals_u.flatten() - mu_p.flatten()).reshape((len(x_u), 1))
+    obj     = 0.5*(diff.T@diff)
+    
+    return obj.flatten()
+                
 def gen_f(H, persis_info, gen_specs, libE_info):
 
         """Generator to select and obviate parameters for calibration."""
@@ -108,17 +128,22 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         test_data       = gen_specs['user']['test_data']
         prior_func      = gen_specs['user']['prior']
         type_init       = gen_specs['user']['type_init']
+        unknown_var     = gen_specs['user']['unknown_var']
+        design          = gen_specs['user']['design']
         
         obsvar          = synth_info.obsvar
         data            = synth_info.real_data
         theta_limits    = synth_info.thetalimits
         
+   
+        des = synth_info.des
+     
+        theta_torun     = synth_info.theta_torun
 
-        
         thetatest, posttest, ftest, priortest = None, None, None, None
         if test_data is not None:
-            thetatest, th_mesh, posttest, ftest, priortest = test_data['theta'], test_data['th'], test_data['p'], test_data['f'], test_data['p_prior']
-        
+            thetatest, th_mesh, x_mesh, posttest, ftest, priortest = test_data['theta'], test_data['th'], test_data['xmesh'], test_data['p'], test_data['f'], test_data['p_prior']
+
 
         true_fevals = np.reshape(data[0, :], (1, data.shape[1]))
         n_x     = synth_info.d 
@@ -139,7 +164,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         update_model = False
         acquisition_f = eval(AL)
         list_id = []
-
+        emubias = None
         theta = 0
         
         while tag not in [STOP_TAG, PERSIS_STOP]:
@@ -161,119 +186,89 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                         break
 
             if update_model:
-                print('Updating model...\n')
 
-                print('Percentage Pending: %0.2f ( %d / %d)' % (100*np.round(np.mean(pending), 4),
-                                                                np.sum(pending),
-                                                                np.prod(pending.shape)))
-                print('Percentage Complete: %0.2f ( %d / %d)' % (100*np.round(np.mean(complete), 4),
-                                                                 np.sum(complete),
-                                                                 np.prod(pending.shape)))
-                
                 emu = emulator(x_emu, 
                                theta, 
                                fevals, 
                                method='PCGPexp')
-                
-                ####
-                new_field = True if (theta.shape[0] % 10) == 0 else False
-                
-                def obj_mle(parameter):
-                    xp = np.concatenate((x_u, np.repeat(parameter, len(x_u))[:, None]), axis=1)
-      
-                    #xp = np.concatenate((x_u, parameter))
-                    emupred = emu.predict(x=x_emu, theta=xp)
-                    mu_p = emupred.mean()
-                    var_p = emupred.var()
-                    
-                    covmat     = np.diag(var_p) + obsvar_u
-                    
-                    covmat_inv = np.linalg.inv(covmat)
-                    diff       = (true_fevals_u.flatten() - mu_p.flatten()).reshape((len(x_u), 1))
-                    obj        = 0.5*np.log(np.linalg.det(covmat)) + 0.5*(diff.T@covmat_inv@diff)
-                    return obj.flatten()
-                
-                bnd = ()
-                theta_init = []
-                for i in range(1, 2):
-                    bnd += ((theta_limits[i][0], theta_limits[i][1]),)
-                    theta_init.append((theta_limits[i][0] + theta_limits[i][1])/2)
 
-       
-                opval = spo.minimize(obj_mle,
-                                     theta_init,
-                                     method='L-BFGS-B',
-                                     options={'gtol': 0.01},
-                                     bounds=bnd)                
+ 
 
-                theta_mle = opval.x
-                print(theta_mle)
-                if new_field:
-                    x_u, obsvar_u, true_fevals_u = add_new_design(prior_func, emu, x_u, x_emu, theta_mle, th_mesh, true_fevals_u, obsvar_u)
-                    print(x_u)
-                    
-                    #xdesign_vec = np.tile(x.flatten(), len(th_mesh))
-                    #thetatest   = np.concatenate((xdesign_vec[:, None], np.repeat(th_mesh, len(x))[:, None]), axis=1)
-                    
                 prev_pending   = pending.copy()
                 update_model   = False
-                
-                # Obtain the accuracy on the test set
                 if test_data is not None:
+                    #print(theta)
+                    obsvar3d       = np.repeat(obsvar.reshape(1, n_x_des, n_x_des), len(th_mesh), axis=0)
                     emupredict     = emu.predict(x=x_emu, theta=thetatest)
                     emumean        = emupredict.mean()
-                    emuvar         = emupredict.var()
-                  
-                    emumean = emumean.reshape(len(th_mesh), n_x_des)
-                    emuvar = emuvar.reshape(len(th_mesh), n_x_des)
+                    #print(np.shape(emumean))
+                    #print(emumean[0, 0:10])
+                    emumean = emumean.reshape(len(th_mesh), len(real_x))
+                    #print(np.shape(emumean))
+                    #print(emumean[0:2, 0:5])
+                    # emuvar, is_cov = get_emuvar(emupredict)
+                    #emumeanT       = emumean.T
+                    #print(true_fevals.shape)
+                    #print(emumeanT.shape)
+                    #print(obsvar3d.shape)
+                    # emuvarT        = emuvar.transpose(1, 0, 2)
+                    # var_obsvar1    = emuvarT + obsvar3d 
                     posttesthat = np.zeros(len(th_mesh))
                     for i in range(emumean.shape[0]):
                         mean = emumean[i, :] 
-                        var = emuvar[i, :] 
-                        rnd = sps.multivariate_normal(mean=mean, cov=obsvar + np.diag(var))
+                        rnd = sps.multivariate_normal(mean=mean, cov=obsvar)
                         posttesthat[i] = rnd.pdf(true_fevals)
+        
+                    #posttesthat    = multiple_pdfs(true_fevals, 
+                    #                               emumean, 
+                    #                               obsvar3d)
                     
-                    TV = np.mean(np.abs(posttest - posttesthat*priortest))
-                    HD = np.sqrt(0.5*np.mean((np.sqrt(posttesthat) - np.sqrt(posttest))**2))     
+                    TV = np.mean(np.abs(posttest - posttesthat))
                     
             if first_iter:
-                print('Selecting theta for the first iteration...\n')
+               # print('Selecting theta for the first iteration...\n')
 
                 n_init = max(n_workers-1, n0)
 
                 if type_init == 'LHS':
                     sampling = LHS(xlimits=theta_limits, random_state=seed)
-                    theta = sampling(n_init)
+                    theta  = sampling(n_init)
+                elif type_init == 'to_run':
+                    theta  = theta_torun[0:n_init, :]
                 else:
                     theta  = prior_func.rnd(n_init, seed) 
-                    
+                
+
                 fevals, pending, prev_pending, complete, prev_complete = create_arrays(n_x, n_init)
                             
                 H_o    = np.zeros(len(theta), dtype=gen_specs['out'])
                 H_o    = load_H(H_o, theta, TV, HD, generated_no, set_priorities=True)
                 tag, Work, calc_in = ps.send_recv(H_o)       
                 first_iter = False
-                generated_no += n_workers-1
+                generated_no += n_init
                 
             else: 
                 if select_condition(complete, prev_complete, n_theta=mini_batch, n_initial=n0):
-                    print('Selecting theta...\n')
-        
+
                     prev_complete = complete.copy()
-                    new_theta = acquisition_f(mini_batch, 
-                                              x_u,
-                                              real_x,
-                                              emu, 
-                                              theta, 
-                                              fevals, 
-                                              true_fevals_u, 
-                                              obsvar_u, 
-                                              theta_limits, 
-                                              prior_func,
-                                              thetatest,
-                                              th_mesh,
-                                              priortest,
-                                              type_init)
+                    
+                    if type_init == 'to_run':
+                        new_theta = theta_torun[generated_no:(generated_no+mini_batch), :]
+                    else:
+                        new_theta = acquisition_f(mini_batch, 
+                                                  x_u,
+                                                  real_x,
+                                                  emu, 
+                                                  theta, 
+                                                  fevals, 
+                                                  true_fevals_u, 
+                                                  obsvar_u, 
+                                                  theta_limits, 
+                                                  prior_func,
+                                                  thetatest,
+                                                  th_mesh,
+                                                  priortest,
+                                                  type_init)
 
                     theta, fevals, pending, prev_pending, complete, prev_complete = \
                         pad_arrays(n_x, new_theta, theta, fevals, pending, prev_pending, complete, prev_complete)
@@ -283,6 +278,9 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                     H_o = load_H(H_o, new_theta, TV, HD, generated_no, set_priorities=True)
                     tag, Work, calc_in = ps.send_recv(H_o) 
                     generated_no += mini_batch
+                    
+        
+        
 
         return None, persis_info, FINISHED_PERSISTENT_GEN_TAG
 

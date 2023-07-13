@@ -147,7 +147,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
          
         x_extend = np.tile(x_mesh.flatten(), len(th_mesh))
         xt_test2   = np.concatenate((x_extend[:, None], np.repeat(th_mesh, len(x_mesh))[:, None]), axis=1)
-        print(xt_test2)
+ 
 
         true_fevals = np.reshape(data[0, :], (1, data.shape[1]))
         n_x     = synth_info.d 
@@ -230,7 +230,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                         
                         if new_field:
                             
-                            des           = eivar_new_exp_mat(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubias, des)
+                            des           = eivar_new_exp_mat(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
                             x_u           = np.array([e['x'] for e in des])[:, None]
                             true_fevals_u = np.array([np.mean(e['feval']) for e in des])[None, :]
                             reps          = [e['rep'] for e in des]
@@ -255,8 +255,6 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                         obsvar_u = np.diag(np.repeat(synth_info.sigma2, len(x_u)))
                         obsvar_u = obsvar_u/reps
            
-                print(x_u)
-                print(reps)
                 #print(obsvar_u)
                 prev_pending   = pending.copy()
                 update_model   = False
@@ -272,6 +270,12 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                     theta = sampling(n_init)
                 else:
                     theta  = prior_func.rnd(n_init, seed) 
+                
+                #from numpy.random import rand
+                #th   = rand(int(n_init/5))
+                #xvec = np.tile(x.flatten(), len(th))
+                #theta   = np.concatenate((xvec[:, None], np.repeat(th, len(x))[:, None]), axis=1)
+
                     
                 fevals, pending, prev_pending, complete, prev_complete = create_arrays(n_x, n_init)
                             
