@@ -1,9 +1,8 @@
-"""Contains supplemental methods for gen function in persistent_surmise_calib.py."""
+"""Contains acquisition functions."""
 
 import numpy as np
 from sklearn.metrics import pairwise_distances
 from PUQ.designmethods.gen_funcs.acquisition_funcs_support import compute_postvar, compute_eivar, multiple_pdfs, get_emuvar
-from smt.sampling_methods import LHS
 import scipy
 
 def rnd(n, 
@@ -23,89 +22,7 @@ def rnd(n,
         theta_acq = prior_func.rnd(n, None)
         return theta_acq
         
-def hybrid(n, 
-           x, 
-           real_x,
-           emu, 
-           theta, 
-           fevals, 
-           obs, 
-           obsvar, 
-           thetalimits, 
-           prior_func, 
-           thetatest=None, 
-           posttest=None,
-           type_init=None):
-    
-    # Update emulator for uncompleted jobs.
-    idnan    = np.isnan(fevals).any(axis=0).flatten()
-    theta_uc = theta[idnan, :]
-    if sum(idnan) > 0:
-        fevalshat_uc = emu.predict(x=x, theta=theta_uc)
-        emu.update(theta=theta_uc, f=fevalshat_uc.mean()) 
-        
-    theta_acq, f_acq = [], []
-    d, p      = x.shape[0], theta.shape[1]
-    d_real    = real_x.shape[0]
-    obsvar3d  = obsvar.reshape(1, d, d)
-    diags     = np.diag(obsvar[real_x, real_x.T])
-    coef      = (2**d_real)*(np.sqrt(np.pi)**d_real)*np.sqrt(np.prod(diags))
-    
-    # Create a candidate list
-    n_clist = 100*n
-    if type_init == 'LHS':
-        sampling = LHS(xlimits=thetalimits)
-        clist = sampling(n_clist)
-    else:
-        clist   = prior_func.rnd(n_clist, None)
-    # Project into (0, 1)
-    theta_sd = (theta - thetalimits[:, 0])/(thetalimits[:, 1] - thetalimits[:, 0])
-    theta_cand_sd = (clist - thetalimits[:, 0])/(thetalimits[:, 1] - thetalimits[:, 0])
 
-    # Decide which acquisition to be used
-    even = True if (theta.shape[0] % 2) else False
-
-    for i in range(n):
-        emupredict     = emu.predict(x, clist)
-        emumean        = emupredict.mean()   
-        emuvar, is_cov = get_emuvar(emupredict)
-        emumeanT       = emumean.T
-        emuvarT        = emuvar.transpose(1, 0, 2)
-        var_obsvar1    = emuvarT + obsvar3d 
-        var_obsvar2    = emuvarT + 0.5*obsvar3d 
-        postmean       = multiple_pdfs(obs, emumeanT[:, real_x.flatten()], var_obsvar1[:, real_x, real_x.T])
-        postvar        = compute_postvar(obs, emumeanT[:, real_x.flatten()], 
-                                         var_obsvar1[:, real_x, real_x.T], 
-                                         var_obsvar2[:, real_x, real_x.T], coef)
-        if even:
-            print('Acq. F.: Max. Var.\n')
-            acq_func    = np.copy(postvar)
-            even        = False
-        else:
-            print('Acq. F.: Post. x Dist.\n')
-            logpostmean = np.log(postmean)
-            d           = pairwise_distances(theta_sd, theta_cand_sd, metric='euclidean')
-            min_dist    = np.min(d, axis=0)
-            acq_func    = logpostmean + np.log(min_dist) 
-            even        = True
-            
-        # New theta
-        idc         = np.argmax(acq_func)
-        theta_sd    = np.concatenate((theta_sd, theta_cand_sd[idc][None, :]), axis=0)
-        ctheta      = clist[idc, :].reshape((1, p))
-        theta_acq.append(ctheta)
-        f_acq.append(postmean[idc])
-        clist           = np.delete(clist, idc, 0)
-        theta_cand_sd   = np.delete(theta_cand_sd, idc, 0)
-        
-        # Kriging believer strategy
-        fevalsnew       = emu.predict(x=x, theta=ctheta)
-        emu.update(theta=ctheta, f=fevalsnew.mean()) 
-
-    theta_acq = np.array(theta_acq).reshape((n, p))
-
-    return theta_acq    
-    
 def maxvar(n, 
            x, 
            real_x,
@@ -136,11 +53,7 @@ def maxvar(n,
     
     # Create a candidate list.
     n_clist = 100*n
-    if type_init == 'LHS':
-        sampling = LHS(xlimits=thetalimits)
-        clist = sampling(n_clist)
-    else:
-        clist   = prior_func.rnd(n_clist, None)
+    clist   = prior_func.rnd(n_clist, None)
         
     # Acquire n thetas.
     for i in range(n):
@@ -203,12 +116,7 @@ def eivar(n,
     else:
         n_clist = 100*int(n) #100*int(np.ceil(np.log(n)))
 
-
-    if type_init == 'LHS':
-        sampling = LHS(xlimits=thetalimits)
-        clist = sampling(n_clist)
-    else:
-        clist   = prior_func.rnd(n_clist, None)
+    clist   = prior_func.rnd(n_clist, None)
     
     for i in range(n):
         emupredict     = emu.predict(x, thetatest)
@@ -275,11 +183,7 @@ def maxexp(n,
     
     # Create a candidate list.
     n_clist = 100*n
-    if type_init == 'LHS':
-        sampling = LHS(xlimits=thetalimits)
-        clist = sampling(n_clist)
-    else:
-        clist   = prior_func.rnd(n_clist, None)
+    clist   = prior_func.rnd(n_clist, None)
         
     theta_sd = (theta - thetalimits[:, 0])/(thetalimits[:, 1] - thetalimits[:, 0])
     theta_cand_sd = (clist - thetalimits[:, 0])/(thetalimits[:, 1] - thetalimits[:, 0])
@@ -352,11 +256,8 @@ def imse(n,
     else:
         n_clist = 100*int(n) #100*int(np.ceil(np.log(n)))
 
-    if type_init == 'LHS':
-        sampling = LHS(xlimits=thetalimits)
-        clist = sampling(n_clist)
-    else:
-        clist   = prior_func.rnd(n_clist, None)
+
+    clist   = prior_func.rnd(n_clist, None)
         
     for i in range(n):
         # Get the n_ref x d x d x n_cand phi matrix
@@ -407,13 +308,8 @@ def ei(n,
     else:
         n_clist = 100*int(n) #100*int(np.ceil(np.log(n)))
 
-    if type_init == 'LHS':
-        sampling = LHS(xlimits=thetalimits)
-        clist = sampling(n_clist)
-    else:
-        clist   = prior_func.rnd(n_clist, None)
 
-
+    clist   = prior_func.rnd(n_clist, None)
     maxpost = np.max(fevals)
     
     for i in range(n):

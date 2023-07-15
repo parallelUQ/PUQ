@@ -1,13 +1,11 @@
 import numpy as np
-from PUQ.designmethods.gen_funcs.acquisition_funcs_support import get_emuvar, multiple_pdfs
-from PUQ.designmethods.gen_funcs.acquisition_funcs import maxvar, eivar, maxexp, hybrid, rnd, imse
+from PUQ.designmethods.gen_funcs.acquisition_funcs import maxvar, eivar, maxexp, rnd, imse
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
 from libensemble.alloc_funcs.start_only_persistent import only_persistent_gens as alloc_f
 from libensemble.libE import libE
 from libensemble.tools import parse_args, save_libE_output, add_unique_random_streams
-from smt.sampling_methods import LHS
 from PUQ.posterior import posterior
 
 def fit(fitinfo, data_cls, args):
@@ -119,7 +117,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         n_x     = synth_info.d 
         x       = synth_info.x
         real_x  = synth_info.real_x
-        obsvar3d   = obsvar.reshape(1, n_x, n_x)
+
         obs_offset, theta_offset, generated_no = 0, 0, 0
         TV, HD = 1000, 1000
         fevals, pending, prev_pending, complete, prev_complete = None, None, None, None, None
@@ -150,14 +148,14 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                         break
 
             if update_model:
-                print('Updating model...\n')
+                #print('Updating model...\n')
 
-                print('Percentage Pending: %0.2f ( %d / %d)' % (100*np.round(np.mean(pending), 4),
-                                                                np.sum(pending),
-                                                                np.prod(pending.shape)))
-                print('Percentage Complete: %0.2f ( %d / %d)' % (100*np.round(np.mean(complete), 4),
-                                                                 np.sum(complete),
-                                                                 np.prod(pending.shape)))
+                #print('Percentage Pending: %0.2f ( %d / %d)' % (100*np.round(np.mean(pending), 4),
+                #                                                np.sum(pending),
+                #                                                np.prod(pending.shape)))
+                #print('Percentage Complete: %0.2f ( %d / %d)' % (100*np.round(np.mean(complete), 4),
+                #                                                 np.sum(complete),
+                #                                                 np.prod(pending.shape)))
                 
                 emu            = fit_emulator(x, theta, fevals, theta_limits)
                 prev_pending   = pending.copy()
@@ -165,32 +163,16 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 
                 # Obtain the accuracy on the test set
                 if test_data is not None:
-                    emupredict     = emu.predict(x=x, theta=thetatest)
-                    emumean        = emupredict.mean()
-                    emuvar, is_cov = get_emuvar(emupredict)
-                    emumeanT       = emumean.T
-                    emuvarT        = emuvar.transpose(1, 0, 2)
-                    var_obsvar1    = emuvarT + obsvar3d 
-                   
-                    posttesthat    = multiple_pdfs(true_fevals, 
-                                                   emumeanT[:, real_x.flatten()], 
-                                                   var_obsvar1[:, real_x, real_x.T])
-
-                    #post = posterior(data_cls=synth_info, emulator=emu)
-                    #posttesthat, posttestvar = post.predict(thetatest)
+                    post = posterior(data_cls=synth_info, emulator=emu)
+                    posttesthat, posttestvar = post.predict(thetatest)
                     TV = np.mean(np.abs(posttest - posttesthat*priortest))
                     HD = np.sqrt(0.5*np.mean((np.sqrt(posttesthat) - np.sqrt(posttest))**2))     
 
             if first_iter:
-                print('Selecting theta for the first iteration...\n')
+                # print('Selecting theta for the first iteration...\n')
 
                 n_init = max(n_workers-1, n0)
-
-                if type_init == 'LHS':
-                    sampling = LHS(xlimits=theta_limits, random_state=seed)
-                    theta = sampling(n_init)
-                else:
-                    theta  = prior_func.rnd(n_init, seed) 
+                theta  = prior_func.rnd(n_init, seed) 
                     
                 fevals, pending, prev_pending, complete, prev_complete = create_arrays(n_x, n_init)
                             
@@ -202,7 +184,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 
             else: 
                 if select_condition(complete, prev_complete, n_theta=mini_batch, n_initial=n0):
-                    print('Selecting theta...\n')
+                    # print('Selecting theta...\n')
                 
                     prev_complete = complete.copy()
                     new_theta = acquisition_f(mini_batch, 

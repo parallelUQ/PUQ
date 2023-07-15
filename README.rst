@@ -1,16 +1,3 @@
-|
-
-.. image:: https://img.shields.io/badge/License-MIT-yellow.svg
-    :target: https://opensource.org/licenses/MIT
-    :alt: License
-
-.. image:: https://github.com/parallelUQ/PUQ/actions/workflows/puq-ci.yml/badge.svg?/branch=main
-    :target: https://github.com/parallelUQ/PUQ/actions
-
-.. image:: https://readthedocs.org/projects/puq/badge/?version=latest
-    :target: https://puq.readthedocs.io/en/latest/?badge=latest
-    :alt: Documentation Status
-
 ==================================================================================
 PUQ: Python package for parallel uncertainty quantification
 ==================================================================================
@@ -19,86 +6,103 @@ PUQ: Python package for parallel uncertainty quantification
 Dependencies
 ~~~~~~~~~~~~
 
-PUQ has been tested on Unix/Linux and MacOS systems.
+PUQ is a Python package for the method introduced in the paper titled 'Sequential
+Bayesian experimental design for calibration of expensive simulation models.'
 
-PUQ's base has the following dependencies:
+This code requires Python (version 3.6 or later) and pip. 
 
- * Python_ 3.6+
- * NumPy_ -- for data structures and performant numerical linear algebra
- * SciPy_ -- for scientific calculations needed for specific modules
- * libEnsemble_ -- for parallel implementation
+Examples under ``examples/`` directory replicate figures 1--3 and figure 6.
 
+Set up 
+~~~~~~
+
+We recommend creating a Python virtual environment within the working directory of PUQ. 
+If a virtual environment is created, PUQ's required packages are installed and 
+isolated from those installed a priori. Creating a virtual environment will also prevent
+having conflicting packages on a user's machine. 
+
+1)Extract the zipped file.
+
+2)From the command line, go to the directory of the source code.
+
+3)Use the following command to create a virtual environment::
+
+  python3 -m venv venv/  
+  source venv/bin/activate  
+ 
+We note that creating a virtual environment is not a required step. However, we tested this
+procedure to prevent any conflict, and the code runs smoothly.
 
 Installation
 ~~~~~~~~~~~~
 
-From the command line, use the following command to install PUQ::
+The package can be installed from the .tar file.
 
- pip install PUQ==0.1.0
+1)Go to the directory of the source code (if a user has not done so yet).
 
+2)Use the following command to install the required packages::
 
-Alternatively, the source code can be downloaded to the local folder, and the
-package can be installed from the .tar file.
+ pip install -r requirements.txt
 
-Testing
-~~~~~~~
+3)From the command line, use the following command to install PUQ::
 
-The test suite requires the pytest_ and pytest-cov_ packages to be installed
-and can be run from the ``tests/`` directory of the source distribution by running::
+ python3 setup.py sdist bdist_wheel 
+ pip install ./dist/PUQ-0.1.0.tar.gz
+ 
+Once installed, a user should see ``build/`` and ``dist/`` directories created.
 
-./run-tests.sh
+Instructions for running the illustrative examples
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you have the source distribution, you can run the tests in the top-level
-directory containing the setup script with ::
+To replicate Figures~1--3, respectively:
 
- python setup.py test
+1)Go to the ``examples/`` directory.
 
-Further options are available for testing. To see a complete list of options, run::
+2)Execute the followings from the command line::
 
- ./run-tests.sh -h
+ python3 figure1b.py
+ python3 figure2.py
+ python3 figure3.py
 
-Coverage reports are produced under the relevant directory only if all tests are used.
+Running each script should not take more than 60 sec. See the figures (png files) saved under ``examples/`` directory.
 
-Documentation
-~~~~~~~~~~~~~
+Instructions for running the prominent empirical results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The documentation is stored in ``docs/`` and is compiled with the Sphinx Python
-documentation generator. It is written in the reStructuredText format. These
-files are hosted at `Read the Docs <http://PUQ.readthedocs.io>`_.
+Instructions are provided to replicate each panel in Figure~6.
 
-To compile the documentation, first ensure that Sphinx is installed. Then, to
-generate documentation, run command ``make html`` from terminal within this directory as follows ::
+To replicate the upper-left panel (banana function), execute the following from the command line::
 
- cd docs
- make html
+ python3 figure6.py -funcname banana
+ 
+Running this script takes about 2hrs on a personal Mac laptop. 
+Once completed, ``Figure6_banana.png`` is saved under ``examples/`` directory.
+ 
+To replicate the upper-right panel (bimodal function), execute the following from the command line::
 
-The HTML files are then stored in ``docs/_build/html``
+ python3 figure6.py -funcname bimodal
 
+Running this script takes about 2hrs on a personal Mac laptop. 
+Once completed, ``Figure6_bimodal.png`` is saved under ``examples/`` directory.
+ 
+To replicate the lower-left panel (unimodal function), execute the following from the command line::
 
-**Citation:**
+ python3 figure6.py -funcname unimodal
 
-- Please use the following to cite PUQ in a publication:
+Running this script takes about 1hr on a personal Mac laptop. 
+Once completed, ``Figure6_unimodal.png`` is saved under ``examples/`` directory.
+ 
+To replicate the lower-right panel (unidentifiable function), execute the following from the command line::
 
-.. code-block:: bibtex
+ python3 figure6.py -funcname unidentifiable
+ 
+Running this script takes about 2hrs on a personal Mac laptop. 
+Once completed, ``Figure6_unidentifiable.png`` is saved under ``examples/`` directory.
+  
+Final comments
+~~~~~~~~~~~~~~
 
-   @techreport{PUQ2022,
-     author      = {Özge Sürer, Matthew Plumlee, Stefan M. Wild},
-     title       = {PUQ Users Manual},
-     institution = {},
-     number      = {Version 0.1.0},
-     year        = {2022},
-     url         = {https://github.com/parallelUQ/PUQ}
-   }
+Type ``deactivate`` from the command line to deactivate the virtual environment if created.
 
-Examples
-~~~~~~~~
+Type ``pip uninstall PUQ`` from the command line to uninstall the package.
 
-We provide examples in the ``examples/`` directory to illustrate the basic usage
-of PUQ.
-
-.. _NumPy: http://www.numpy.org
-.. _pytest-cov: https://pypi.org/project/pytest-cov/
-.. _pytest: https://pypi.org/project/pytest/
-.. _Python: http://www.python.org
-.. _SciPy: http://www.scipy.org
-.. _libEnsemble: https://libensemble.readthedocs.io/en/main/

@@ -75,7 +75,7 @@ def fit(fitinfo, x, theta, f, epsilonPC=0.001,
     None.
 
     '''
-    print('Fitting...')
+    # print('Fitting...')
     f = f.T
     fitinfo['epsilonPC'] = epsilonPC
     hyp1 = lognugmean
@@ -112,7 +112,7 @@ def fit(fitinfo, x, theta, f, epsilonPC=0.001,
     return
 
 def update(fitinfo, x, theta, f, **kwargs):
-    print('Updating...')
+    #print('Updating...')
     f = f.T
     #print(fitinfo['f'].shape)
     #print(f.shape)

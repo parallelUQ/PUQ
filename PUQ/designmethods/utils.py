@@ -1,6 +1,4 @@
 import argparse
-import dill as pickle
-import os
 
 def parse_arguments():
     parser = argparse.ArgumentParser("Parameters for calibration")
@@ -34,21 +32,10 @@ def parse_arguments():
                         default='eivar',
                         type=str,
                         help='Acquisition function.') 
+    parser.add_argument("-funcname",
+                        metavar='N2',
+                        default='unimodal',
+                        type=str,
+                        help='Name of the function.') 
     args = parser.parse_args()
     return args
-
-def save_output(desing_obj, name, al_func, nworker, minibatch, seedno):
-    if not os.path.isdir('output'):
-        os.mkdir('output')
-        
-    design_path = 'output/' + name + '_' + al_func + '_w_' + str(nworker) + '_b_' + str(minibatch) + '_seed_' + str(seedno) + '.pkl'
-    with open(design_path, 'wb') as file:
-        pickle.dump(desing_obj, file)
-    
-def read_output(path1, name, al_func, nworker, minibatch, seedno):
-    
-    design_path = path1 + 'output/' + name + '_' + al_func + '_w_' + str(nworker) + '_b_' + str(minibatch) + '_seed_' + str(seedno) + '.pkl'
-    with open(design_path, 'rb') as file:
-        design_obj = pickle.load(file) 
-        
-    return design_obj

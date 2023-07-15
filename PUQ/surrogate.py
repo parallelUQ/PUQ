@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Sep  3 17:40:00 2022
-
-@author: ozgesurer
-"""
 
 """
 This module contains a class that implements the main emulation method.

@@ -1,10 +1,13 @@
 import numpy as np
-from PUQ.designmethods.SEQCALsupport import load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
+from PUQ.designmethods.gen_funcs.acquisition_funcs_support import get_emuvar, multiple_pdfs
+from PUQ.designmethods.gen_funcs.acquisition_funcs import maxvar, eivar, maxexp, rnd
+from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
 from libensemble.alloc_funcs.start_only_persistent import only_persistent_gens as alloc_f
 from libensemble.libE import libE
-from libensemble.tools import add_unique_random_streams
+from libensemble.tools import parse_args, save_libE_output, add_unique_random_streams
+from PUQ.prior import prior_dist
 
 def fit(fitinfo, data_cls, args):
 
@@ -56,9 +59,9 @@ def fit(fitinfo, data_cls, args):
         },
     }
     libE_specs = {'nworkers': nworkers, 'comms': 'local'}
-                 
+                                         
     persis_info = add_unique_random_streams({}, nworkers + 1)
-  
+
     # Currently just allow gen to exit if mse goes below threshold value
     exit_criteria = {'sim_max': max_evals}  # Now just a set number of sims.
 
@@ -83,15 +86,27 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         mini_batch      = gen_specs['user']['mini_batch']
         n_workers       = gen_specs['user']['nworkers'] 
         synth_info      = gen_specs['user']['synth_cls']
+        
         theta_torun     = synth_info.theta
-        n_x     = synth_info.d 
+        obsvar          = synth_info.obsvar
+        data            = synth_info.real_data
+        theta_limits    = synth_info.thetalimits
 
+
+        true_fevals = np.reshape(data[0, :], (1, data.shape[1]))
+
+        n_x     = synth_info.d 
+        n_realx = true_fevals.shape[1]
+        x       = synth_info.x
+        real_x  = synth_info.real_x
 
         obs_offset, theta_offset, generated_no = 0, 0, 0
         TV, HD = 1000, 1000
         fevals, pending, prev_pending, complete, prev_complete = None, None, None, None, None
         first_iter = True
         tag = 0
+
+        obsvar3d   = obsvar.reshape(1, n_x, n_x)
         update_model = False
         list_id = []
 
@@ -117,7 +132,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
 
             if first_iter:
-                print('Selecting theta for the first iteration...\n')
+                # print('Selecting theta for the first iteration...\n')
 
                 n_init = max(n_workers-1, n0)
                 theta  = theta_torun[0:n_init, :]
@@ -131,7 +146,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 
             else: 
                 if select_condition(complete, prev_complete, n_theta=mini_batch, n_initial=n0):
-                    print('Selecting theta...\n')
+                    # print('Selecting theta...\n')
                 
                     prev_complete = complete.copy()
                     new_theta = theta_torun[generated_no:(generated_no+mini_batch), :]
