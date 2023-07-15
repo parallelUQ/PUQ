@@ -85,6 +85,7 @@ if __name__ == "__main__":
     TV       = al_unimodal._info['TV']
     HD       = al_unimodal._info['HD']
     
+    print(theta_al)
     fig, ax = plt.subplots()    
     cp = ax.contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap='RdGy')
     ax.scatter(theta_al[10:, 0], theta_al[10:, 1], c='black', marker='+', zorder=2)
