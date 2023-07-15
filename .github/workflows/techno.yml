@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ["3.9"]
+        python-version: ["3.9", "3.10"]
 
     steps:
     - uses: actions/checkout@v2
@@ -26,6 +26,6 @@ jobs:
         python -m pip install pip==21.2.4
         python -m pip install -r requirements.txt
         pip install -e .
-    - name: Test with pytest
+    - name: Test with Figure 1
       run: |
         python ./examples/figure1b.py
