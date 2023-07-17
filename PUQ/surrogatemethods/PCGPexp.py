@@ -707,8 +707,7 @@ def postphimat(fitinfo, x, theta, obs, obsvar, theta_cand):
         rVh_4_3d = rVh_4.reshape(1, n_t, 1)
         cov3D = np.matmul(rVh_1_3d, rVh_4_3d)
         cov_cand_3D = infos[k]['sig2'] * (r_2_3D - cov3D)
-        
-        
+     
         #predvars_ref[:, k] = infos[k]['sig2'] * np.abs(1 - np.sum(rVh_1 ** 2, 1))
         predvars_cand[:, k] = infos[k]['sig2'] * np.abs(1 - np.sum(rVh_4 ** 2, 1))
         predvars_cand[:, k] += infos[k]['nug']
@@ -1018,14 +1017,15 @@ def postphimat3(fitinfo, theta, obs, obsvar, theta_cand):
     return eivar
 
 
+
 def postpred(fitinfo, x, theta, obs, obsvar):
 
-    #print(theta[0:10,])
+
     n_x       = len(x)
     n_tot_ref = theta.shape[0]
     n_ref     = int(n_tot_ref/n_x)
- 
     n_t       = fitinfo['theta'].shape[0]
+    
     
     predinfo = {}
     infos = fitinfo['emulist']
@@ -1038,9 +1038,9 @@ def postpred(fitinfo, x, theta, obs, obsvar):
 
     # n_ref x n_t
     rsave_1 = np.array(np.ones(len(infos)), dtype=object)
-
     # n_ref x n_ref
     rsave_3 = np.array(np.ones(len(infos)), dtype=object)
+
 
     # loop over principal components
     for k in range(0, len(infos)):
@@ -1054,15 +1054,14 @@ def postpred(fitinfo, x, theta, obs, obsvar):
                                   theta,
                                   infos[k]['hypcov'])
 
+
         # adjusted covariance matrix
         r_1 = (1 - infos[k]['nug']) * np.squeeze(rsave_1[infos[k]['hypind']])
-        #r_2 = (1 - infos[k]['nug']) * np.squeeze(rsave_2[infos[k]['hypind']])
         r_3 = (1 - infos[k]['nug']) * np.squeeze(rsave_3[infos[k]['hypind']])
-        #r_4 = (1 - infos[k]['nug']) * np.squeeze(rsave_4[infos[k]['hypind']])
 
         try:
             rVh_1 = r_1 @ infos[k]['Vh']
-            #rVh_4 = r_4.reshape(1, len(fitinfo['theta'])) @ infos[k]['Vh']
+
             
         except Exception:
             for i in range(0, len(infos)):
@@ -1079,45 +1078,36 @@ def postpred(fitinfo, x, theta, obs, obsvar):
         id_col = np.repeat(id_col, repeats=n_x, axis=0)
         
         r_3_3D = r_3[id_row[:, None], id_col].reshape(n_ref, n_x, n_x)
-        #r_2_3D = r_2.reshape(n_ref, n_x, 1)
+
     
         rVh_1_3d = rVh_1.reshape(n_ref, n_x, n_t)
         rVh_1_3dT = np.transpose(rVh_1_3d, (0, 2, 1))
         cov3D = np.matmul(rVh_1_3d, rVh_1_3dT)
         cov_ref_3D = infos[k]['sig2'] * (r_3_3D - cov3D)
 
+
         
         predmean_ref[:, k] = r_1 @ infos[k]['pw']
-        
-        #rVh_4_3d = rVh_4.reshape(1, n_t, 1)
-        #cov3D = np.matmul(rVh_1_3d, rVh_4_3d)
-        #cov_cand_3D = infos[k]['sig2'] * (r_2_3D - cov3D)
-        
-        
-        #predvars_ref[:, k] = infos[k]['sig2'] * np.abs(1 - np.sum(rVh_1 ** 2, 1))
-        #predvars_cand[:, k] = infos[k]['sig2'] * np.abs(1 - np.sum(rVh_4 ** 2, 1))
-        
-        #cov_ref = infos[k]['sig2'] * (r_3.reshape((theta.shape[0], theta.shape[0])) - rVh_1 @ rVh_1.T)
-        #cov_cand = infos[k]['sig2'] * (r_2.reshape((theta.shape[0], theta_cand.shape[0])) - rVh_1 @ rVh_4.T)
-      
 
-    
-    
+
     # calculate predictive mean and variance
     predinfo['mean'] = np.full((x.shape[0], int(theta.shape[0]/x.shape[0])), np.nan)
 
     pctscale     = (fitinfo['pcti'].T * fitinfo['standardpcinfo']['scale']).T
     Smat3D       = cov_ref_3D*(pctscale[:, :] ** 2)
 
+
     predinfo['mean'] = ((predmean_ref @ pctscale.T) +
                                     fitinfo['standardpcinfo']['offset']).T
     predinfo['mean'] = predinfo['mean'].reshape(n_ref, n_x)
 
-    d         = x.shape[0]
+
+    d     = x.shape[0]
+
     obsvar3D  = obsvar.reshape(1, n_x, n_x)
-    cov1      = 0.5*obsvar3D + Smat3D
-    cov2      = Smat3D + obsvar3D
- 
+    cov1 = 0.5*obsvar3D + Smat3D
+    cov2 = Smat3D + obsvar3D
+    # cov2 = obsvar3D
     p1 = multiple_pdfs(obs, predinfo['mean'], cov1)
     postmean = multiple_pdfs(obs, predinfo['mean'], cov2)
    

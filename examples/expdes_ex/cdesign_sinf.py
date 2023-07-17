@@ -4,14 +4,22 @@ import scipy.stats as sps
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
-from plots import plot_EIVAR, plot_LHS, obsdata, fitemu, create_test
+from plots import plot_EIVAR, plot_LHS, obsdata, fitemu, create_test, gather_data
 from smt.sampling_methods import LHS
 from test_funcs import sinfunc
 
-
+def add_result(method_name, phat, s):
+    rep = {}
+    rep['method'] = method_name
+    rep['MAD'] = np.mean(np.abs(phat - ptest))
+    rep['repno'] = s
+    return rep
 
 seeds = 5
+result = []
 for s in range(seeds):
+    
+    
     cls_data = sinfunc()
     cls_data.realdata(s)
     args         = parse_arguments()
@@ -43,39 +51,69 @@ for s in range(seeds):
                                  'prior': prior_func,
                                  'data_test': test_data,
                                  'max_evals': 50,
-                                 'type_init':None,
+                                 'type_init': None,
                                  'unknown_var': False,
                                  'design': False})
     
-    xt_acq = al_unimodal._info['theta']
-    f_acq   = al_unimodal._info['f']
-    TV_acq = al_unimodal._info['TV']
-    
-    
-    phat_eivar = fitemu(xt_acq, f_acq[:, None], xt_test, thetamesh, cls_data) 
-    plot_EIVAR(xt_acq, cls_data, ninit)
+    xt_eivar = al_unimodal._info['theta']
+    f_eivar  = al_unimodal._info['f']
+
+    phat_eivar, pvar_eivar = fitemu(xt_eivar, f_eivar[:, None], xt_test, thetamesh, cls_data) 
+    plot_EIVAR(xt_eivar, cls_data, ninit)
+    rep = add_result('eivar', phat_eivar, s)
+    result.append(rep)
     
     print(np.mean(np.abs(phat_eivar - ptest)))
     
+    plt.plot(thetamesh, phat_eivar, c='blue', linestyle='dashed')
+    plt.plot(thetamesh, ptest, c='black')
+    plt.fill_between(thetamesh, phat_eivar-np.sqrt(pvar_eivar), phat_eivar+np.sqrt(pvar_eivar), alpha=0.2)
+    plt.show()
+    
     # LHS 
     sampling = LHS(xlimits=cls_data.thetalimits, random_state=s)
-    xt_LHS   = sampling(50)
-    f_LHS    = np.zeros(len(xt_LHS))
-    for t_id, t in enumerate(xt_LHS):
-        f_LHS[t_id] = cls_data.function(xt_LHS[t_id, 0], xt_LHS[t_id, 1])
+    xt_lhs   = sampling(50)
+    f_lhs    = gather_data(xt_lhs, cls_data)
+    phat_lhs, pvar_lhs = fitemu(xt_lhs, f_lhs[:, None], xt_test, thetamesh, cls_data) 
     
-    phat_lhs = fitemu(xt_LHS, f_LHS[:, None], xt_test, thetamesh, cls_data) 
-    plot_LHS(xt_LHS, cls_data)
+    plot_LHS(xt_lhs, cls_data)
+    rep = add_result('lhs', phat_lhs, s)
+    result.append(rep)
+    
     print(np.mean(np.abs(phat_lhs - ptest)))
+
+    # rnd 
+    xt_rnd   = prior_func.rnd(50, seed=s)
+    f_rnd    = gather_data(xt_rnd, cls_data)
+    phat_rnd, pvar_rnd = fitemu(xt_rnd, f_rnd[:, None], xt_test, thetamesh, cls_data) 
     
+    plot_LHS(xt_rnd, cls_data)
+    rep = add_result('rnd', phat_rnd, s)
+    result.append(rep)
+
+    print(np.mean(np.abs(phat_rnd - ptest)))
+        
     # Unif
     t_unif = sps.uniform.rvs(0, 1, size=10)
     xvec = np.tile(cls_data.x.flatten(), len(t_unif))
     xt_unif   = np.concatenate((xvec[:, None], np.repeat(t_unif, len(cls_data.x))[:, None]), axis=1)
-    f_unif    = np.zeros(len(xt_unif))
-    for t_id, t in enumerate(xt_unif):
-        f_unif[t_id] = cls_data.function(xt_unif[t_id, 0], xt_unif[t_id, 1])
+    f_unif    = gather_data(xt_unif, cls_data)
+    phat_unif, pvar_unif = fitemu(xt_unif, f_unif[:, None], xt_test, thetamesh, cls_data)
     
-    phat_unif = fitemu(xt_unif, f_unif[:, None], xt_test, thetamesh, cls_data)
     plot_LHS(xt_unif, cls_data)
+    rep = add_result('unif', phat_unif, s)
+    result.append(rep)
+
+    
     print(np.mean(np.abs(phat_unif - ptest)))
+    
+    plt.plot(thetamesh, phat_unif, c='blue', linestyle='dashed')
+    plt.plot(thetamesh, ptest, c='black')
+    plt.fill_between(thetamesh, phat_unif-np.sqrt(pvar_unif), phat_unif+np.sqrt(pvar_unif), alpha=0.2)
+    plt.show()
+
+
+import pandas as pd
+import seaborn as sns
+df = pd.DataFrame(result)
+sns.boxplot(x='method', y='MAD', data=df)

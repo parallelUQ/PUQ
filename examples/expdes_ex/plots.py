@@ -81,16 +81,27 @@ def fitemu(xt, f, xt_test, thetamesh, cls_data):
                    xt, 
                    f, 
                    method='PCGPexp')
+    from PUQ.surrogatemethods.PCGPexp import  postpred
+    pmeanhat, pvarhat = postpred(emu._info, cls_data.x, xt_test, cls_data.real_data, cls_data.obsvar)
     
-    emupredict     = emu.predict(x=x_emu, theta=xt_test)
-    emumean        = emupredict.mean()
-    emumean = emumean.reshape(len(thetamesh), len(cls_data.x))
+
+    #emupredict     = emu.predict(x=x_emu, theta=xt_test)
+    #emumean        = emupredict.mean()
+    #emumean = emumean.reshape(len(thetamesh), len(cls_data.x))
     
-    posttesthat = np.zeros(len(thetamesh))
-    for i in range(emumean.shape[0]):
-        mean = emumean[i, :] 
-        rnd = sps.multivariate_normal(mean=mean, cov=cls_data.obsvar)
-        posttesthat[i] = rnd.pdf(cls_data.real_data)
-        
-    return posttesthat
+    #posttesthat_c = np.zeros(len(thetamesh))
+    #for i in range(emumean.shape[0]):
+    #    mean = emumean[i, :] 
+    #    rnd = sps.multivariate_normal(mean=mean, cov=cls_data.obsvar)
+    #    posttesthat_c[i] = rnd.pdf(cls_data.real_data)
+
+    #print(np.round(posttesthat_c - posttesthat, 4))
+    return pmeanhat, pvarhat
+
+def gather_data(xt, cls_data):
+    f    = np.zeros(len(xt))
+    for t_id, t in enumerate(xt):
+        f[t_id] = cls_data.function(xt[t_id, 0], xt[t_id, 1])
+    
+    return f
     

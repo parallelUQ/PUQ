@@ -97,22 +97,6 @@ def fit(fitinfo, data_cls, args):
     fitinfo['HD'] = H['HD']
     return
 
-    
-def obj_mle(parameter, args):
-    emu = args[0]
-    x_u = args[2]
-    x_emu = args[3]
-    true_fevals_u = args[4]
-
-    
-    xp      = np.concatenate((x_u, np.repeat(parameter, len(x_u))[:, None]), axis=1)
-    emupred = emu.predict(x=x_emu, theta=xp)
-    mu_p    = emupred.mean()
-    var_p   = emupred.var()
-    diff    = (true_fevals_u.flatten() - mu_p.flatten()).reshape((len(x_u), 1))
-    obj     = 0.5*(diff.T@diff)
-    
-    return obj.flatten()
                 
 def gen_f(H, persis_info, gen_specs, libE_info):
 
@@ -196,35 +180,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
                 prev_pending   = pending.copy()
                 update_model   = False
-                if test_data is not None:
-                    #print(theta)
-                    obsvar3d       = np.repeat(obsvar.reshape(1, n_x_des, n_x_des), len(th_mesh), axis=0)
-                    emupredict     = emu.predict(x=x_emu, theta=thetatest)
-                    emumean        = emupredict.mean()
-                    #print(np.shape(emumean))
-                    #print(emumean[0, 0:10])
-                    emumean = emumean.reshape(len(th_mesh), len(real_x))
-                    #print(np.shape(emumean))
-                    #print(emumean[0:2, 0:5])
-                    # emuvar, is_cov = get_emuvar(emupredict)
-                    #emumeanT       = emumean.T
-                    #print(true_fevals.shape)
-                    #print(emumeanT.shape)
-                    #print(obsvar3d.shape)
-                    # emuvarT        = emuvar.transpose(1, 0, 2)
-                    # var_obsvar1    = emuvarT + obsvar3d 
-                    posttesthat = np.zeros(len(th_mesh))
-                    for i in range(emumean.shape[0]):
-                        mean = emumean[i, :] 
-                        rnd = sps.multivariate_normal(mean=mean, cov=obsvar)
-                        posttesthat[i] = rnd.pdf(true_fevals)
-        
-                    #posttesthat    = multiple_pdfs(true_fevals, 
-                    #                               emumean, 
-                    #                               obsvar3d)
-                    
-                    TV = np.mean(np.abs(posttest - posttesthat))
-                    
+
             if first_iter:
                # print('Selecting theta for the first iteration...\n')
 

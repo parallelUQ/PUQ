@@ -39,21 +39,6 @@ def eivar_exp(n,
         clist   = prior_func.rnd(n_clist, None)
         
     ###
-    t_unif = sps.uniform.rvs(0, 1, size=20)
-    xvec = np.tile(x.flatten(), len(t_unif))
-    clist_add   = np.concatenate((xvec[:, None], np.repeat(t_unif, len(x))[:, None]), axis=1)
-    #print(clist_add)
-    clist = np.concatenate((clist, clist_add), axis=0)
-    #print(np.shape(clist))
-    ###
-    
-    ###
-    #th = rand(100)
-    #xvec = np.tile(x.flatten(), len(th))
-    #clist   = np.concatenate((xvec[:, None], np.repeat(th, len(x))[:, None]), axis=1)
-    ###
-    
-    ###
     xdesign_vec = np.tile(x.flatten(), len(thetamesh))
     thetatest   = np.concatenate((xdesign_vec[:, None], np.repeat(thetamesh, len(x))[:, None]), axis=1)
     ###
