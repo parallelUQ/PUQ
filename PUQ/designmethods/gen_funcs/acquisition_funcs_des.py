@@ -37,13 +37,14 @@ def eivar_exp(n,
     else:
         clist   = prior_func.rnd(n_clist, None)
     
-    
-    sampling = LHS(xlimits=thetalimits[0:2])
-    t_unif   = sampling(50)
-    x_unif   = np.repeat(x, 50, axis=0)
-    t_unif_rep = np.tile(t_unif, (9,1))
-    n_clist = 50*9
-    clist = np.concatenate((x_unif, t_unif_rep), axis=1) 
+        # n_clist  = 50*9
+        # sampling = LHS(xlimits=thetalimits[0:2])
+        # t_unif   = sampling(50)
+        # x_unif   = np.repeat(x, 50, axis=0)
+        # t_unif_rep = np.tile(t_unif, (9,1))
+        # clist = np.concatenate((x_unif, t_unif_rep), axis=1) 
+
+
     # temp values
     Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, x, thetatest, obs, obsvar)
     
