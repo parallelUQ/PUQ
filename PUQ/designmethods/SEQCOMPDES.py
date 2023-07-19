@@ -128,7 +128,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         if test_data is not None:
             thetatest, th_mesh, x_mesh, posttest, ftest, priortest = test_data['theta'], test_data['th'], test_data['xmesh'], test_data['p'], test_data['f'], test_data['p_prior']
 
-
+        
         true_fevals = np.reshape(data[0, :], (1, data.shape[1]))
         n_x     = synth_info.d 
         x       = synth_info.x
@@ -194,7 +194,6 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 else:
                     theta  = prior_func.rnd(n_init, seed) 
                 
-
                 fevals, pending, prev_pending, complete, prev_complete = create_arrays(n_x, n_init)
                             
                 H_o    = np.zeros(len(theta), dtype=gen_specs['out'])
@@ -211,6 +210,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                     if type_init == 'to_run':
                         new_theta = theta_torun[generated_no:(generated_no+mini_batch), :]
                     else:
+            
                         new_theta = acquisition_f(mini_batch, 
                                                   x_u,
                                                   real_x,

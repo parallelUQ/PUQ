@@ -1,5 +1,5 @@
 import numpy as np
-from PUQ.surrogatemethods.PCGPexp import postphimat, postpred, postphimat2, postphimat3
+from PUQ.surrogatemethods.PCGPexp import temp_postphimat, postphimat, postpred, postphimat2, postphimat3
 from smt.sampling_methods import LHS
 import matplotlib.pyplot as plt
 from numpy.random import rand
@@ -28,31 +28,31 @@ def eivar_exp(n,
         emu.update(theta=theta_uc, f=fevalshat_uc.mean()) 
 
     p    = theta.shape[1]
-
-
+    
     # Create a candidate list
-    n_clist = 100
+    n_clist = 500
     if type_init == 'LHS':
         sampling = LHS(xlimits=thetalimits)
         clist = sampling(n_clist)
     else:
         clist   = prior_func.rnd(n_clist, None)
-        
-    ###
-    xdesign_vec = np.tile(x.flatten(), len(thetamesh))
-    thetatest   = np.concatenate((xdesign_vec[:, None], np.repeat(thetamesh, len(x))[:, None]), axis=1)
-    ###
     
-    eivar_max = -np.inf
-    th_max = 0
-    for xt_c in clist:
-        eivar_val = postphimat(emu._info, x, thetatest, obs, obsvar, xt_c.reshape(1, 2))
-        if eivar_val > eivar_max:
-            eivar_max = 1*eivar_val
-            th_max = 1*xt_c
-        
-    th_cand = th_max.reshape(1, p)
- 
+    
+    sampling = LHS(xlimits=thetalimits[0:2])
+    t_unif   = sampling(50)
+    x_unif   = np.repeat(x, 50, axis=0)
+    t_unif_rep = np.tile(t_unif, (9,1))
+    n_clist = 50*9
+    clist = np.concatenate((x_unif, t_unif_rep), axis=1) 
+    # temp values
+    Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, x, thetatest, obs, obsvar)
+    
+    eivar_val = np.zeros(n_clist)
+    for xt_id, xt_c in enumerate(clist):
+        eivar_val[xt_id] = postphimat(emu._info, x, thetatest, obs, obsvar, xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
+
+    th_cand = clist[np.argmax(eivar_val), :].reshape(1, p)
+    print(th_cand)
     return th_cand  
 
 def eivar_new_exp(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubias=None, des=None):

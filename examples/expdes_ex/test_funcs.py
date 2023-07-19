@@ -91,8 +91,8 @@ class gohbostos:
         self.out         = [('f', float)]
         self.d           = 1
         self.p           = 4
-        x = np.linspace(0, 1, 5)
-        y = np.linspace(0, 1, 5)
+        x = np.linspace(0, 1, 3)
+        y = np.linspace(0, 1, 3)
         self.x           = np.array([[xx, yy] for xx in x for yy in y])
         self.real_x      = self.x 
         self.theta_torun = None

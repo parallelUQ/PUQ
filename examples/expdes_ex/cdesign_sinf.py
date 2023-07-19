@@ -15,14 +15,16 @@ def add_result(method_name, phat, s):
     rep['repno'] = s
     return rep
 
+cls_data = sinfunc()
+cls_data.realdata(0)
+args         = parse_arguments()
+    
 seeds = 5
 result = []
 for s in range(seeds):
     
     
-    cls_data = sinfunc()
-    cls_data.realdata(s)
-    args         = parse_arguments()
+
 
     # Observe
     obsdata(cls_data)
