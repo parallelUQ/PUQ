@@ -1,5 +1,9 @@
 name: black
-on: [pull_request]
+on:
+  push:
+    branches: [ "techno_paper"]
+  pull_request:
+    branches: [ "techno_paper"]
 jobs:
   linter_name:
     name: black
