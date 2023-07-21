@@ -3,12 +3,8 @@ import argparse
 
 def parse_arguments():
     parser = argparse.ArgumentParser("Parameters for calibration")
-    parser.add_argument(
-        "-nworkers", metavar="N2", default=2, type=int, help="Number of workers."
-    )
-    parser.add_argument(
-        "-minibatch", metavar="N2", default=1, type=int, help="Minibatch size."
-    )
+    parser.add_argument("-nworkers", metavar="N2", default=2, type=int, help="Number of workers.")
+    parser.add_argument("-minibatch", metavar="N2", default=1, type=int, help="Minibatch size.")
     parser.add_argument(
         "-max_eval",
         metavar="N2",
