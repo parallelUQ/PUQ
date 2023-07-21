@@ -16,15 +16,19 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
-    install_requires=['pandas',
-                      'matplotlib',
-                      'libensemble==0.9.1',
-                      'torch',
-                      'scikit-learn'
-                      ],
-    ext_modules=[
-        Extension('PUQ.surrogatesupport.matern_covmat', sources=['PUQ/surrogatesupport/matern_covmat.pyx']),
+    python_requires=">=3.6",
+    install_requires=[
+        "pandas",
+        "matplotlib",
+        "libensemble==0.9.1",
+        "torch",
+        "scikit-learn",
     ],
-    include_dirs=[numpy.get_include()]
+    ext_modules=[
+        Extension(
+            "PUQ.surrogatesupport.matern_covmat",
+            sources=["PUQ/surrogatesupport/matern_covmat.pyx"],
+        ),
+    ],
+    include_dirs=[numpy.get_include()],
 )
