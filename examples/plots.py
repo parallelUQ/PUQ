@@ -51,7 +51,7 @@ def plotline(df, methods, rep_no, w=2, b=1, s="banana", ylim=[0.000001, 1], idst
 
     
 
-    if os.path.exists('ensemble.log'):
-        os.remove('ensemble.log')
-    if os.path.exists('libE_stats.txt'):
-        os.remove('libE_stats.txt')
+    #if os.path.exists('ensemble.log'):
+    #    os.remove('ensemble.log')
+    #if os.path.exists('libE_stats.txt'):
+    #    os.remove('libE_stats.txt')

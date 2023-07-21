@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as sps
-import os
+#import os
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments
 from PUQ.prior import prior_dist
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     ax.tick_params(axis="both", labelsize=16)
     plt.savefig("Figure1b.png", bbox_inches="tight")
 
-    if os.path.exists('ensemble.log'):
-        os.remove('ensemble.log')
-    if os.path.exists('libE_stats.txt'):
-        os.remove('libE_stats.txt')
+    #if os.path.exists('ensemble.log'):
+    #    os.remove('ensemble.log')
+    #if os.path.exists('libE_stats.txt'):
+    #    os.remove('libE_stats.txt')
