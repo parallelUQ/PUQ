@@ -5,8 +5,6 @@ from PUQ.surrogate import emulator
 from PUQ.posterior import posterior
 from PUQ.designmethods.gen_funcs.acquisition_funcs_support import (
     get_emuvar,
-    multiple_pdfs,
-    compute_postvar,
     compute_eivar_fig,
 )
 

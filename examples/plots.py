@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+import os
 
 def plotline(df, methods, rep_no, w=2, b=1, s="banana", ylim=[0.000001, 1], idstart=0):
     colors = ["red", "green", "blue", "cyan", "magenta"]
@@ -35,12 +35,6 @@ def plotline(df, methods, rep_no, w=2, b=1, s="banana", ylim=[0.000001, 1], idst
             linewidth=2,
             label=m,
         )
-        # ax.errorbar(range(0, len(mslist)),
-        #            mslist,
-        #            yerr=sdlist,
-        #            ls='',
-        #            color=colors[m_id],
-        #            errorevery=40)
 
         maxval = max(maxval, max(mslist))
         minval = min(minval, min(mslist))
@@ -55,7 +49,9 @@ def plotline(df, methods, rep_no, w=2, b=1, s="banana", ylim=[0.000001, 1], idst
     ax.tick_params(axis="both", labelsize=ft)
     plt.savefig("Figure6_" + s + ".png", bbox_inches="tight")
 
-    import os
+    
 
-    os.remove("ensemble.log")
-    os.remove("libE_stats.txt")
+    if os.path.exists('ensemble.log'):
+        os.remove('ensemble.log')
+    if os.path.exists('libE_stats.txt'):
+        os.remove('libE_stats.txt')
