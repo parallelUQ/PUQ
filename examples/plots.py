@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import os
 
 
 def plotline(df, methods, rep_no, w=2, b=1, s="banana", ylim=[0.000001, 1], idstart=0):
@@ -50,7 +49,3 @@ def plotline(df, methods, rep_no, w=2, b=1, s="banana", ylim=[0.000001, 1], idst
     ax.tick_params(axis="both", labelsize=ft)
     plt.savefig("Figure6_" + s + ".png", bbox_inches="tight")
 
-    # if os.path.exists('ensemble.log'):
-    #    os.remove('ensemble.log')
-    # if os.path.exists('libE_stats.txt'):
-    #    os.remove('libE_stats.txt')
