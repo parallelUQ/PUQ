@@ -39,7 +39,7 @@ def compute_postvar(obs, emumean, covmat1, covmat2, coef):
     part1 = part1 * (1 / coef)
 
     # part2 = compute_likelihood(emumean, emuvar, obs, obsvar, is_cov)
-    part2 = part2**2
+    part2 = part2 ** 2
 
     return part1 - part2
 
@@ -73,7 +73,7 @@ def compute_eivar(summatrix, emuphi, emumean, emuvar, obs, is_cov, prioreval):
     denum = multiple_determinants(covmat2)
     part2 = rndpdf / np.sqrt(denum)
     # print(part2.shape)
-    return -np.sum(part2 * (prioreval**2))
+    return -np.sum(part2 * (prioreval ** 2))
 
 
 def multiple_pdfs(x, means, covs):

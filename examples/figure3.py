@@ -79,7 +79,7 @@ if __name__ == "__main__":
             var_obsvar1 = emuvarT + obsvar3d
             var_obsvar2 = emuvarT + 0.5 * obsvar3d
             diags = np.diag(obsvar[real_x, real_x.T])
-            coef = (2**d_real) * (np.sqrt(np.pi) ** d_real) * np.sqrt(np.prod(diags))
+            coef = (2 ** d_real) * (np.sqrt(np.pi) ** d_real) * np.sqrt(np.prod(diags))
 
             # Get the n_ref x d x d x n_cand phi matrix
             emuphi4d = emu.acquisition(x=x, theta1=theta_test, theta2=clist)

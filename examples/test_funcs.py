@@ -38,7 +38,7 @@ class banana:
     def __init__(self):
         self.data_name = "banana"
         self.thetalimits = np.array([[-20, 20], [-10, 5]])
-        self.obsvar = np.array([[10**2, 0], [0, 1]])
+        self.obsvar = np.array([[10 ** 2, 0], [0, 1]])
         self.real_data = np.array([[1, 3]], dtype="float64")
         self.out = [("f", float, (2,))]
         self.p = 2
@@ -47,7 +47,7 @@ class banana:
         self.real_x = np.arange(0, self.d)[:, None]
 
     def function(self, theta1, theta2):
-        f = np.array([theta1, theta2 + 0.03 * theta1**2])
+        f = np.array([theta1, theta2 + 0.03 * theta1 ** 2])
         return f
 
     def sim(self, H, persis_info, sim_specs, libE_info):
@@ -101,7 +101,7 @@ class bimodal:
         self.real_x = np.arange(0, self.d)[:, None]
 
     def function(self, theta1, theta2):
-        f = np.array([theta2 - theta1**2, theta2 - theta1])
+        f = np.array([theta2 - theta1 ** 2, theta2 - theta1])
         return f
 
     def sim(self, H, persis_info, sim_specs, libE_info):
