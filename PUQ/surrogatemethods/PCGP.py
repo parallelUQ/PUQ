@@ -295,7 +295,7 @@ def predict(predinfo, fitinfo, x, theta, **kwargs):
                 predvars_gradtheta[:, k, :] = -(infos[k]["sig2"] * 2) * np.einsum(
                     "ij,ijk->ik", rVh2, dr
                 )
-        predvars[:, k] = infos[k]["sig2"] * np.abs(1 - np.sum(rVh ** 2, 1))
+        predvars[:, k] = infos[k]["sig2"] * np.abs(1 - np.sum(rVh**2, 1))
 
     # calculate predictive mean and variance
     predinfo["mean"] = np.full((x.shape[0], theta.shape[0]), np.nan)
@@ -427,7 +427,7 @@ def acquisition(fitinfo, x, theta1, theta2, **kwargs):
         )
         # print('predcov:', predcov.shape)
 
-        predvars_2[:, k] = infos[k]["sig2"] * np.abs(1 - np.sum(rVh_2 ** 2, 1))
+        predvars_2[:, k] = infos[k]["sig2"] * np.abs(1 - np.sum(rVh_2**2, 1))
         predvars_2[:, k] += infos[k]["nug"]
 
         # print('predvars_2:', predvars_2.shape)
@@ -466,7 +466,7 @@ def predictlpdf(predinfo, f, return_grad=False, addvar=0, **kwargs):
     Gf = predinfo["phi"].T * (1 / np.sqrt(totvar))
     Gfrf = Gf @ rf
     Gf2 = Gf @ Gf.T
-    likv = np.sum(rf ** 2, 0)
+    likv = np.sum(rf**2, 0)
     if return_grad:
         rf2 = -(
             predinfo["mean_gradtheta"].transpose(2, 1, 0) * (1 / np.sqrt(totvar))
@@ -525,10 +525,10 @@ def __standardizef(fitinfo, offset=None, scale=None):
 
     # Assigning new values to the dictionary
     U, S, _ = np.linalg.svd(fs.T, full_matrices=False)
-    Sp = S ** 2 - epsilonPC
+    Sp = S**2 - epsilonPC
     Up = U[:, Sp > 0]
 
-    extravar = np.nanmean((fs - fs @ Up @ Up.T) ** 2, 0) * (scale ** 2)
+    extravar = np.nanmean((fs - fs @ Up @ Up.T) ** 2, 0) * (scale**2)
 
     standardpcinfo = {
         "offset": offset,
@@ -555,7 +555,7 @@ def __PCs(fitinfo):
         S = fitinfo["standardpcinfo"]["S"]
     else:
         U, S, _ = np.linalg.svd(fs.T, full_matrices=False)
-    Sp = S ** 2 - epsilonPC
+    Sp = S**2 - epsilonPC
     pct = U[:, Sp > 0]
     pcw = np.sqrt(Sp[Sp > 0])
 
@@ -747,7 +747,7 @@ def __fitGP1d(
         fcenter = Vh.T @ g
         subinfo["Vh"] = Vh
         n = subinfo["R"].shape[0]
-        subinfo["sig2"] = (np.mean(fcenter ** 2) * n + sig2ofconst) / (n + sig2ofconst)
+        subinfo["sig2"] = (np.mean(fcenter**2) * n + sig2ofconst) / (n + sig2ofconst)
         subinfo["Rinv"] = V @ np.diag(1 / W) @ V.T
     else:
         subinfo["hyp"] = hypn
@@ -764,7 +764,7 @@ def __fitGP1d(
         W, V = np.linalg.eigh(subinfo["R"])
         Vh = V / np.sqrt(np.abs(W))
         fcenter = Vh.T @ g
-        subinfo["sig2"] = (np.mean(fcenter ** 2) * n + sig2ofconst) / (n + sig2ofconst)
+        subinfo["sig2"] = (np.mean(fcenter**2) * n + sig2ofconst) / (n + sig2ofconst)
         subinfo["Rinv"] = Vh @ Vh.T
         subinfo["Vh"] = Vh
     subinfo["pw"] = subinfo["Rinv"] @ g
@@ -785,7 +785,7 @@ def __negloglik(hyp, info):
     n = info["g"].shape[0]
 
     sig2ofconst = info["sig2ofconst"]
-    sig2hat = (n * np.mean(fcenter ** 2) + sig2ofconst) / (n + sig2ofconst)
+    sig2hat = (n * np.mean(fcenter**2) + sig2ofconst) / (n + sig2ofconst)
     negloglik = 1 / 2 * np.sum(np.log(np.abs(W))) + 1 / 2 * n * np.log(sig2hat)
     negloglik += 0.5 * np.sum(
         ((10 ** (-8) + hyp - info["hypregmean"]) / (info["hypregstd"])) ** 2
@@ -816,7 +816,7 @@ def __negloglikgrad(hyp, info):
     n = info["g"].shape[0]
 
     sig2ofconst = info["sig2ofconst"]
-    sig2hat = (n * np.mean(fcenter ** 2) + sig2ofconst) / (n + sig2ofconst)
+    sig2hat = (n * np.mean(fcenter**2) + sig2ofconst) / (n + sig2ofconst)
     dnegloglik = np.zeros(dR.shape[2])
     Rinv = Vh @ Vh.T
 

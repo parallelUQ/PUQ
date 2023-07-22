@@ -57,7 +57,7 @@ def maxvar(
     obsvar3d = obsvar.reshape(1, d, d)
     diags = np.diag(obsvar[real_x, real_x.T])
     d_real = real_x.shape[0]
-    coef = (2 ** d_real) * (np.sqrt(np.pi) ** d_real) * np.sqrt(np.prod(diags))
+    coef = (2**d_real) * (np.sqrt(np.pi) ** d_real) * np.sqrt(np.prod(diags))
 
     # Create a candidate list.
     n_clist = 100 * n

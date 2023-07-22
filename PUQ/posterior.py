@@ -23,7 +23,7 @@ class posterior(object):
         obsvar3d = obsvar.reshape(1, d, d)
         diags = np.diag(obsvar[real_x, real_x.T])
         d_real = real_x.shape[0]
-        coef = (2 ** d_real) * (np.sqrt(np.pi) ** d_real) * np.sqrt(np.prod(diags))
+        coef = (2**d_real) * (np.sqrt(np.pi) ** d_real) * np.sqrt(np.prod(diags))
 
         emupred_test = emu.predict(x=data_cls.x, theta=theta)
         emumean = emupred_test.mean()
@@ -33,7 +33,7 @@ class posterior(object):
         var_obsvar1 = emuvarT + obsvar3d
         var_obsvar2 = emuvarT + 0.5 * obsvar3d
         diags = np.diag(obsvar[real_x, real_x.T])
-        coef = (2 ** d_real) * (np.sqrt(np.pi) ** d_real) * np.sqrt(np.prod(diags))
+        coef = (2**d_real) * (np.sqrt(np.pi) ** d_real) * np.sqrt(np.prod(diags))
 
         postmean = multiple_pdfs(
             obs, emumeanT[:, real_x.flatten()], var_obsvar1[:, real_x, real_x.T]
@@ -76,7 +76,7 @@ def compute_postvar(obs, emumean, covmat1, covmat2, coef):
     part1 = part1 * (1 / coef)
 
     # part2 = compute_likelihood(emumean, emuvar, obs, obsvar, is_cov)
-    part2 = part2 ** 2
+    part2 = part2**2
 
     return part1 - part2
 
