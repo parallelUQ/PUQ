@@ -48,4 +48,3 @@ def plotline(df, methods, rep_no, w=2, b=1, s="banana", ylim=[0.000001, 1], idst
     ax.set_ylabel("MAD", fontsize=ft)
     ax.tick_params(axis="both", labelsize=ft)
     plt.savefig("Figure6_" + s + ".png", bbox_inches="tight")
-
