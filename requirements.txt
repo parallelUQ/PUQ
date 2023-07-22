@@ -1,4 +1,4 @@
 numpy
 scipy
-Cython
+Cython==0.29.24
 wheel
