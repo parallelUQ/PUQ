@@ -38,7 +38,7 @@ procedure to prevent any conflict, and the code runs smoothly.
 Installation
 ~~~~~~~~~~~~
 
-The package can be installed from the .tar file.
+To install the PUQ package:
 
 1)Go to the directory of the source code (if a user has not done so yet).
 
@@ -48,10 +48,15 @@ The package can be installed from the .tar file.
 
 3)From the command line, use the following command to install PUQ::
 
+ pip install -e .
+
+Once installed, a user should see ``build/`` directory created.
+
+As an alternative to 'pip install -e .' in Step 3, the package can be installed from the .tar file::
+
  python3 setup.py sdist bdist_wheel 
  pip install ./dist/PUQ-0.1.0.tar.gz
  
-Once installed, a user should see ``build/`` and ``dist/`` directories created.
 
 Instructions for running the illustrative examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
