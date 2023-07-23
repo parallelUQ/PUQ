@@ -19,7 +19,9 @@ Set up
 We recommend creating a Python virtual environment within the working directory of PUQ. 
 If a virtual environment is created, PUQ's required packages are installed and 
 isolated from those installed a priori. Creating a virtual environment will also prevent
-having conflicting packages on a user's machine. 
+having conflicting packages on a user's machine. You may need to install the virtual 
+environment on your system (if a user's system does not have it), for example, 
+with 'apt install python3.9-venv'
 
 1)Extract the zipped file.
 
