@@ -52,7 +52,7 @@ To install the PUQ package:
 
 Once installed, a user should see ``build/`` directory created.
 
-As an alternative to 'pip install -e .' in Step 3, the package can be installed from the .tar file::
+As an alternative to 'pip install -e .' in Step 3, the package can be installed from the .tar file as well::
 
  python3 setup.py sdist bdist_wheel 
  pip install ./dist/PUQ-0.1.0.tar.gz
