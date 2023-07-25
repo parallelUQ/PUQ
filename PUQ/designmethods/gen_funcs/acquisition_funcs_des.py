@@ -45,16 +45,106 @@ def eivar_exp(n,
         # clist = np.concatenate((x_unif, t_unif_rep), axis=1) 
 
 
-    # temp values
-    Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, x, thetatest, obs, obsvar)
+    n_x = x.shape[0]
+    thetatest = np.array([np.concatenate([xc, th]) for th in thetamesh for xc in x ])
+
+    Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, thetatest, obs, obsvar)
     
     eivar_val = np.zeros(n_clist)
     for xt_id, xt_c in enumerate(clist):
-        eivar_val[xt_id] = postphimat(emu._info, x, thetatest, obs, obsvar, xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
+        eivar_val[xt_id] = postphimat(emu._info, n_x, thetatest, obs, obsvar, xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
 
     th_cand = clist[np.argmax(eivar_val), :].reshape(1, p)
     print(th_cand)
     return th_cand  
+
+
+
+def eivar_des_updated(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias=None, des=None):
+
+    # nf x d_x
+    x_temp = np.array([e['x'] for e in des])[:, None]
+    # 1 x nf
+    f_temp = np.array([np.mean(e['feval']) for e in des])[None, :]
+    r_temp = [e['rep'] for e in des]
+    
+    # Create a candidate list
+    n_clist = 100
+    clist   = prior_func.rnd(n_clist, None)
+    xclist  = clist[:, 0]
+
+    nx_ref = x_mesh.shape[0]
+    dx = x_mesh.shape[1]
+    nt_ref = th_mesh.shape[0]
+    dt = th_mesh.shape[1]
+    
+    nf = x_temp.shape[0]
+    
+    # nx_ref x d_x
+    x_ref     = 1*x_mesh 
+    # nt_ref x d_t
+    theta_ref = 1*th_mesh
+
+    # Get estimate for real data at theta_mle for reference x
+    # nx_ref x (d_x + d_t)
+    xt_ref = np.concatenate((x_ref, np.repeat(theta_mle, nx_ref)[:, None]), axis=1)
+    # 1 x nx_ref
+    y_ref  = emu.predict(x=x_emu, theta=xt_ref).mean()
+
+    # nx_ref x nf
+    f_temp_rep  = np.repeat(f_temp, nx_ref, axis=0)
+    #x_temp_rep  = np.tile(x_temp.T, [nx_ref, 1])
+    
+    # nx_ref x (nf + 1)
+    #x_field_rep = np.concatenate((x_temp_rep, x_ref), axis=1)
+    f_field_rep = np.concatenate((f_temp_rep, y_ref.T), axis=1)
+    f_field_all = np.repeat(f_field_rep, nt_ref, axis=0)
+    # (d_x + d_ref + d_t) x (nx_ref x nt_ref)
+    #xflat = np.repeat(x_field_rep, theta_ref.shape[0], axis=0) #
+    #xflat = xflat.flatten()[:, None]
+    
+    #tr = np.repeat(theta_ref, x_field_rep.shape[1])
+    #tr = np.tile(tr, [nx_ref, 1]).flatten()[:, None]
+    
+    # (nx_ref x nt_ref x nf) x (d_x + d_t)
+    #xf_thmesh = np.concatenate((xflat, tr), axis=1)
+
+    xs = [np.concatenate([x_temp, xc[:, None]], axis=0) for xc in x_ref]
+    ts = [np.repeat(th[:, None], nf + 1, axis=0) for th in theta_ref]
+    mesh_grid = [np.concatenate([xc, th], axis=1).tolist() for xc in xs for th in ts]
+    mesh_grid = np.array([m for mesh in mesh_grid for m in mesh])
+    
+    
+    obsvar_field  = np.diag(np.repeat(synth_info.sigma2, f_field_rep.shape[1]))
+    n_x = obsvar_field.shape[0]
+    
+    Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, mesh_grid, f_field_all, obsvar_field)
+    
+    #print('ch')
+    #print(np.sum(xf_thmesh - mesh_grid))
+    eivar_val = np.zeros(len(xclist))
+    eivar_valtry = np.zeros(len(xclist))
+    
+    ftry = np.repeat(f_field_rep, th_mesh.shape[0], axis=0)
+    #print(ftry.shape)
+    theta_mle = theta_mle.reshape(1, dt)
+    for xt_id, x_c in enumerate(xclist):
+        x_cand = x_c.reshape(1, dx)
+        xt_cand = np.concatenate([x_cand, theta_mle], axis=1)
+        #eivar_valtry[xt_id] = postphimat(emu._info, n_x, xf_thmesh, np.repeat(f_field_rep, th_mesh.shape[0], axis=0), obsvar_field, xt_cand, Smat3D, rVh_1_3d, pred_mean)
+        eivar_val[xt_id] = postphimat(emu._info, n_x, mesh_grid, f_field_all, obsvar_field, xt_cand, Smat3D, rVh_1_3d, pred_mean)
+
+    #print( np.sum(eivar_valtry-eivar_val))
+    #print(eivar_val)
+    minid = np.argmax(eivar_val)
+    xnew  = xclist[minid]
+    y_temp    = synth_info.function(xnew, synth_info.true_theta) + np.random.normal(0, np.sqrt(synth_info.sigma2), 1)
+    des.append({'x': xnew, 'feval':[y_temp], 'rep': 1})
+        
+    print(des)
+                
+    return des  
+
 
 def eivar_new_exp(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubias=None, des=None):
     
@@ -133,8 +223,8 @@ def eivar_new_exp(prior_func, emu, x_emu, theta_mle, th_mesh, synth_info, emubia
 
 def eivar_new_exp_mat(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias=None, des=None):
     
-    print(x_mesh.shape)
-    print(th_mesh.shape)
+    #print(x_mesh.shape)
+    #print(th_mesh.shape)
     # Update emulator for uncompleted jobs.
     x_temp = np.array([e['x'] for e in des])[:, None]
     f_temp = np.array([np.mean(e['feval']) for e in des])[None, :]
@@ -150,11 +240,13 @@ def eivar_new_exp_mat(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_
     x_ref     = 1*x_mesh 
     theta_ref = 1*th_mesh
 
+    print(theta_ref.shape)
+    print(x_ref.shape)
     xt_ref = np.concatenate((x_ref, np.repeat(theta_mle, nx_ref)[:, None]), axis=1)
     y_ref  = emu.predict(x=x_emu, theta=xt_ref).mean()
 
-    print(xt_ref)
-    print(y_ref)
+    #print(xt_ref)
+    #print(y_ref)
     f_temp_rep  = np.repeat(f_temp, nx_ref, axis=0)
     x_temp_rep  = np.tile(x_temp.T, [nx_ref, 1])
     
@@ -179,13 +271,15 @@ def eivar_new_exp_mat(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_
 
     #print(np.repeat(f_field_rep, th_mesh.shape[0], axis=0))
     
+    print(xf_thmesh.shape)
     eivar_val = np.zeros(len(xclist))
     for xid, x_c in enumerate(xclist):
         xt_c           = np.array([x_c, theta_mle[0]])
         eivar_val[xid] = postphimat3(emu._info, xf_thmesh, np.repeat(f_field_rep, th_mesh.shape[0], axis=0), obsvar_field, xt_c.reshape(1, 2))
  
 
-    minid = np.argmin(eivar_val)
+    #minid = np.argmin(eivar_val)
+    minid = np.argmax(eivar_val)
     xnew  = xclist[minid]
     plt.scatter(xclist[0:100], eivar_val[0:100])
     plt.show()

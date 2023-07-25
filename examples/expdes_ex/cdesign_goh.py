@@ -4,7 +4,7 @@ import scipy.stats as sps
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
-from plots import plot_EIVAR, plot_LHS, obsdata, fitemu, create_test, gather_data
+from plots_design import plot_EIVAR, plot_LHS, obsdata, fitemu, create_test, gather_data
 from smt.sampling_methods import LHS
 from test_funcs import gohbostos
 
@@ -62,7 +62,7 @@ prior_func      = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], b=cls
 
 print(thetamesh[np.argmax(ptest), :])
 
-seeds = 30
+seeds = 1
 ninit = 30
 nmax = 135
 result = []

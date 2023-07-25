@@ -4,7 +4,7 @@ import scipy.stats as sps
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
-from plots import plot_EIVAR, plot_LHS, obsdata, fitemu, create_test, gather_data
+from plots_design import plot_EIVAR, plot_LHS, obsdata, fitemu, create_test, gather_data
 from smt.sampling_methods import LHS
 from test_funcs import bellcurve
 
@@ -19,7 +19,7 @@ cls_data = bellcurve()
 cls_data.realdata(0)
 args         = parse_arguments()
     
-seeds = 5
+seeds = 1
 result = []
 for s in range(seeds):
     

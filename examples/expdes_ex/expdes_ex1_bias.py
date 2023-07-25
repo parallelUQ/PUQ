@@ -91,8 +91,8 @@ plt.show()
 
 
 # # # Create a mesh for test set # # # 
-tpl = np.linspace(cls_unimodal.thetalimits[1][0], cls_unimodal.thetalimits[1][1], 50)
-xmesh = np.linspace(cls_unimodal.thetalimits[0][0], cls_unimodal.thetalimits[0][1], 50)
+tpl = np.linspace(cls_unimodal.thetalimits[1][0], cls_unimodal.thetalimits[1][1], 25)
+xmesh = np.linspace(cls_unimodal.thetalimits[0][0], cls_unimodal.thetalimits[0][1], 25)
 
 xdesign_vec = np.tile(cls_unimodal.x.flatten(), len(tpl))
 thetatest   = np.concatenate((xdesign_vec[:, None], np.repeat(tpl, len(cls_unimodal.x))[:, None]), axis=1)

@@ -622,10 +622,10 @@ def __negloglikgrad(hyp, info):
     return dnegloglik
 
 
-def postphimat(fitinfo, x, theta, obs, obsvar, theta_cand, covmat_ref, rVh_1_3D, pred_mean):
+def postphimat(fitinfo, n_x, theta, obs, obsvar, theta_cand, covmat_ref, rVh_1_3D, pred_mean):
 
 
-    n_x       = len(x)
+    # n_x       = len(x)
     n_tot_ref = theta.shape[0]
     n_ref     = int(n_tot_ref/n_x)
     n_t       = fitinfo['theta'].shape[0]
@@ -699,10 +699,12 @@ def postphimat(fitinfo, x, theta, obs, obsvar, theta_cand, covmat_ref, rVh_1_3D,
     eivar = np.sum((1/((2**n_x)*(np.sqrt(np.pi)**n_x)*np.sqrt(det1)))*p1)
     return eivar
 
-def temp_postphimat(fitinfo, x, theta, obs, obsvar):
+def temp_postphimat(fitinfo, n_x, theta, obs, obsvar):
 
+    #print(theta)
 
-    n_x       = len(x)
+    #n_x       = len(x)
+    #print(n_x)
     n_tot_ref = theta.shape[0]
     n_ref     = int(n_tot_ref/n_x)
     n_t       = fitinfo['theta'].shape[0]
@@ -911,6 +913,7 @@ def postphimat2(fitinfo, x, theta, obs, obsvar, theta_cand):
 
 def postphimat3(fitinfo, theta, obs, obsvar, theta_cand):
 
+   
 
     n_x       = obs.shape[1] 
     n_tot_ref = theta.shape[0]
@@ -1032,15 +1035,18 @@ def postphimat3(fitinfo, theta, obs, obsvar, theta_cand):
     obsvar3D  = obsvar.reshape(1, n_x, n_x)
     cov1 = 0.5*(Smat3D + obsvar3D + Phi3D)
     cov2 = Smat3D + obsvar3D - Phi3D
-    cov3 = 0.5*obsvar3D + Smat3D
-    det2 = multiple_determinants(obsvar3D)
+    #cov3 = 0.5*obsvar3D + Smat3D
+    #det2 = multiple_determinants(obsvar3D)
 
     #obs_mult = np.repeat(obs, predinfo['mean'].shape[0], axis=0)
     #print(predinfo['mean'].shape)
-    p2 = multiple_pdfs(obs, predinfo['mean'], cov3)
+    #p2 = multiple_pdfs(obs, predinfo['mean'], cov3)
+    #print(predinfo['mean'].shape)
+    #print(Smat3D.shape)
     p1 = multiple_pdfs(obs, predinfo['mean'], cov1)
     det1 = multiple_determinants(cov2)
-    eivar = np.sum((1/((2**d)*(np.sqrt(np.pi)**d)*np.sqrt(det2)))*p2) - np.sum((1/((2**d)*(np.sqrt(np.pi)**d)*np.sqrt(det1)))*p1)
+    #eivar = np.sum((1/((2**d)*(np.sqrt(np.pi)**d)*np.sqrt(det2)))*p2) - np.sum((1/((2**d)*(np.sqrt(np.pi)**d)*np.sqrt(det1)))*p1)
+    eivar = np.sum((1/((2**d)*(np.sqrt(np.pi)**d)*np.sqrt(det1)))*p1)
 
     return eivar
 

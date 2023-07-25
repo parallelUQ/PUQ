@@ -90,8 +90,8 @@ plt.plot(th_vec, pvec)
 plt.show()
 
 # # # Create a mesh for test set # # # 
-tpl = np.linspace(cls_unimodal.thetalimits[1][0], cls_unimodal.thetalimits[1][1], 10)
-xmesh = np.linspace(cls_unimodal.thetalimits[0][0], cls_unimodal.thetalimits[0][1], 50)
+tpl = np.linspace(cls_unimodal.thetalimits[1][0], cls_unimodal.thetalimits[1][1], 30)
+xmesh = np.linspace(cls_unimodal.thetalimits[0][0], cls_unimodal.thetalimits[0][1], 30)
 xdesign_vec = np.tile(cls_unimodal.x.flatten(), len(tpl))
 thetatest   = np.concatenate((xdesign_vec[:, None], np.repeat(tpl, len(cls_unimodal.x))[:, None]), axis=1)
 setattr(cls_unimodal, 'theta', thetatest)
@@ -135,7 +135,7 @@ al_unimodal = designer(data_cls=cls_unimodal,
                              'seed_n0': 6, #args.seed_n0, #6
                              'prior': prior_func,
                              'data_test': test_data,
-                             'max_evals': 50,
+                             'max_evals': 100,
                              'type_init': None,
                              'unknown_var': False,
                              'design': True})

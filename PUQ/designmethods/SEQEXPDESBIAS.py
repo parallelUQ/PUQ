@@ -1,5 +1,5 @@
 import numpy as np
-from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp, eivar_new_exp, eivar_new_exp_mat
+from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp, eivar_new_exp, eivar_new_exp_mat, eivar_des_updated
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
@@ -230,7 +230,8 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                         
                         if new_field:
                             
-                            des           = eivar_new_exp_mat(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
+                            #des           = eivar_new_exp_mat(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
+                            des           = eivar_des_updated(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
                             x_u           = np.array([e['x'] for e in des])[:, None]
                             true_fevals_u = np.array([np.mean(e['feval']) for e in des])[None, :]
                             reps          = [e['rep'] for e in des]
@@ -261,7 +262,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 
                     
             if first_iter:
-                print('Selecting theta for the first iteration...\n')
+                #print('Selecting theta for the first iteration...\n')
 
                 n_init = max(n_workers-1, n0)
 
@@ -287,7 +288,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 
             else: 
                 if select_condition(complete, prev_complete, n_theta=mini_batch, n_initial=n0):
-                    print('Selecting theta...\n')
+                    #print('Selecting theta...\n')
         
                     prev_complete = complete.copy()
                     new_theta = acquisition_f(mini_batch, 
