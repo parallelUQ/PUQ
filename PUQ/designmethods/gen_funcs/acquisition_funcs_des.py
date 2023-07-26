@@ -46,10 +46,11 @@ def eivar_exp(n,
 
 
     n_x = x.shape[0]
+    #print(n_x)
     thetatest = np.array([np.concatenate([xc, th]) for th in thetamesh for xc in x ])
-
+    #print(thetatest)
     Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, thetatest, obs, obsvar)
-    
+    #print('here')
     eivar_val = np.zeros(n_clist)
     for xt_id, xt_c in enumerate(clist):
         eivar_val[xt_id] = postphimat(emu._info, n_x, thetatest, obs, obsvar, xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
@@ -64,14 +65,15 @@ def eivar_des_updated(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_
 
     # nf x d_x
     x_temp = np.array([e['x'] for e in des])[:, None]
+    print(x_temp)
     # 1 x nf
     f_temp = np.array([np.mean(e['feval']) for e in des])[None, :]
     r_temp = [e['rep'] for e in des]
     
     # Create a candidate list
     n_clist = 100
-    clist   = prior_func.rnd(n_clist, None)
-    xclist  = clist[:, 0]
+    #clist   = prior_func.rnd(n_clist, None)
+    xclist  = sps.uniform.rvs(0, 1, size=n_clist) # clist[:, 0]
 
     nx_ref = x_mesh.shape[0]
     dx = x_mesh.shape[1]
@@ -97,6 +99,8 @@ def eivar_des_updated(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_
     # (nx_ref + nt_ref) x (nf + 1)
     f_field_all = np.repeat(f_field_rep, nt_ref, axis=0)
 
+    print(x_ref)
+    print(x_temp.shape)
     xs = [np.concatenate([x_temp, xc[:, None]], axis=0) for xc in x_ref]
     ts = [np.repeat(th[:, None], nf + 1, axis=0) for th in theta_ref]
     mesh_grid = [np.concatenate([xc, th], axis=1).tolist() for xc in xs for th in ts]

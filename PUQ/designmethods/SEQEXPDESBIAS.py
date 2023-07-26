@@ -1,5 +1,5 @@
 import numpy as np
-from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp, eivar_new_exp, eivar_new_exp_mat, eivar_des_updated
+from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp, eivar_des_updated
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
@@ -103,8 +103,10 @@ def obj_mle(parameter, args):
     x_emu = args[3]
     true_fevals_u = args[4]
 
-    
+    #print(x_u)
+    #print(parameter)
     xp      = np.concatenate((x_u, np.repeat(parameter, len(x_u))[:, None]), axis=1)
+    
     emupred = emu.predict(x=x_emu, theta=xp)
     mu_p    = emupred.mean()
     var_p   = emupred.var()
@@ -134,7 +136,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         data            = synth_info.real_data
         theta_limits    = synth_info.thetalimits
         
-        real_data_rep   = synth_info.real_data_rep
+        real_data_rep   = None
         
         des = synth_info.des
      
@@ -262,7 +264,6 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 
                     
             if first_iter:
-                #print('Selecting theta for the first iteration...\n')
 
                 n_init = max(n_workers-1, n0)
 
@@ -271,13 +272,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                     theta = sampling(n_init)
                 else:
                     theta  = prior_func.rnd(n_init, seed) 
-                
-                #from numpy.random import rand
-                #th   = rand(int(n_init/5))
-                #xvec = np.tile(x.flatten(), len(th))
-                #theta   = np.concatenate((xvec[:, None], np.repeat(th, len(x))[:, None]), axis=1)
-
-                    
+   
                 fevals, pending, prev_pending, complete, prev_complete = create_arrays(n_x, n_init)
                             
                 H_o    = np.zeros(len(theta), dtype=gen_specs['out'])
