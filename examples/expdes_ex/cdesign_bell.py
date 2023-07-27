@@ -6,7 +6,7 @@ from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
 from plots_design import plot_EIVAR, plot_LHS, obsdata, fitemu, create_test, gather_data
 from smt.sampling_methods import LHS
-from test_funcs import bellcurve
+from ctest_funcs import bellcurve
 
 def add_result(method_name, phat, s):
     rep = {}

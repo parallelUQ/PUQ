@@ -701,10 +701,6 @@ def postphimat(fitinfo, n_x, theta, obs, obsvar, theta_cand, covmat_ref, rVh_1_3
 
 def temp_postphimat(fitinfo, n_x, theta, obs, obsvar):
 
-    #print(theta)
-
-    #n_x       = len(x)
-    #print(n_x)
     n_tot_ref = theta.shape[0]
     n_ref     = int(n_tot_ref/n_x)
     n_t       = fitinfo['theta'].shape[0]
@@ -773,9 +769,10 @@ def temp_postphimat(fitinfo, n_x, theta, obs, obsvar):
     pred_mean = ((predmean_ref @ pctscale.T) + fitinfo['standardpcinfo']['offset']).T
     pred_mean = pred_mean.reshape(n_ref, n_x)
 
-    obsvar3D  = obsvar.reshape(1, n_x, n_x)
-    covmat_ref = Smat3D + obsvar3D
-
+    #obsvar3D  = obsvar.reshape(1, n_x, n_x)
+    #print(Smat3D.shape)
+    #covmat_ref = Smat3D + obsvar3D
+    covmat_ref = Smat3D + obsvar
     return covmat_ref, rVh_1_3d, pred_mean
 
 def postphimat2(fitinfo, x, theta, obs, obsvar, theta_cand):

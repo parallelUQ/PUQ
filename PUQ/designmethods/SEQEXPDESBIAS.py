@@ -1,5 +1,5 @@
 import numpy as np
-from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp, eivar_des_updated
+from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp, eivar_des_updated, eivar_des_updated2
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
@@ -104,12 +104,15 @@ def obj_mle(parameter, args):
     true_fevals_u = args[4]
 
     #print(x_u)
-    #print(parameter)
-    xp      = np.concatenate((x_u, np.repeat(parameter, len(x_u))[:, None]), axis=1)
-    
+    #print(len(x_u))
+    #print(parameter.shape)
+
+    xp      = np.concatenate((x_u, np.repeat(parameter, len(x_u)).reshape(len(x_u), len(parameter))), axis=1)
+    #print(xp)
     emupred = emu.predict(x=x_emu, theta=xp)
     mu_p    = emupred.mean()
     var_p   = emupred.var()
+    
     diff    = (true_fevals_u.flatten() - mu_p.flatten()).reshape((len(x_u), 1))
     obj     = 0.5*(diff.T@diff)
     
@@ -145,7 +148,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         if test_data is not None:
             thetatest, th_mesh, x_mesh, posttest, ftest, priortest = test_data['theta'], test_data['th'], test_data['xmesh'], test_data['p'], test_data['f'], test_data['p_prior']
         
-        xt_test      = np.concatenate((x_mesh, np.repeat(synth_info.true_theta, len(x_mesh))[:, None]), axis=1)
+        #xt_test      = np.concatenate((x_mesh, np.repeat(synth_info.true_theta, len(x_mesh))[:, None]), axis=1)
          
         x_extend = np.tile(x_mesh.flatten(), len(th_mesh))
         xt_test2   = np.concatenate((x_extend[:, None], np.repeat(th_mesh, len(x_mesh))[:, None]), axis=1)
@@ -158,10 +161,15 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         n_x_des    = len(x)
         x_emu      = np.arange(0, 1)[:, None ]
         
+        dx = x.shape[1]
+        dt = synth_info.true_theta.shape[0]
+
         x_u = 1*x
         true_fevals_u = 1*true_fevals
         obsvar_u = 1*obsvar
-        
+        reps = 1
+        print(x_u)
+        print(xt_test2)
         obs_offset, theta_offset, generated_no = 0, 0, 0
         TV, HD = 1000, 1000
         fevals, pending, prev_pending, complete, prev_complete = None, None, None, None, None
@@ -201,6 +209,8 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                                                  np.sum(complete),
                                                                  np.prod(pending.shape)))
                 
+   
+                
                 emu = emulator(x_emu, 
                                theta, 
                                fevals, 
@@ -211,10 +221,11 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 else:
                     bnd = ()
                     theta_init = []
-                    for i in range(1, 2):
+                    for i in range(dx, dx + dt):
                         bnd += ((theta_limits[i][0], theta_limits[i][1]),)
+                        #theta_init.append((0 + 0)/2)
                         theta_init.append((theta_limits[i][0] + theta_limits[i][1])/2)
-
+             
                     opval = spo.minimize(obj_mle,
                                          theta_init,
                                          method='L-BFGS-B',
@@ -227,35 +238,41 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
                     
                     if design == True:
-                        new_field = True if (theta.shape[0] % 10) == 0 else False
+                        new_field = True if ((theta.shape[0] % 10) == 0) and (theta.shape[0] > n_init) else False
                         
                         
                         if new_field:
                             
                             #des           = eivar_new_exp_mat(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
+                            #des           = eivar_des_updated2(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
                             des           = eivar_des_updated(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
-                            x_u           = np.array([e['x'] for e in des])[:, None]
+                            x_u           = np.array([e['x'] for e in des])#[:, None]
                             true_fevals_u = np.array([np.mean(e['feval']) for e in des])[None, :]
                             reps          = [e['rep'] for e in des]
                             
-                            pred2        = emu.predict(x=x_emu, theta=xt_test2)
-                            f2 = pred2.mean().reshape(len(th_mesh), len(x_mesh))
+                            #pred2        = emu.predict(x=x_emu, theta=xt_test2)
+                            #f2 = pred2.mean().reshape(len(th_mesh), len(x_mesh))
                             
-                            for fe in f2:
-                                plt.plot(x_mesh, fe)
-                            plt.show()
+                            #for fe in f2:
+                            #    plt.plot(x_mesh, fe)
+                            #plt.show()
                             
-                            pred        = emu.predict(x=x_emu, theta=xt_test)
-                            mean_pred   = pred.mean()
-                            var_pred    = np.sqrt(pred.var())
-                            plt.plot(xt_test[:, 0], mean_pred.flatten())
-                            plt.scatter(x_u, true_fevals_u, color='red')
-                            plt.fill_between(xt_test[:, 0], mean_pred.flatten() + 2*var_pred.flatten(), mean_pred.flatten() - 2*var_pred.flatten(), alpha=0.5)
-                            plt.show()
+                            #xt_test      = np.concatenate((x_mesh, np.repeat(theta_mle, len(x_mesh))[:, None]), axis=1)
+                            #pred        = emu.predict(x=x_emu, theta=xt_test)
+                            #mean_pred   = pred.mean()
+                            #var_pred    = np.sqrt(pred.var())
+                            #plt.plot(xt_test[:, 0], mean_pred.flatten())
+                            #plt.scatter(x_u, true_fevals_u, color='red')
+                            #plt.fill_between(xt_test[:, 0], mean_pred.flatten() + 2*var_pred.flatten(), mean_pred.flatten() - 2*var_pred.flatten(), alpha=0.5)
+                            #plt.show()
                             
-
-              
+                        #print(x_u)
+                        #print(synth_info.realvar(x_u))
                         obsvar_u = np.diag(np.repeat(synth_info.sigma2, len(x_u)))
+                        obsvar_u = np.diag(synth_info.realvar(x_u))
+                        #print(obsvar_u)
+                        #print(np.diag(synth_info.realvar(x_u)))
+                        
                         obsvar_u = obsvar_u/reps
            
                 #print(obsvar_u)

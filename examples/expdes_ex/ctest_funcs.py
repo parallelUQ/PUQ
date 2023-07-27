@@ -83,6 +83,7 @@ class sinfunc:
     
 
 
+
 class gohbostos:
     def __init__(self):
         self.data_name   = 'gohbostos'
