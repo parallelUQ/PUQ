@@ -64,7 +64,7 @@ print(thetamesh[np.argmax(ptest), :])
 
 seeds = 1
 ninit = 30
-nmax = 135
+nmax = 100
 result = []
 for s in range(seeds):
 
@@ -103,7 +103,7 @@ for s in range(seeds):
     plt.show()
     
     
-    phat_eivar, pvar_eivar = fitemu(xt_acq, f_acq[:, None], XT, thetamesh, cls_data)
+    phat_eivar, pvar_eivar = fitemu(xt_acq, f_acq[:, None], XT, thetamesh, cls_data.x, cls_data.real_data, cls_data.obsvar)
     plt.scatter(thetamesh[:, 0], thetamesh[:, 1], c=phat_eivar)
     plt.show()
     
@@ -119,7 +119,7 @@ for s in range(seeds):
     for i in range(nmax):
         f_lhs[i] = cls_data.function(xt_lhs[i, 0], xt_lhs[i, 1], xt_lhs[i, 2], xt_lhs[i, 3])
     
-    phat_lhs, pvar_lhs = fitemu(xt_lhs, f_lhs[:, None], XT, thetamesh, cls_data)
+    phat_lhs, pvar_lhs = fitemu(xt_lhs, f_lhs[:, None], XT, thetamesh, cls_data.x, cls_data.real_data, cls_data.obsvar)
     plt.scatter(thetamesh[:, 0], thetamesh[:, 1], c=phat_lhs)
     plt.show()
     
@@ -134,7 +134,7 @@ for s in range(seeds):
     for i in range(nmax):
         f_rnd[i] = cls_data.function(xt_rnd[i, 0], xt_rnd[i, 1], xt_rnd[i, 2], xt_rnd[i, 3])
     
-    phat_rnd, pvar_rnd = fitemu(xt_rnd, f_rnd[:, None], XT, thetamesh, cls_data) 
+    phat_rnd, pvar_rnd = fitemu(xt_rnd, f_rnd[:, None], XT, thetamesh, cls_data.x, cls_data.real_data, cls_data.obsvar)
     plt.scatter(thetamesh[:, 0], thetamesh[:, 1], c=phat_rnd)
     plt.show()
     
@@ -144,20 +144,21 @@ for s in range(seeds):
     print(np.mean(np.abs(phat_rnd - ptest)))
     
     # Unif
+    uniqx = np.unique(cls_data.x, axis=0)
     sampling = LHS(xlimits=cls_data.thetalimits[0:2], random_state=s)
-    t_unif   = sampling(15)
-    f_unif   = np.zeros(nmax)
-    xt_unif  = np.zeros((nmax, 4))
+    t_unif   = sampling(11)
+    f_unif   = np.zeros(11*9)
+    xt_unif  = np.zeros((11*9, 4))
     k = 0
     
-    x_unif = np.repeat(cls_data.x, 15, axis=0)
+    x_unif = np.repeat(uniqx, 11, axis=0)
     t_unif_rep = np.tile(t_unif, (9,1))
     xt_unif = np.concatenate((x_unif, t_unif_rep), axis=1)
-    for k in range(nmax):
+    for k in range(11*9):
         f_unif[k] = cls_data.function(xt_unif[k][0], xt_unif[k][1], xt_unif[k][2], xt_unif[k][3])
 
 
-    phat_unif, pvar_unif = fitemu(xt_unif, f_unif[:, None], XT, thetamesh, cls_data)
+    phat_unif, pvar_unif = fitemu(xt_unif, f_unif[:, None], XT, thetamesh, cls_data.x, cls_data.real_data, cls_data.obsvar)
     plt.scatter(thetamesh[:, 0], thetamesh[:, 1], c=phat_unif)
     plt.show()
     

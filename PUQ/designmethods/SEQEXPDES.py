@@ -209,7 +209,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
             else: 
                 if select_condition(complete, prev_complete, n_theta=mini_batch, n_initial=n0):
                     print('Selecting theta...\n')
-                
+                    print(obsvar)
                     prev_complete = complete.copy()
                     new_theta = acquisition_f(mini_batch, 
                                               x,

@@ -170,7 +170,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                         break
 
             if update_model:
-
+                print(theta.shape)
                 emu = emulator(x_emu, 
                                theta, 
                                fevals, 
@@ -210,7 +210,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                     if type_init == 'to_run':
                         new_theta = theta_torun[generated_no:(generated_no+mini_batch), :]
                     else:
-            
+                        print(obsvar_u)
                         new_theta = acquisition_f(mini_batch, 
                                                   x_u,
                                                   real_x,

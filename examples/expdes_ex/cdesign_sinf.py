@@ -60,7 +60,7 @@ for s in range(seeds):
     xt_eivar = al_unimodal._info['theta']
     f_eivar  = al_unimodal._info['f']
 
-    phat_eivar, pvar_eivar = fitemu(xt_eivar, f_eivar[:, None], xt_test, thetamesh, cls_data) 
+    phat_eivar, pvar_eivar = fitemu(xt_eivar, f_eivar[:, None], xt_test, thetamesh, cls_data.x, cls_data.real_data, cls_data.obsvar) 
     plot_EIVAR(xt_eivar, cls_data, ninit)
     rep = add_result('eivar', phat_eivar, s)
     result.append(rep)
@@ -76,7 +76,7 @@ for s in range(seeds):
     sampling = LHS(xlimits=cls_data.thetalimits, random_state=s)
     xt_lhs   = sampling(50)
     f_lhs    = gather_data(xt_lhs, cls_data)
-    phat_lhs, pvar_lhs = fitemu(xt_lhs, f_lhs[:, None], xt_test, thetamesh, cls_data) 
+    phat_lhs, pvar_lhs = fitemu(xt_lhs, f_lhs[:, None], xt_test, thetamesh, cls_data.x, cls_data.real_data, cls_data.obsvar) 
     
     plot_LHS(xt_lhs, cls_data)
     rep = add_result('lhs', phat_lhs, s)
@@ -87,7 +87,7 @@ for s in range(seeds):
     # rnd 
     xt_rnd   = prior_func.rnd(50, seed=s)
     f_rnd    = gather_data(xt_rnd, cls_data)
-    phat_rnd, pvar_rnd = fitemu(xt_rnd, f_rnd[:, None], xt_test, thetamesh, cls_data) 
+    phat_rnd, pvar_rnd = fitemu(xt_rnd, f_rnd[:, None], xt_test, thetamesh, cls_data.x, cls_data.real_data, cls_data.obsvar) 
     
     plot_LHS(xt_rnd, cls_data)
     rep = add_result('rnd', phat_rnd, s)
@@ -100,7 +100,7 @@ for s in range(seeds):
     xvec = np.tile(cls_data.x.flatten(), len(t_unif))
     xt_unif   = np.concatenate((xvec[:, None], np.repeat(t_unif, len(cls_data.x))[:, None]), axis=1)
     f_unif    = gather_data(xt_unif, cls_data)
-    phat_unif, pvar_unif = fitemu(xt_unif, f_unif[:, None], xt_test, thetamesh, cls_data)
+    phat_unif, pvar_unif = fitemu(xt_unif, f_unif[:, None], xt_test, thetamesh, cls_data.x, cls_data.real_data, cls_data.obsvar)
     
     plot_LHS(xt_unif, cls_data)
     rep = add_result('unif', phat_unif, s)

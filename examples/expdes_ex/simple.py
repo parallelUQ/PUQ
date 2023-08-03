@@ -13,13 +13,13 @@ import scipy.stats as sps
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
-from ptest_funcs import sinfunc
-from plots_design import gather_data, fitemu, predmle
+from ptest_funcs import simpleex
+from plots_design import gather_data, fitemu
 from smt.sampling_methods import LHS   
 
     
-cls_data = sinfunc()
-cls_data.realdata(0)
+cls_data = simpleex()
+cls_data.realdata(333)
 args         = parse_arguments()
 
 th_vec      = (np.arange(0, 100, 10)/100)[:, None]
@@ -63,9 +63,10 @@ prior_func      = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], b=cls
 plt.plot(thetamesh, ptest)
 plt.show()
 # # # # # # # # # # # # # # # # # # # # # 
-seeds = 1
+seeds = 10
 n0 = 10
-for s in range(seeds):
+n0seed = 1
+for s in range(n0seed, seeds):
     al_unimodal = designer(data_cls=cls_data, 
                            method='SEQEXPDESBIAS', 
                            args={'mini_batch': 1,
@@ -75,19 +76,15 @@ for s in range(seeds):
                                  'seed_n0': s, 
                                  'prior': prior_func,
                                  'data_test': test_data,
-                                 'max_evals': 60,
+                                 'max_evals': 110,
                                  'type_init': None,
                                  'unknown_var': False,
                                  'design': True})
     
     xt_eivar = al_unimodal._info['theta']
     f_eivar = al_unimodal._info['f']
-    thmle = np.mean(xt_eivar[:, 1])
-    xthmle = np.concatenate((xmesh[:, None], np.repeat(thmle, len(xmesh)).reshape((len(xmesh), 1))), axis=1)
-    fmle      = np.zeros(len(xthmle))
-    for t_id, t in enumerate(xthmle):
-        fmle[t_id] = cls_data.function( xthmle[t_id, 0],  xthmle[t_id, 1])
-        
+
+
     des = al_unimodal._info['des']
     xdes = [e['x'] for e in des]
     nx_ref = len(xdes)
@@ -133,39 +130,39 @@ for s in range(seeds):
     #
     
     phat_eivar, pvar_eivar = fitemu(xt_eivar, f_eivar[:, None], mesh_grid, thetamesh, xdesu, fdes, np.diag(np.repeat(cls_data.sigma2, nx_ref))) 
-    y_eivar = predmle(xt_eivar, f_eivar[:, None], xthmle)
-    
-    print(np.sum((fmle - y_eivar)**2))
     
     print(np.mean(np.abs(phat_eivar - ptest)))
     
     # LHS 
     sampling = LHS(xlimits=cls_data.thetalimits, random_state=s)
-    xt_lhs   = sampling(60)
+    xt_lhs   = sampling(160)
     f_lhs    = gather_data(xt_lhs, cls_data)
     phat_lhs, pvar_lhs = fitemu(xt_lhs, f_lhs[:, None], mesh_grid, thetamesh, xdesu, fdes, np.diag(np.repeat(cls_data.sigma2, nx_ref))) 
-    y_lhs = predmle(xt_lhs, f_lhs[:, None], xthmle)
     
-    print(np.sum((fmle - y_lhs)**2))
     
     print(np.mean(np.abs(phat_lhs - ptest)))
     
     
-    #from PUQ.surrogate import emulator
-    #x_emu = np.arange(0, 1)[:, None ]
-    #emu = emulator(x_emu, 
-    #               xtheta, 
-    #               fevals[:, None], 
-    #               method='PCGPexp')
+    from PUQ.surrogate import emulator
+    x_emu = np.arange(0, 1)[:, None ]
+    emu = emulator(x_emu, 
+                   xt_eivar, 
+                   f_eivar[:, None], 
+                   method='PCGPexp')
 
 
-    #xt_test      = np.concatenate((xmesh[:, None], np.repeat(cls_data.true_theta, len(xmesh))[:, None]), axis=1)
+    xt_test      = np.concatenate((xmesh[:, None], np.repeat(cls_data.true_theta, len(xmesh))[:, None]), axis=1)
     #true_model  = cls_data.function(xt_test[:, 0], xt_test[:, 1])
-    #pred        = emu.predict(x=x_emu, theta=xt_test)
-    #mean_pred   = pred.mean()
-    #var_pred    = np.sqrt(pred.var())
-    #plt.plot(xt_test[:, 0], mean_pred.flatten())
-    #plt.scatter(xdes, fdes, color='red')
+    pred        = emu.predict(x=x_emu, theta=xt_test)
+    mean_pred   = pred.mean()
+    var_pred    = np.sqrt(pred.var())
+    plt.plot(xt_test[:, 0], mean_pred.flatten())
+    plt.scatter(xdes, fdes, color='red')
     #plt.plot(xt_test[:, 0], true_model, color='green')
-    #plt.fill_between(xt_test[:, 0], mean_pred.flatten() + 2*var_pred.flatten(), mean_pred.flatten() - 2*var_pred.flatten(), alpha=0.5)
-    #plt.show()
+    plt.fill_between(xt_test[:, 0], mean_pred.flatten() + 2*var_pred.flatten(), mean_pred.flatten() - 2*var_pred.flatten(), alpha=0.5)
+    plt.show()
+
+xs =    np.arange(-3, 3, 0.1)
+for i in range(0, 10):
+    #plt.plot(xs, np.exp(-(xs*2)**2))
+    plt.plot(xs, i*0.1*np.exp(-(xs*2)**2))

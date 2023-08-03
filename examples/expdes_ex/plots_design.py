@@ -10,7 +10,7 @@ import numpy as np
 from PUQ.surrogate import emulator
 import scipy.stats as sps
 
-def plot_EIVAR(xt, cls_data, ninit):
+def plot_EIVAR(xt, cls_data, ninit, xlim1=0, xlim2=1):
     
     plt.scatter(cls_data.x, np.repeat(cls_data.true_theta, len(cls_data.x)), marker='o', color='black')
     plt.scatter(xt[0:ninit, 0], xt[0:ninit, 1], marker='*', color='blue')
@@ -27,7 +27,7 @@ def plot_EIVAR(xt, cls_data, ninit):
     
     plt.hist(xt[:, 0][ninit:])
     plt.xlabel(r'x')
-    plt.xlim(0, 1)
+    plt.xlim(xlim1, xlim2)
     plt.show()
     
 def plot_LHS(xt, cls_data):
@@ -54,6 +54,24 @@ def obsdata(cls_data):
     plt.xlabel('x')
     plt.legend()
     plt.show()
+
+def obsdata2(cls_data):
+    th_vec = [0.3, 0.4, 0.5, 0.6, 0.7]
+    x_vec  = (np.arange(-300, 300, 1)/100)[:, None]
+    fvec   = np.zeros((len(th_vec), len(x_vec)))
+    colors = ['blue', 'orange', 'green', 'red', 'purple']
+    for t_id, t in enumerate(th_vec):
+        for x_id, x in enumerate(x_vec):
+            fvec[t_id, x_id] = cls_data.function(x, t)
+        plt.plot(x_vec, fvec[t_id, :], label=r'$\theta=$' + str(t), color=colors[t_id]) 
+
+    for d_id, d in enumerate(cls_data.des):
+        for r in range(d['rep']):
+            plt.scatter(d['x'], d['feval'][r], color='black')
+    plt.xlabel('x')
+    plt.legend()
+    plt.show()
+    
     
 def create_test(cls_data):
     thetamesh   = np.linspace(cls_data.thetalimits[1][0], cls_data.thetalimits[1][1], 100)
@@ -75,14 +93,14 @@ def create_test(cls_data):
     
     return thetatest, ftest, ptest, thetamesh 
     
-def fitemu(xt, f, xt_test, thetamesh, cls_data):
+def fitemu(xt, f, xt_test, thetamesh, x, obs, obsvar):
     x_emu      = np.arange(0, 1)[:, None ]
     emu = emulator(x_emu, 
                    xt, 
                    f, 
                    method='PCGPexp')
     from PUQ.surrogatemethods.PCGPexp import  postpred
-    pmeanhat, pvarhat = postpred(emu._info, cls_data.x, xt_test, cls_data.real_data, cls_data.obsvar)
+    pmeanhat, pvarhat = postpred(emu._info, x, xt_test, obs, obsvar)
     
 
     #emupredict     = emu.predict(x=x_emu, theta=xt_test)
@@ -104,4 +122,14 @@ def gather_data(xt, cls_data):
         f[t_id] = cls_data.function(xt[t_id, 0], xt[t_id, 1])
     
     return f
+
+def predmle(xt, f, xtmle):
+    x_emu      = np.arange(0, 1)[:, None ]
+    emu = emulator(x_emu, 
+                   xt, 
+                   f, 
+                   method='PCGPexp')
+
+    yhat = emu.predict(x=x_emu, theta=xtmle).mean()
     
+    return yhat

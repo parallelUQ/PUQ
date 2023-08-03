@@ -4,9 +4,9 @@ import scipy.stats as sps
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
-from plots_design import plot_EIVAR, plot_LHS, obsdata, fitemu, create_test, gather_data
+from plots_design import plot_EIVAR, plot_LHS, obsdata2, fitemu, create_test, gather_data
 from smt.sampling_methods import LHS
-from ctest_funcs import bellcurve
+from ctest_funcs import sbellcurve
 
 def add_result(method_name, phat, s):
     rep = {}
@@ -15,17 +15,17 @@ def add_result(method_name, phat, s):
     rep['repno'] = s
     return rep
 
-cls_data = bellcurve()
-cls_data.realdata(0)
-args         = parse_arguments()
+
     
 seeds = 1
 result = []
 for s in range(seeds):
-    
+    cls_data = sbellcurve()
+    cls_data.realdata(s)
+    args         = parse_arguments()
     
     # Observe
-    obsdata(cls_data)
+    obsdata2(cls_data)
 
     # # # Create a mesh for test set # # # 
     xt_test, ftest, ptest, thetamesh = create_test(cls_data)
@@ -59,7 +59,7 @@ for s in range(seeds):
     f_eivar  = al_unimodal._info['f']
 
     phat_eivar, pvar_eivar = fitemu(xt_eivar, f_eivar[:, None], xt_test, thetamesh, cls_data.x, cls_data.real_data, cls_data.obsvar) 
-    plot_EIVAR(xt_eivar, cls_data, ninit)
+    plot_EIVAR(xt_eivar, cls_data, ninit, xlim1=-3, xlim2=3)
     rep = add_result('eivar', phat_eivar, s)
     result.append(rep)
     

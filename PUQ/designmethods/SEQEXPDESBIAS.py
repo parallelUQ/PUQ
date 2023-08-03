@@ -1,5 +1,5 @@
 import numpy as np
-from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp, eivar_des_updated, eivar_des_updated2
+from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp, eivar_des_updated, eivar_des_updated2, maxvar_des, eivar_des_eff
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
@@ -89,11 +89,18 @@ def fit(fitinfo, data_cls, args):
         sim_specs, gen_specs, exit_criteria, persis_info, alloc_specs=alloc_specs, libE_specs=libE_specs
     )
     
+    #print(persis_info)
 
     fitinfo['f'] = H['f']
     fitinfo['theta'] = H['thetas']
     fitinfo['TV'] = H['TV']
     fitinfo['HD'] = H['HD']
+
+    for key in persis_info.keys():
+        #print(type(persis_info[key]))
+        if isinstance(persis_info[key], dict):
+            if 'des' in persis_info[key].keys():
+                fitinfo['des'] = persis_info[key]['des']
     return
 
     
@@ -103,12 +110,9 @@ def obj_mle(parameter, args):
     x_emu = args[3]
     true_fevals_u = args[4]
 
-    #print(x_u)
-    #print(len(x_u))
-    #print(parameter.shape)
 
     xp      = np.concatenate((x_u, np.repeat(parameter, len(x_u)).reshape(len(x_u), len(parameter))), axis=1)
-    #print(xp)
+
     emupred = emu.predict(x=x_emu, theta=xp)
     mu_p    = emupred.mean()
     var_p   = emupred.var()
@@ -151,7 +155,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         #xt_test      = np.concatenate((x_mesh, np.repeat(synth_info.true_theta, len(x_mesh))[:, None]), axis=1)
          
         x_extend = np.tile(x_mesh.flatten(), len(th_mesh))
-        xt_test2   = np.concatenate((x_extend[:, None], np.repeat(th_mesh, len(x_mesh))[:, None]), axis=1)
+        #xt_test2   = np.concatenate((x_extend[:, None], np.repeat(th_mesh, len(x_mesh))[:, None]), axis=1)
  
 
         true_fevals = np.reshape(data[0, :], (1, data.shape[1]))
@@ -169,7 +173,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         obsvar_u = 1*obsvar
         reps = 1
         print(x_u)
-        print(xt_test2)
+        #print(xt_test2)
         obs_offset, theta_offset, generated_no = 0, 0, 0
         TV, HD = 1000, 1000
         fevals, pending, prev_pending, complete, prev_complete = None, None, None, None, None
@@ -235,17 +239,19 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
                     theta_mle = opval.x
                     print('mle param:', theta_mle)
+            
 
                     
                     if design == True:
-                        new_field = True if ((theta.shape[0] % 10) == 0) and (theta.shape[0] > n_init) else False
+                        new_field = True if ((theta.shape[0] % 5) == 0) and (theta.shape[0] > n_init) else False
                         
                         
                         if new_field:
                             
                             #des           = eivar_new_exp_mat(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
                             #des           = eivar_des_updated2(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
-                            des           = eivar_des_updated(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
+                            #des           = eivar_des_updated(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
+                            des           = maxvar_des(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
                             x_u           = np.array([e['x'] for e in des])#[:, None]
                             true_fevals_u = np.array([np.mean(e['feval']) for e in des])[None, :]
                             reps          = [e['rep'] for e in des]
@@ -268,14 +274,14 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                             
                         #print(x_u)
                         #print(synth_info.realvar(x_u))
-                        obsvar_u = np.diag(np.repeat(synth_info.sigma2, len(x_u)))
+                        #obsvar_u = np.diag(np.repeat(synth_info.sigma2, len(x_u)))
                         obsvar_u = np.diag(synth_info.realvar(x_u))
                         #print(obsvar_u)
                         #print(np.diag(synth_info.realvar(x_u)))
                         
                         obsvar_u = obsvar_u/reps
            
-                #print(obsvar_u)
+                print(obsvar_u)
                 prev_pending   = pending.copy()
                 update_model   = False
                 
@@ -327,5 +333,6 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                     tag, Work, calc_in = ps.send_recv(H_o) 
                     generated_no += mini_batch
 
+        persis_info['des'] =  des
         return None, persis_info, FINISHED_PERSISTENT_GEN_TAG
 

@@ -337,6 +337,7 @@ def __standardizef(fitinfo, offset=None, scale=None):
             offset[k] = np.nanmean(f[:, k])
             scale[k] = np.nanstd(f[:, k]) / np.sqrt(1-np.isnan(f[:, k]).mean())
             if scale[k] == 0:
+                print(f)
                 raise ValueError("You have a row that is non-varying.")
 
     fs = np.zeros(f.shape)

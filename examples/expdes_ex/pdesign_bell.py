@@ -61,41 +61,70 @@ plt.plot(thetamesh, ptest)
 plt.show()
 # # # # # # # # # # # # # # # # # # # # # 
 seeds = 1
+n0 = 10
 for s in range(seeds):
     al_unimodal = designer(data_cls=cls_data, 
                            method='SEQEXPDESBIAS', 
                            args={'mini_batch': 1,
-                                 'n_init_thetas': 20,
+                                 'n_init_thetas': n0,
                                  'nworkers': 2, 
                                  'AL': 'eivar_exp',
                                  'seed_n0': s, 
                                  'prior': prior_func,
                                  'data_test': test_data,
-                                 'max_evals': 160,
+                                 'max_evals': 110,
                                  'type_init': None,
                                  'unknown_var': False,
                                  'design': True})
     
-    xth = al_unimodal._info['theta']
+    
+    xtheta = al_unimodal._info['theta']
+    fevals = al_unimodal._info['f']
     plt.plot(al_unimodal._info['TV'][10:])
     plt.yscale('log')
     plt.show()
 
 
-    plt.scatter(cls_data.x, np.repeat(cls_data.true_theta, len(cls_data.x)), marker='o', color='black')
-    plt.scatter(xth[0:20, 0], xth[0:20, 1], marker='*')
-    plt.scatter(xth[:, 0][20:], xth[:, 1][20:], marker='+')
-    plt.axhline(y = 0.5, color = 'r')
+    des = al_unimodal._info['des']
+    xdes = [e['x'] for e in des]
+    fdes = [e['feval'] for e in des]
+    xu_des, xcount = np.unique(xdes, return_counts=True)
+    repeatth = np.repeat(cls_data.true_theta, len(xu_des))
+    for label, x_count, y_count in zip(xcount, xu_des, repeatth):
+        plt.annotate(label, xy=(x_count, y_count), xytext=(x_count, y_count))
+    plt.scatter(xtheta[0:n0, 0], xtheta[0:n0, 1], marker='*')
+    plt.scatter(xtheta[:, 0][n0:], xtheta[:, 1][n0:], marker='+')
+    plt.axhline(y =cls_data.true_theta, color = 'r')
     plt.xlabel('x')
     plt.ylabel(r'$\theta$')
+    plt.legend()
     plt.show()
-
-    plt.hist(xth[:, 1][20:])
-    plt.axvline(x = 0.5, color = 'r')
+    
+    plt.hist(xtheta[:, 1][n0:])
+    plt.axvline(x =cls_data.true_theta, color = 'r')
     plt.xlabel(r'$\theta$')
     plt.show()
 
-    plt.hist(xth[:, 0][20:])
+    plt.hist(xtheta[:, 0][n0:])
     plt.xlabel(r'x')
     plt.xlim(0, 1)
+    plt.show()
+    
+    from PUQ.surrogate import emulator
+    x_emu = np.arange(0, 1)[:, None ]
+    emu = emulator(x_emu, 
+                   xtheta, 
+                   fevals[:, None], 
+                   method='PCGPexp')
+
+
+    xt_test      = np.concatenate((xmesh[:, None], np.repeat(cls_data.true_theta, len(xmesh))[:, None]), axis=1)
+    true_model  = cls_data.function(xt_test[:, 0], xt_test[:, 1])
+    pred        = emu.predict(x=x_emu, theta=xt_test)
+    mean_pred   = pred.mean()
+    var_pred    = np.sqrt(pred.var())
+    plt.plot(xt_test[:, 0], mean_pred.flatten())
+    plt.scatter(xdes, fdes, color='red')
+    plt.plot(xt_test[:, 0], true_model, color='green')
+    plt.fill_between(xt_test[:, 0], mean_pred.flatten() + 2*var_pred.flatten(), mean_pred.flatten() - 2*var_pred.flatten(), alpha=0.5)
     plt.show()
