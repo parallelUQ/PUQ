@@ -19,7 +19,15 @@ cls_data = sinfunc()
 cls_data.realdata(0)
 args         = parse_arguments()
     
-seeds = 1
+
+prior_xt     = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], b=cls_data.thetalimits[:, 1]) 
+prior_x      = prior_dist(dist='uniform')(a=np.array([cls_data.thetalimits[0][0]]), b=np.array([cls_data.thetalimits[0][1]])) 
+prior_t      = prior_dist(dist='uniform')(a=np.array([cls_data.thetalimits[1][0]]), b=np.array([cls_data.thetalimits[1][1]]))
+
+priors = {'prior': prior_xt, 'priorx': prior_x, 'priort': prior_t}
+    
+
+seeds = 10
 result = []
 for s in range(seeds):
     
@@ -30,7 +38,7 @@ for s in range(seeds):
     obsdata(cls_data)
 
     # # # Create a mesh for test set # # # 
-    xt_test, ftest, ptest, thetamesh = create_test(cls_data)
+    xt_test, ftest, ptest, thetamesh, _ = create_test(cls_data)
           
     test_data = {'theta': xt_test, 
                  'f': ftest,
@@ -43,14 +51,15 @@ for s in range(seeds):
     # # # # # # # # # # # # # # # # # # # # # 
     
     ninit = 10
+    nmax = 50
     al_unimodal = designer(data_cls=cls_data, 
                            method='SEQCOMPDES', 
                            args={'mini_batch': 1, 
                                  'n_init_thetas': ninit,
                                  'nworkers': 2, 
-                                 'AL': 'eivar_exp',
+                                 'AL': 'ceivar',
                                  'seed_n0': s,
-                                 'prior': prior_func,
+                                 'prior': priors,
                                  'data_test': test_data,
                                  'max_evals': 50,
                                  'type_init': None,
@@ -74,7 +83,7 @@ for s in range(seeds):
     
     # LHS 
     sampling = LHS(xlimits=cls_data.thetalimits, random_state=s)
-    xt_lhs   = sampling(50)
+    xt_lhs   = sampling(nmax)
     f_lhs    = gather_data(xt_lhs, cls_data)
     phat_lhs, pvar_lhs = fitemu(xt_lhs, f_lhs[:, None], xt_test, thetamesh, cls_data.x, cls_data.real_data, cls_data.obsvar) 
     
@@ -85,7 +94,7 @@ for s in range(seeds):
     print(np.mean(np.abs(phat_lhs - ptest)))
 
     # rnd 
-    xt_rnd   = prior_func.rnd(50, seed=s)
+    xt_rnd   = prior_func.rnd(nmax, seed=s)
     f_rnd    = gather_data(xt_rnd, cls_data)
     phat_rnd, pvar_rnd = fitemu(xt_rnd, f_rnd[:, None], xt_test, thetamesh, cls_data.x, cls_data.real_data, cls_data.obsvar) 
     
@@ -96,16 +105,16 @@ for s in range(seeds):
     print(np.mean(np.abs(phat_rnd - ptest)))
         
     # Unif
-    t_unif = sps.uniform.rvs(0, 1, size=10)
-    xvec = np.tile(cls_data.x.flatten(), len(t_unif))
-    xt_unif   = np.concatenate((xvec[:, None], np.repeat(t_unif, len(cls_data.x))[:, None]), axis=1)
+    xuniq = np.unique(cls_data.x)
+    t_unif = sps.uniform.rvs(0, 1, size=int(nmax/len(xuniq)))
+    xvec = np.tile(xuniq, len(t_unif))
+    xt_unif   = np.concatenate((xvec[:, None], np.repeat(t_unif, len(xuniq))[:, None]), axis=1)
     f_unif    = gather_data(xt_unif, cls_data)
     phat_unif, pvar_unif = fitemu(xt_unif, f_unif[:, None], xt_test, thetamesh, cls_data.x, cls_data.real_data, cls_data.obsvar)
     
     plot_LHS(xt_unif, cls_data)
     rep = add_result('unif', phat_unif, s)
     result.append(rep)
-
     
     print(np.mean(np.abs(phat_unif - ptest)))
     

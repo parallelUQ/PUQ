@@ -75,24 +75,93 @@ def obsdata2(cls_data):
     
 def create_test(cls_data):
     thetamesh   = np.linspace(cls_data.thetalimits[1][0], cls_data.thetalimits[1][1], 100)
-    xdesign_vec = np.tile(cls_data.x.flatten(), len(thetamesh))
-    thetatest   = np.concatenate((xdesign_vec[:, None], np.repeat(thetamesh, len(cls_data.x))[:, None]), axis=1)
-    ftest       = np.zeros(len(thetatest))
-    for t_id, t in enumerate(thetatest):
-        ftest[t_id] = cls_data.function(thetatest[t_id, 0], thetatest[t_id, 1])
-
-    ptest = np.zeros(thetamesh.shape[0])
-    ftest = ftest.reshape(len(thetamesh), len(cls_data.x))
-    for i in range(ftest.shape[0]):
-        mean     = ftest[i, :] 
-        rnd      = sps.multivariate_normal(mean=mean, cov=cls_data.obsvar)
-        ptest[i] = rnd.pdf(cls_data.real_data)
+    xmesh = np.linspace(cls_data.thetalimits[0][0], cls_data.thetalimits[0][1], 100)
+    
+    #if (cls_data.x).all() != None:
+    if cls_data.x != None:
+        xdesign_vec = np.tile(cls_data.x.flatten(), len(thetamesh))
+        thetatest   = np.concatenate((xdesign_vec[:, None], np.repeat(thetamesh, len(cls_data.x))[:, None]), axis=1)
+        ftest       = np.zeros(len(thetatest))
+        for t_id, t in enumerate(thetatest):
+            ftest[t_id] = cls_data.function(thetatest[t_id, 0], thetatest[t_id, 1])
+    
+        ptest = np.zeros(thetamesh.shape[0])
+        ftest = ftest.reshape(len(thetamesh), len(cls_data.x))
+        for i in range(ftest.shape[0]):
+            mean     = ftest[i, :] 
+            rnd      = sps.multivariate_normal(mean=mean, cov=cls_data.obsvar)
+            ptest[i] = rnd.pdf(cls_data.real_data)
          
-    plt.plot(thetamesh, ptest)
+        plt.plot(thetamesh, ptest)
+        plt.show()
+    else:
+        thetatest, ftest, ptest = None, None, None
+    
+    return thetatest, ftest, ptest, thetamesh, xmesh
+
+
+
+def create_test_non(cls_data):
+    n_t = 100
+    n_x = cls_data.x.shape[0]
+    n_tot = n_t*n_x
+    thetamesh = np.linspace(cls_data.thetalimits[2][0], cls_data.thetalimits[2][1], n_t)
+
+    xt_test = np.zeros((n_tot, 3))
+    ftest = np.zeros(n_tot)
+    k = 0
+    for j in range(n_t):
+        for i in range(n_x):
+            xt_test[k, :] = np.array([cls_data.real_x[i, 0], cls_data.real_x[i, 1], thetamesh[j]])
+            ftest[k] = cls_data.function(cls_data.real_x[i, 0], cls_data.real_x[i, 1], thetamesh[j])
+            k += 1
+
+    ftest = ftest.reshape(n_t, n_x)
+    ptest = np.zeros(n_t)
+    for j in range(n_t):
+        rnd = sps.multivariate_normal(mean=ftest[j, :], cov=cls_data.obsvar)
+        ptest[j] = rnd.pdf(cls_data.real_data)
+        
+    plt.scatter(thetamesh, ptest)
     plt.show()
     
-    return thetatest, ftest, ptest, thetamesh 
+    x1 = np.linspace(cls_data.thetalimits[0][0], cls_data.thetalimits[0][1], 20)
+    x2 = np.linspace(cls_data.thetalimits[1][0], cls_data.thetalimits[1][1], 20)
+    X1, X2 = np.meshgrid(x1, x2)
+    xmesh = np.vstack([X1.ravel(), X2.ravel()]).T
     
+    return xt_test, ftest, ptest, thetamesh[:, None], xmesh
+
+def create_test_goh(cls_data):
+    n_t = 20
+    n_x = len(cls_data.x)
+    n_tot = n_t*n_t*n_x
+    t1 = np.linspace(cls_data.thetalimits[1][0], cls_data.thetalimits[1][1], n_t)
+    t2 = np.linspace(cls_data.thetalimits[1][0], cls_data.thetalimits[1][1], n_t)
+    T1, T2 = np.meshgrid(t1, t2)
+    TS = np.vstack([T1.ravel(), T2.ravel()])
+    thetamesh = TS.T
+    
+    xt_test = np.zeros((n_tot, 4))
+    f = np.zeros((n_tot))
+    k = 0
+    for j in range(n_t*n_t):
+        for i in range(n_x):
+            xt_test[k, :] = np.array([cls_data.real_x[i, 0], cls_data.real_x[i, 1], thetamesh[j, 0], thetamesh[j, 1]])
+            f[k] = cls_data.function(cls_data.real_x[i, 0], cls_data.real_x[i, 1], thetamesh[j, 0], thetamesh[j, 1])
+            k += 1
+            
+    ftest = f.reshape(n_t*n_t, n_x)
+    ptest = np.zeros(n_t*n_t)
+    for j in range(n_t*n_t):
+        rnd = sps.multivariate_normal(mean=ftest[j, :], cov=cls_data.obsvar)
+        ptest[j] = rnd.pdf(cls_data.real_data)
+        
+    plt.scatter(thetamesh[:, 0], thetamesh[:, 1], c=ptest)
+    plt.show()
+    
+    return xt_test, ftest, ptest, thetamesh, thetamesh
+
 def fitemu(xt, f, xt_test, thetamesh, x, obs, obsvar):
     x_emu      = np.arange(0, 1)[:, None ]
     emu = emulator(x_emu, 
@@ -120,6 +189,13 @@ def gather_data(xt, cls_data):
     f    = np.zeros(len(xt))
     for t_id, t in enumerate(xt):
         f[t_id] = cls_data.function(xt[t_id, 0], xt[t_id, 1])
+    
+    return f
+
+def gather_data_non(xt, cls_data):
+    f    = np.zeros(len(xt))
+    for t_id, t in enumerate(xt):
+        f[t_id] = cls_data.function(xt[t_id, 0], xt[t_id, 1], xt[t_id, 2])
     
     return f
 

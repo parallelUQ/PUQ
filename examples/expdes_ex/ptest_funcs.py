@@ -8,22 +8,24 @@ class bellcurve:
         self.out         = [('f', float)]
         self.d           = 1
         self.p           = 2
-        self.x           = np.array([0.5])[:, None]
-        self.dx          = len(self.x)
+        self.dx         = 1
+        self.real_data  = None
+        self.x          = None 
+        self.des = []
+        self.dx          = 1
         self.nrep        = 1
         self.real_x      = self.x
         self.sigma2      = 0.1**2
         self.obsvar      = np.diag(np.repeat(self.sigma2/self.nrep, self.dx))
-
-    def function(self, x, theta):
-        #if x < 0.4:
-        #    f = 0
-        #else:
-        f = np.exp(-100*(x - theta)**2) 
-        #elif x > 0.7:
-        #    f = 0
-        #else:
         
+        
+    def realvar(self, x):
+        obsvar = np.zeros(x.shape)
+        obsvar[x >= 0] = 0.1**2
+        return obsvar.ravel()
+    
+    def function(self, x, theta):
+        f = np.exp(-100*(x - theta)**2) 
         return f
     
     def sim(self, H, persis_info, sim_specs, libE_info):
@@ -33,7 +35,10 @@ class bellcurve:
         
         return H_o, persis_info
     
-    def realdata(self, seed):
+    def realdata(self, x, seed):
+        self.x = x
+        self.real_x = self.x
+        
         np.random.seed(seed)
         self.des = []
         for xid, x in enumerate(self.x):
@@ -47,13 +52,6 @@ class bellcurve:
         mean_feval       = [np.mean(d['feval']) for d in self.des]
         self.real_data   = np.array([mean_feval], dtype='float64')
     
-    def realvar(self, x):
-        obsvar = np.zeros(x.shape)
-        obsvar[x >= 0] = 0.1**2
-        #obsvar[x < 0.4] = 0.2**2
-        #obsvar[x < 0.4] = 0.01**2
-        return obsvar.ravel()
-
     def genobsdata(self, x, sigma2):
         return self.function(x[0], self.true_theta) + np.random.normal(0, np.sqrt(sigma2), 1) 
         
@@ -67,19 +65,24 @@ class sinfunc:
         self.out         = [('f', float)]
         self.d           = 1
         self.p           = 2
-        self.x           = np.array([0.5])[:, None]
-        self.dx          = len(self.x)
+        #self.x           = np.array([0.75])[:, None]
+        self.dx          = 1
+        self.x           = None
+        self.real_data   = None
+        self.obsvar = None
+        self.des = []
         self.nrep        = 1
         self.real_x      = self.x
         self.sigma2      = 0.2**2
-        self.obsvar      = np.diag(np.repeat(self.sigma2/self.nrep, self.dx))
+        
+        
+    def realvar(self, x):
+        s = len(x)
+        obsvar = np.zeros(s)
+        obsvar[(x >= 0).ravel()] = 0.2**2
+        return obsvar
 
     def function(self, x, theta):
-        #if x < 0.3:
-        #    f = 0
-        #elif x > 0.7:
-        #    f = 0
-        #else:
         f = np.sin(10*x - 5*theta)
         return f
     
@@ -90,7 +93,11 @@ class sinfunc:
         
         return H_o, persis_info
     
-    def realdata(self, seed):
+    def realdata(self, x, seed):
+        self.x = x
+        self.real_x = self.x
+        self.obsvar      = np.diag(np.repeat(self.sigma2/self.nrep, len(x)))
+        
         np.random.seed(seed)
         self.des = []
         for xid, x in enumerate(self.x):
@@ -102,38 +109,37 @@ class sinfunc:
         
         mean_feval       = [np.mean(d['feval']) for d in self.des]
         self.real_data   = np.array([mean_feval], dtype='float64')
-        
-    
-    def realvar(self, x):
-        s = len(x)
-        obsvar = np.zeros(s)
-        obsvar[(x >= 0).ravel()] = 0.2**2
-        
-        #obsvar[(x >= 0.5).ravel()] = 0.4**2
-        return obsvar
     
     def genobsdata(self, x, sigma2):
         return self.function(x[0], self.true_theta) + np.random.normal(0, np.sqrt(sigma2), 1) 
-        
+            
     
 class gohbostos:
     def __init__(self):
         self.data_name   = 'gohbostos'
         self.thetalimits = np.array([[0, 1], [0, 1], [0, 1], [0, 1]])
-        self.true_theta  = np.array([0.2, 0.1])
+        self.true_theta  = np.array([0.5, 0.5])
         self.out         = [('f', float)]
         self.d           = 1
         self.p           = 4
         #self.x           = np.array([[0.1, 0.1], [0.5, 0.5]])
         #self.x           = np.array([[0, 0], [1, 0], [0.5, 0.5], [0, 0.5]])
         self.x           = np.array([[0, 0], [1, 0], [1, 1], [0, 1]])
+        self.x           = np.array([[0, 0], [1, 1]])
         self.dx          = len(self.x)
         self.nrep        = 1
         self.real_x      = self.x
-        self.sigma2      = 0.25**2
+        self.sigma2      = 0.05**2
         self.obsvar      = np.diag(np.repeat(self.sigma2/self.nrep, self.dx))
 
-
+    def realvar(self, x):
+        if x.ndim == 1:
+            obsvar =  0.05**2
+        else:
+            s = len(x)
+            obsvar = np.zeros(s)
+            obsvar[:] = 0.05**2
+        return obsvar
         
     def function(self, x1, x2, theta1, theta2):
         num = 1000*theta1*(x1**3) + 1900*(x1**2) + 2092*x1 + 60
@@ -161,14 +167,7 @@ class gohbostos:
         self.real_data   = np.array([mean_feval], dtype='float64')
         
     
-    def realvar(self, x):
-        if x.ndim == 1:
-            obsvar =  0.2**2
-        else:
-            s = len(x)
-            obsvar = np.zeros(s)
-            obsvar[:] = 0.2**2
-        return obsvar
+
     
     def genobsdata(self, x, sigma2):
         return self.function(x[0], x[1], self.true_theta[0], self.true_theta[1]) + np.random.normal(0, np.sqrt(sigma2), 1) 
@@ -244,8 +243,10 @@ class bellcurvesimple:
         self.out         = [('f', float)]
         self.d           = 1
         self.p           = 2
-        self.x           = np.array([0])[:, None]
-        self.dx          = len(self.x)
+        self.x           = None
+        self.real_data   = None
+        self.des = []
+        self.dx          = 1
         self.nrep        = 1
         self.real_x      = self.x
         #self.sigma2      = 0.05**2
@@ -262,7 +263,10 @@ class bellcurvesimple:
         
         return H_o, persis_info
     
-    def realdata(self, seed):
+    def realdata(self, x, seed):
+        self.x = x
+        self.real_x = self.x
+        self.dx  = len(self.x)
         np.random.seed(seed)
         self.des = []
         for xid, x in enumerate(self.x):
@@ -280,28 +284,6 @@ class bellcurvesimple:
         obsvar = np.zeros(x.shape)
         obsvar[x >= -3] = 0.05**2
         obsvar = obsvar.ravel()
-        #if x.ndim <= 0:
-        #    if x <= -1:
-        #        obsvar = 0.001**2
-        #    elif x >= 1:
-        #        obsvar = 0.001**2
-        #    else:
-        #        obsvar = 0.01**2
-        #else:
-        #    for x_id, x_item in enumerate(x):
-        #        if x_item <= -1:
-        #            obsvar[x_id] = 0.001**2
-        #        elif x_item >= 1:
-        #            obsvar[x_id] = 0.001**2
-        #        else:
-        #            obsvar[x_id] = 0.01**2
-            
-        #    obsvar = obsvar.ravel()
-        #obsvar[x <= -1] = 0.001**2
-        #obsvar[x >= 1] = 0.001**2
-        #obsvar[(x > -1)] = 0.01**2
-        #obsvar[(x < 1)] = 0.01**2
-
         return obsvar
 
     def genobsdata(self, x, sigma2):

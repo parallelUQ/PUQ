@@ -9,9 +9,8 @@ class bellcurve:
         self.out         = [('f', float)]
         self.d           = 1
         self.p           = 2
-        self.x           = np.array([0.1, 0.3, 0.5, 0.7, 0.9])[:, None] 
         self.x           = np.array([0.1, 0.1, 0.3, 0.3, 0.5, 0.5, 0.7, 0.7, 0.9, 0.9])[:, None] 
-        self.real_x      = self.x # np.array([0.2, 0.4, 0.5, 0.6, 0.8])[:, None]
+        self.real_x      = self.x
         self.theta_torun = None
         self.sigma2      = 0.2**2
         self.dx          = len(self.x)
@@ -50,13 +49,12 @@ class sbellcurve:
         self.out         = [('f', float)]
         self.d           = 1
         self.p           = 2
-        self.x           = np.array([-3, -1.75, 0, 1.75, 3])[:, None] 
-        #self.x           = np.array([-3, -3, -1.75, -1.75, 0, 0, 1.75, 1.75, 3, 3])[:, None] 
+        self.x           = np.array([-3, -3, -1.5, -1.5, 0, 0, 1.5, 1.5, 3, 3])[:, None] 
         self.real_x      = self.x 
         self.theta_torun = None
-        self.sigma2      = 0.1**2
+        self.sigma2      = 0.05**2
         self.dx          = len(self.x)
-        self.nrep        = 2
+        self.nrep        = 1
         self.obsvar      = np.diag(np.repeat(self.sigma2/self.nrep, self.dx))
 
     def function(self, x, theta):
@@ -91,7 +89,6 @@ class sinfunc:
         self.out         = [('f', float)]
         self.d           = 1
         self.p           = 2
-        self.x           = np.array([0.1, 0.3, 0.5, 0.7, 0.9])[:, None] 
         self.x           = np.array([0.1, 0.1, 0.3, 0.3, 0.5, 0.5, 0.7, 0.7, 0.9, 0.9])[:, None] 
         self.real_x      = self.x 
         self.theta_torun = None
@@ -131,7 +128,7 @@ class gohbostos:
     def __init__(self):
         self.data_name   = 'gohbostos'
         self.thetalimits = np.array([[0, 1], [0, 1], [0, 1], [0, 1]])
-        self.true_theta  = np.array([0.2, 0.1])
+        self.true_theta  = np.array([0.5, 0.5])
         self.out         = [('f', float)]
         self.d           = 1
         self.p           = 4
@@ -141,7 +138,7 @@ class gohbostos:
         #self.x = np.concatenate((np.array([[xx, yy] for xx in x for yy in y]), np.array([[xx, yy] for xx in x for yy in y])))
         self.real_x      = self.x 
         self.theta_torun = None
-        self.sigma2      = 0.25**2
+        self.sigma2      = 0.05**2
         self.dx          = len(self.x)
         self.nrep        = 1
         self.obsvar      = np.diag(np.repeat(self.sigma2/self.nrep, self.dx))
@@ -183,7 +180,6 @@ class nonlin:
         x = np.linspace(0, 1, 3)
         y = np.linspace(0, 1, 3)
         self.x           = np.array([[xx, yy] for xx in x for yy in y])
-        #self.x = np.concatenate((np.array([[xx, yy] for xx in x for yy in y]), np.array([[xx, yy] for xx in x for yy in y])))
         self.real_x      = self.x 
         self.theta_torun = None
         self.sigma2      = 0.1**2

@@ -14,15 +14,15 @@ from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
 from ptest_funcs import sinfunc
-from plots_design import gather_data, fitemu, predmle
+from plots_design import gather_data, fitemu, predmle, create_test
 from smt.sampling_methods import LHS   
 
-    
 cls_data = sinfunc()
-cls_data.realdata(0)
+#cls_data.realdata(x=np.array([[0.5], [0.5]]), seed=0)
+cls_data.realdata(x=np.array([[0.5]]), seed=0)
 args         = parse_arguments()
 
-th_vec      = (np.arange(0, 100, 10)/100)[:, None]
+th_vec = (np.arange(0, 100, 10)/100)[:, None]
 x_vec = (np.arange(0, 100, 1)/100)[:, None]
 fvec = np.zeros((len(th_vec), len(x_vec)))
 pvec = np.zeros((len(th_vec)))
@@ -37,33 +37,25 @@ for d_id, d in enumerate(cls_data.des):
 plt.show()
 
 # # # Create a mesh for test set # # # 
-thetamesh = np.linspace(cls_data.thetalimits[1][0], cls_data.thetalimits[1][1], 30)
-xmesh = np.linspace(cls_data.thetalimits[0][0], cls_data.thetalimits[0][1], 30)
-xdesign_vec = np.tile(cls_data.x.flatten(), len(thetamesh))
-thetatest   = np.concatenate((xdesign_vec[:, None], np.repeat(thetamesh, len(cls_data.x))[:, None]), axis=1)
-ftest       = np.zeros(len(thetatest))
-for t_id, t in enumerate(thetatest):
-    ftest[t_id] = cls_data.function(thetatest[t_id, 0], thetatest[t_id, 1])
-
-ptest = np.zeros(thetamesh.shape[0])
-ftest = ftest.reshape(len(thetamesh), len(cls_data.x))
-for i in range(ftest.shape[0]):
-    mean = ftest[i, :] 
-    rnd = sps.multivariate_normal(mean=mean, cov=cls_data.obsvar)
-    ptest[i] = rnd.pdf(cls_data.real_data)
+xt_test, ftest, ptest, thetamesh, xmesh = create_test(cls_data)
             
-test_data = {'theta': thetatest, 
+test_data = {'theta': xt_test, 
              'f': ftest,
              'p': ptest,
              'th': thetamesh[:, None],      
              'xmesh': xmesh[:, None],
              'p_prior': 1} 
 
-prior_func      = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], b=cls_data.thetalimits[:, 1]) 
-plt.plot(thetamesh, ptest)
-plt.show()
+prior_xt     = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], b=cls_data.thetalimits[:, 1]) 
+prior_x      = prior_dist(dist='uniform')(a=np.array([cls_data.thetalimits[0][0]]), b=np.array([cls_data.thetalimits[0][1]])) 
+prior_t      = prior_dist(dist='uniform')(a=np.array([cls_data.thetalimits[1][0]]), b=np.array([cls_data.thetalimits[1][1]]))
+
+priors = {'prior': prior_xt, 'priorx': prior_x, 'priort': prior_t}
+
+#plt.plot(thetamesh, ptest)
+#plt.show()
 # # # # # # # # # # # # # # # # # # # # # 
-seeds = 1
+seeds = 10
 n0 = 10
 for s in range(seeds):
     al_unimodal = designer(data_cls=cls_data, 
@@ -71,9 +63,9 @@ for s in range(seeds):
                            args={'mini_batch': 1,
                                  'n_init_thetas': n0,
                                  'nworkers': 2, 
-                                 'AL': 'eivar_exp',
+                                 'AL': 'ceivar',
                                  'seed_n0': s, 
-                                 'prior': prior_func,
+                                 'prior': priors,
                                  'data_test': test_data,
                                  'max_evals': 60,
                                  'type_init': None,
@@ -107,6 +99,7 @@ for s in range(seeds):
     plt.hist(xt_eivar[:, 1][n0:])
     plt.axvline(x =cls_data.true_theta, color = 'r')
     plt.xlabel(r'$\theta$')
+    plt.xlim(0, 1)
     plt.show()
 
     plt.hist(xt_eivar[:, 0][n0:])

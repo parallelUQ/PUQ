@@ -1,6 +1,6 @@
 import numpy as np
 from PUQ.designmethods.gen_funcs.acquisition_funcs_support import multiple_pdfs
-from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp
+from PUQ.designmethods.gen_funcs.CEIVAR import ceivar
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
@@ -110,7 +110,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         seed            = gen_specs['user']['seed_n0']
         synth_info      = gen_specs['user']['synth_cls']
         test_data       = gen_specs['user']['test_data']
-        prior_func      = gen_specs['user']['prior']
+        prior_func_all  = gen_specs['user']['prior']
         type_init       = gen_specs['user']['type_init']
         unknown_var     = gen_specs['user']['unknown_var']
         design          = gen_specs['user']['design']
@@ -119,7 +119,10 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         data            = synth_info.real_data
         theta_limits    = synth_info.thetalimits
         
-   
+        prior_func = prior_func_all['prior']
+        prior_func_x = prior_func_all['priorx']
+        prior_func_t = prior_func_all['priort']
+        
         des = synth_info.des
      
         theta_torun     = synth_info.theta_torun
@@ -221,6 +224,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                                   obsvar_u, 
                                                   theta_limits, 
                                                   prior_func,
+                                                  prior_func_t,
                                                   thetatest,
                                                   th_mesh,
                                                   priortest,

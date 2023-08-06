@@ -1,5 +1,8 @@
 import numpy as np
-from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_exp, eivar_des_updated, eivar_des_updated2, maxvar_des, eivar_des_eff
+from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_des_updated, eivar_des_updated2
+from PUQ.designmethods.gen_funcs.PMAXVAR import pmaxvar
+from PUQ.designmethods.gen_funcs.PEIVAReff import peivareff
+from PUQ.designmethods.gen_funcs.CEIVAR import ceivar
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
@@ -12,6 +15,7 @@ from PUQ.surrogate import emulator
 import scipy.stats as sps
 import scipy.optimize as spo
 import matplotlib.pyplot as plt
+from PUQ.designmethods.gen_funcs.PEIVARinit import peivarinitial, pmaxvarinitial
 
 def fit(fitinfo, data_cls, args):
 
@@ -134,7 +138,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         seed            = gen_specs['user']['seed_n0']
         synth_info      = gen_specs['user']['synth_cls']
         test_data       = gen_specs['user']['test_data']
-        prior_func      = gen_specs['user']['prior']
+        prior_func_all  = gen_specs['user']['prior']
         type_init       = gen_specs['user']['type_init']
         unknown_var     = gen_specs['user']['unknown_var']
         design          = gen_specs['user']['design']
@@ -143,37 +147,36 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         data            = synth_info.real_data
         theta_limits    = synth_info.thetalimits
         
-        real_data_rep   = None
+        prior_func = prior_func_all['prior']
+        prior_func_x = prior_func_all['priorx']
+        prior_func_t = prior_func_all['priort']
         
-        des = synth_info.des
-     
+        real_data_rep   = None
 
         thetatest, posttest, ftest, priortest = None, None, None, None
         if test_data is not None:
             thetatest, th_mesh, x_mesh, posttest, ftest, priortest = test_data['theta'], test_data['th'], test_data['xmesh'], test_data['p'], test_data['f'], test_data['p_prior']
         
-        #xt_test      = np.concatenate((x_mesh, np.repeat(synth_info.true_theta, len(x_mesh))[:, None]), axis=1)
-         
-        x_extend = np.tile(x_mesh.flatten(), len(th_mesh))
-        #xt_test2   = np.concatenate((x_extend[:, None], np.repeat(th_mesh, len(x_mesh))[:, None]), axis=1)
- 
-
-        true_fevals = np.reshape(data[0, :], (1, data.shape[1]))
         n_x     = synth_info.d 
         x       = synth_info.x
         real_x  = synth_info.real_x
-        n_x_des    = len(x)
         x_emu      = np.arange(0, 1)[:, None ]
-        
-        dx = x.shape[1]
+        dx = synth_info.dx 
         dt = synth_info.true_theta.shape[0]
 
-        x_u = 1*x
-        true_fevals_u = 1*true_fevals
-        obsvar_u = 1*obsvar
+        #if data.all() != None:
+        if data != None:
+            true_fevals = np.reshape(data[0, :], (1, data.shape[1]))
+            x_u = 1*x
+            true_fevals_u = 1*true_fevals
+            obsvar_u = 1*obsvar
+            des = synth_info.des
+            nodesign = False
+        else:
+            true_fevals, x_u, true_fevals_u, obsvar_u, des = None, None, None, None, []
+            nodesign = True
+            
         reps = 1
-        print(x_u)
-        #print(xt_test2)
         obs_offset, theta_offset, generated_no = 0, 0, 0
         TV, HD = 1000, 1000
         fevals, pending, prev_pending, complete, prev_complete = None, None, None, None, None
@@ -223,63 +226,37 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 if (design == False) & (unknown_var == False):
                     print('Skip')
                 else:
-                    bnd = ()
-                    theta_init = []
-                    for i in range(dx, dx + dt):
-                        bnd += ((theta_limits[i][0], theta_limits[i][1]),)
-                        #theta_init.append((0 + 0)/2)
-                        theta_init.append((theta_limits[i][0] + theta_limits[i][1])/2)
-             
-                    opval = spo.minimize(obj_mle,
-                                         theta_init,
-                                         method='L-BFGS-B',
-                                         options={'gtol': 0.01},
-                                         bounds=bnd,
-                                         args=([emu, real_data_rep, x_u, x_emu, true_fevals_u, unknown_var, obsvar_u, des]))                
-
-                    theta_mle = opval.x
-                    print('mle param:', theta_mle)
-            
-
+                    if nodesign == False:
+                        bnd = ()
+                        theta_init = []
+                        for i in range(dx, dx + dt):
+                            bnd += ((theta_limits[i][0], theta_limits[i][1]),)
+                            #theta_init.append((0 + 0)/2)
+                            theta_init.append((theta_limits[i][0] + theta_limits[i][1])/2)
+                 
+                        opval = spo.minimize(obj_mle,
+                                             theta_init,
+                                             method='L-BFGS-B',
+                                             options={'gtol': 0.01},
+                                             bounds=bnd,
+                                             args=([emu, real_data_rep, x_u, x_emu, true_fevals_u, unknown_var, obsvar_u, des]))                
+    
+                        theta_mle = opval.x
+                        print('mle param:', theta_mle)
                     
                     if design == True:
-                        new_field = True if ((theta.shape[0] % 5) == 0) and (theta.shape[0] > n_init) else False
-                        
-                        
+                        new_field = True if ((theta.shape[0] % 10) == 0) and (theta.shape[0] > n_init) else False
                         if new_field:
-                            
                             #des           = eivar_new_exp_mat(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
                             #des           = eivar_des_updated2(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
                             #des           = eivar_des_updated(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
-                            des           = maxvar_des(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
-                            x_u           = np.array([e['x'] for e in des])#[:, None]
+                            des           = peivareff(prior_func, prior_func_x, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
+                            x_u           = np.array([e['x'] for e in des])
                             true_fevals_u = np.array([np.mean(e['feval']) for e in des])[None, :]
                             reps          = [e['rep'] for e in des]
                             
-                            #pred2        = emu.predict(x=x_emu, theta=xt_test2)
-                            #f2 = pred2.mean().reshape(len(th_mesh), len(x_mesh))
-                            
-                            #for fe in f2:
-                            #    plt.plot(x_mesh, fe)
-                            #plt.show()
-                            
-                            #xt_test      = np.concatenate((x_mesh, np.repeat(theta_mle, len(x_mesh))[:, None]), axis=1)
-                            #pred        = emu.predict(x=x_emu, theta=xt_test)
-                            #mean_pred   = pred.mean()
-                            #var_pred    = np.sqrt(pred.var())
-                            #plt.plot(xt_test[:, 0], mean_pred.flatten())
-                            #plt.scatter(x_u, true_fevals_u, color='red')
-                            #plt.fill_between(xt_test[:, 0], mean_pred.flatten() + 2*var_pred.flatten(), mean_pred.flatten() - 2*var_pred.flatten(), alpha=0.5)
-                            #plt.show()
-                            
-                        #print(x_u)
-                        #print(synth_info.realvar(x_u))
-                        #obsvar_u = np.diag(np.repeat(synth_info.sigma2, len(x_u)))
-                        obsvar_u = np.diag(synth_info.realvar(x_u))
-                        #print(obsvar_u)
-                        #print(np.diag(synth_info.realvar(x_u)))
-                        
-                        obsvar_u = obsvar_u/reps
+           
+                            obsvar_u = np.diag(synth_info.realvar(x_u))
            
                 print(obsvar_u)
                 prev_pending   = pending.copy()
@@ -306,8 +283,14 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 
             else: 
                 if select_condition(complete, prev_complete, n_theta=mini_batch, n_initial=n0):
-                    #print('Selecting theta...\n')
-        
+                    if nodesign:
+                        nodesign = False
+                        des = pmaxvarinitial(prior_func, prior_func_x, emu, x_emu, None, x_mesh, th_mesh, synth_info, emubias, des)
+                        x_u           = np.array([e['x'] for e in des])
+                        true_fevals_u = np.array([np.mean(e['feval']) for e in des])[None, :]
+                        reps          = [e['rep'] for e in des]
+                        obsvar_u = np.diag(synth_info.realvar(x_u))
+                                
                     prev_complete = complete.copy()
                     new_theta = acquisition_f(mini_batch, 
                                               x_u,
@@ -319,6 +302,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                               obsvar_u, 
                                               theta_limits, 
                                               prior_func,
+                                              prior_func_t,
                                               thetatest,
                                               th_mesh,
                                               priortest,

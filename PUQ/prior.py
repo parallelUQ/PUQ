@@ -6,6 +6,8 @@ class prior_uniform():
         self.a = a
         self.b = b
         self.p = len(a)
+
+        print(self.p )
         
     def rnd(self, n, seed=None):
         if seed == None:

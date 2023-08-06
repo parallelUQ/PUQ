@@ -4,7 +4,7 @@ import scipy.stats as sps
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
-from plots_design import plot_EIVAR, plot_LHS, obsdata, fitemu, create_test, gather_data
+from plots_design import plot_EIVAR, plot_LHS, obsdata, fitemu, create_test_non, gather_data_non
 from smt.sampling_methods import LHS
 from ptest_funcs import nonlin
 from plots_design import predmle
@@ -20,43 +20,21 @@ s = 1
 cls_data = nonlin()
 cls_data.realdata(s)
 
-cls_data.realvar(cls_data.x)
 
-n_t = 100
-n_x = len(cls_data.x)
-n_tot = n_t*n_x
-thetamesh = np.linspace(cls_data.thetalimits[2][0], cls_data.thetalimits[2][1], n_t).reshape(n_t, 1)
-f = np.zeros((n_tot))
-k = 0
-for j in range(n_t):
-    for i in range(n_x):
-        f[k] = cls_data.function(cls_data.real_x[i, 0], cls_data.real_x[i, 1], thetamesh[j, 0])
-        k += 1
-ftest = f.reshape(n_t, n_x)
-ptest = np.zeros(n_t)
-for j in range(n_t):
-    rnd = sps.multivariate_normal(mean=ftest[j, :], cov=cls_data.obsvar)
-    ptest[j] = rnd.pdf(cls_data.real_data)
-    
-plt.scatter(thetamesh, ptest)
-plt.show()
+prior_xt     = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], b=cls_data.thetalimits[:, 1]) 
+prior_x      = prior_dist(dist='uniform')(a=cls_data.thetalimits[0:2, 0], b=cls_data.thetalimits[0:2, 1]) 
+prior_t      = prior_dist(dist='uniform')(a=np.array([cls_data.thetalimits[2][0]]), b=np.array([cls_data.thetalimits[2][1]]))
 
-x1 = np.linspace(cls_data.thetalimits[1][0], cls_data.thetalimits[1][1], 10)
-x2 = np.linspace(cls_data.thetalimits[1][0], cls_data.thetalimits[1][1], 10)
-X1, X2 = np.meshgrid(x1, x2)
-XS = np.vstack([X1.ravel(), X2.ravel()]).T
+priors = {'prior': prior_xt, 'priorx': prior_x, 'priort': prior_t}
+
+xt_test, ftest, ptest, thetamesh, xmesh = create_test_non(cls_data)
 
 test_data = {'theta': 1, 
              'f': ftest,
              'p': ptest,
              'th': thetamesh,    
-             'xmesh': XS,
+             'xmesh': xmesh,
              'p_prior': 1} 
-
-
-
-prior_func      = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], b=cls_data.thetalimits[:, 1]) 
-
 
 seeds = 10
 ninit = 30
@@ -70,9 +48,9 @@ for s in range(seeds):
                            args={'mini_batch': 1, 
                                  'n_init_thetas': ninit,
                                  'nworkers': 2, 
-                                 'AL': 'eivar_exp',
+                                 'AL': 'ceivar',
                                  'seed_n0': s,
-                                 'prior': prior_func,
+                                 'prior': priors,
                                  'data_test': test_data,
                                  'max_evals': nmax,
                                  'type_init': None,
@@ -154,7 +132,7 @@ for s in range(seeds):
     result2.append(rep)
     
     # rnd 
-    xt_rnd   = prior_func.rnd(100, seed=s)
+    xt_rnd   = prior_xt.rnd(100, seed=s)
     f_rnd    = np.zeros(100)
     for i in range(100):
         f_rnd[i] = cls_data.function(xt_rnd[i][0], xt_rnd[i][1], xt_rnd[i][2])
