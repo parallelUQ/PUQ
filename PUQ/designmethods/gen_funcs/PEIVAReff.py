@@ -32,7 +32,7 @@ def peivareff(prior_func, prior_func_x, emu, x_emu, theta_mle, x_mesh, th_mesh, 
     #sampling = LHS(xlimits=synth_info.thetalimits[0:2])
     #xclist   = sampling(n_clist)
     
-    #xclist = np.concatenate((xclist, x_temp))
+    xclist = np.concatenate((xclist, x_temp))
     #print(xclist)
     # nx_ref x d_x
     x_ref     = 1*x_mesh 
@@ -76,7 +76,6 @@ def peivareff(prior_func, prior_func_x, emu, x_emu, theta_mle, x_mesh, th_mesh, 
     n_x = nf + 1
     
     Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, mesh_grid, f_field_rep, obsvar3D)
-    
 
     for xt_id, x_c in enumerate(xclist):
         x_cand = x_c.reshape(1, dx)
@@ -89,6 +88,9 @@ def peivareff(prior_func, prior_func_x, emu, x_emu, theta_mle, x_mesh, th_mesh, 
     maxid = np.argmax(eivar_val)
     xnew  = xclist[maxid]
 
+    #xnew = prior_func_x.rnd(1, None).flatten()
+
+    
     xnew_var = synth_info.realvar(xnew)
     for i in range(1):
         y_temp   = synth_info.genobsdata(xnew, xnew_var) 

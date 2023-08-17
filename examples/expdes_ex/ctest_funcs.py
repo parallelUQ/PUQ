@@ -16,6 +16,7 @@ class bellcurve:
         self.dx          = len(self.x)
         self.nrep        = 1
         self.obsvar      = np.diag(np.repeat(self.sigma2/self.nrep, self.dx))
+        self.nodata = False
         
     def function(self, x, theta):
         f = np.exp(-100*(x - theta)**2) 
@@ -56,7 +57,8 @@ class sbellcurve:
         self.dx          = len(self.x)
         self.nrep        = 1
         self.obsvar      = np.diag(np.repeat(self.sigma2/self.nrep, self.dx))
-
+        
+        
     def function(self, x, theta):
         f = theta*np.exp(-(x*2)**2)
         return f
@@ -80,7 +82,68 @@ class sbellcurve:
         
         mean_feval       = [np.mean(d['feval']) for d in self.des]
         self.real_data   = np.array([mean_feval], dtype='float64')
-                
+
+class multicurve:
+    def __init__(self):
+        self.data_name   = 'multicurve'
+        self.thetalimits = np.array([[0, 1], [0, 1]])
+        self.true_theta  = np.array([0.25])  
+        self.out         = [('f', float)]
+        self.d           = 1
+        self.p           = 2
+        self.x           = None
+        self.real_data   = None
+        self.des = []
+        self.dx          = 1
+        self.nrep        = 1
+        self.sigma2      = 0.05**2
+        self.nodata = True
+        self.theta_torun = None
+        self.real_x = self.x
+
+    def function(self, x, theta):
+        x = 12*x - 6
+        if theta <= 0.5:
+            f = (theta+0.5)*np.exp(-((x+3)*1)**2)
+        else:
+            f = theta*np.exp(-((x-3)*1)**2)
+        return f
+    
+    def sim(self, H, persis_info, sim_specs, libE_info):
+        function        = sim_specs['user']['function']
+        H_o             = np.zeros(1, dtype=sim_specs['out'])
+        H_o['f']        = function(H['thetas'][0][0], H['thetas'][0][1])
+        
+        return H_o, persis_info
+    
+    def realdata(self, x, seed):
+        self.x = x
+        self.nodata = False
+        self.obsvar = np.diag(np.repeat(self.sigma2, len(self.x)))
+        np.random.seed(seed)
+        self.des = []
+        for xid, x in enumerate(self.x):
+            newd = {'x':x, 'feval':[], 'rep':self.nrep}
+            for r in range(self.nrep):
+                realv = self.realvar(x[0])
+                fv              = self.genobsdata(x, self.true_theta) 
+                newd['feval'].append(fv)
+            self.des.append(newd)
+        
+        mean_feval       = [np.mean(d['feval']) for d in self.des]
+        self.real_data   = np.array([mean_feval], dtype='float64')
+    
+    def realvar(self, x):
+        obsvar = np.zeros(x.shape)
+        obsvar[x >= 0] = self.sigma2 
+        obsvar = obsvar.ravel()
+        return obsvar
+
+    def genobsdata(self, x, sigma2):
+        varval = self.realvar(x)
+        return self.function(x[0], self.true_theta) + np.random.normal(0, np.sqrt(varval), 1) 
+
+               
 class sinfunc:
     def __init__(self):
         self.data_name   = 'sinfunc'
@@ -96,6 +159,7 @@ class sinfunc:
         self.dx          = len(self.x)
         self.nrep        = 1
         self.obsvar      = np.diag(np.repeat(self.sigma2/self.nrep, self.dx))
+        self.nodata = False
         
     def function(self, x, theta):
         f = np.sin(10*x - 5*theta)

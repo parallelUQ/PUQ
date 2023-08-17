@@ -6,18 +6,18 @@ import scipy.stats as sps
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
-from ptest_funcs import bellcurvesimple
+from ptest_funcs import multicurve
 from plots_design import gather_data, fitemu, create_test
 from smt.sampling_methods import LHS   
  
 
 # # # # # # # # # # # # # # # # # # # # # 
-seeds = 10
-n0 = 50
+seeds = 5
+n0 = 20
 n0seed = 1
 for s in range(n0seed, seeds):
-    cls_data = bellcurvesimple()
-    cls_data.realdata(x=np.array([0, 0.25, 0.5, 0.75, 1])[:, None], seed=s)
+    cls_data = multicurve()
+    cls_data.realdata(x=np.array([ 0, 0.2, 0.4, 0.6, 0.8])[:, None], seed=s)
     args         = parse_arguments()
 
     th_vec      = (np.arange(0, 100, 10)/100)[:, None]
@@ -62,7 +62,7 @@ for s in range(n0seed, seeds):
                                  'seed_n0': s, 
                                  'prior': priors,
                                  'data_test': test_data,
-                                 'max_evals': 100,
+                                 'max_evals': 70,
                                  'type_init': None,
                                  'unknown_var': False,
                                  'design': True})
@@ -73,6 +73,9 @@ for s in range(n0seed, seeds):
 
     des = al_unimodal._info['des']
     xdes = [e['x'] for e in des]
+    plt.hist(xdes)
+    plt.xlim(0, 1)
+    plt.show()
     nx_ref = len(xdes)
     fdes = np.array([e['feval'][0] for e in des]).reshape(1, nx_ref)
     xu_des, xcount = np.unique(xdes, return_counts=True)

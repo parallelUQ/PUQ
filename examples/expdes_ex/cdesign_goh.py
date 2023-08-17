@@ -45,7 +45,7 @@ for s in range(seeds):
                            args={'mini_batch': 1, 
                                  'n_init_thetas': ninit,
                                  'nworkers': 2, 
-                                 'AL': 'ceivar',
+                                 'AL': 'ceivarx',
                                  'seed_n0': s,
                                  'prior': priors,
                                  'data_test': test_data,
@@ -66,6 +66,8 @@ for s in range(seeds):
     plt.show()
     
     plt.scatter(tacq[:, 0], tacq[:, 1])
+    plt.xlim(0, 1)
+    plt.ylim(0, 1)
     plt.show()
     
 

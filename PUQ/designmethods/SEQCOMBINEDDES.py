@@ -160,23 +160,22 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         
         n_x     = synth_info.d 
         x       = synth_info.x
-        real_x  = synth_info.real_x
-        x_emu      = np.arange(0, 1)[:, None ]
+        x_emu   = np.arange(0, 1)[:, None ]
         dx = synth_info.dx 
         dt = synth_info.true_theta.shape[0]
 
-        #if data.all() != None:
-        if data != None:
+
+        if synth_info.nodata:
+            true_fevals, x_u, true_fevals_u, obsvar_u, des = None, None, None, None, []
+            nodesign = True
+        else:
             true_fevals = np.reshape(data[0, :], (1, data.shape[1]))
             x_u = 1*x
             true_fevals_u = 1*true_fevals
             obsvar_u = 1*obsvar
             des = synth_info.des
             nodesign = False
-        else:
-            true_fevals, x_u, true_fevals_u, obsvar_u, des = None, None, None, None, []
-            nodesign = True
-            
+
         reps = 1
         obs_offset, theta_offset, generated_no = 0, 0, 0
         TV, HD = 1000, 1000
@@ -188,6 +187,8 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         list_id = []
         emubias = None
         theta = 0
+        
+        nf_init = 0
         
         while tag not in [STOP_TAG, PERSIS_STOP]:
             if not first_iter:
@@ -216,54 +217,39 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 print('Percentage Complete: %0.2f ( %d / %d)' % (100*np.round(np.mean(complete), 4),
                                                                  np.sum(complete),
                                                                  np.prod(pending.shape)))
-                
-   
-                
+
                 emu = emulator(x_emu, 
                                theta, 
                                fevals, 
                                method='PCGPexp')
 
-                if (design == False) & (unknown_var == False):
-                    print('Skip')
-                else:
-                    if nodesign == False:
-                        bnd = ()
-                        theta_init = []
-                        print(dx)
-                        print(dt)
-                        for i in range(dx, dx + dt):
-                            bnd += ((theta_limits[i][0], theta_limits[i][1]),)
-                            #theta_init.append((0 + 0)/2)
-                            theta_init.append((theta_limits[i][0] + theta_limits[i][1])/2)
-                 
-                        opval = spo.minimize(obj_mle,
-                                             theta_init,
-                                             method='L-BFGS-B',
-                                             options={'gtol': 0.01},
-                                             bounds=bnd,
-                                             args=([emu, real_data_rep, x_u, x_emu, true_fevals_u, unknown_var, obsvar_u, des]))                
-    
-                        theta_mle = opval.x
-                        
-                        print('mle param:', theta_mle)
-                        
+
+                new_field = True if ((theta.shape[0] % 10) == 0) and (theta.shape[0] > n_init) else False
+            
+                if new_field:
+                    print('Field design')
+                    bnd = ()
+                    theta_init = []
+                    for i in range(dx, dx + dt):
+                        bnd += ((theta_limits[i][0], theta_limits[i][1]),)
+                        theta_init.append((theta_limits[i][0] + theta_limits[i][1])/2)
+             
+                    opval = spo.minimize(obj_mle,
+                                         theta_init,
+                                         method='L-BFGS-B',
+                                         options={'gtol': 0.01},
+                                         bounds=bnd,
+                                         args=([emu, real_data_rep, x_u, x_emu, true_fevals_u, unknown_var, obsvar_u, des]))                
+
+                    theta_mle = opval.x
+                    print('mle param:', theta_mle)
                     
-                    if design == True:
-                        new_field = True if ((theta.shape[0] % 10) == 0) and (theta.shape[0] > n_init) else False
-                        if new_field:
-                            #des           = eivar_new_exp_mat(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
-                            #des           = eivar_des_updated2(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
-                            #des           = eivar_des_updated(prior_func, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
-                            des           = peivareff(prior_func, prior_func_x, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
-                            #des           = pmaxvar2(prior_func, prior_func_x, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
-                            #des           = pimse(prior_func, prior_func_x, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
-                            x_u           = np.array([e['x'] for e in des])
-                            true_fevals_u = np.array([np.mean(e['feval']) for e in des])[None, :]
-                            reps          = [e['rep'] for e in des]
-                            
-           
-                            obsvar_u = np.diag(synth_info.realvar(x_u))
+                    des           = peivareff(prior_func, prior_func_x, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
+                    
+                x_u           = np.array([e['x'] for e in des])
+                true_fevals_u = np.array([np.mean(e['feval']) for e in des])[None, :]
+                reps          = [e['rep'] for e in des]
+                obsvar_u      = np.diag(synth_info.realvar(x_u))
            
                 print(obsvar_u)
                 prev_pending   = pending.copy()
@@ -280,8 +266,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 else:
                     theta  = prior_func.rnd(n_init, seed) 
    
-                fevals, pending, prev_pending, complete, prev_complete = create_arrays(n_x, n_init)
-                            
+                fevals, pending, prev_pending, complete, prev_complete = create_arrays(n_x, n_init)  
                 H_o    = np.zeros(len(theta), dtype=gen_specs['out'])
                 H_o    = load_H(H_o, theta, TV, HD, generated_no, set_priorities=True)
                 tag, Work, calc_in = ps.send_recv(H_o)       
@@ -290,19 +275,11 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 
             else: 
                 if select_condition(complete, prev_complete, n_theta=mini_batch, n_initial=n0):
-                    if nodesign:
-                        nodesign = False
-                        #des = pmaxvarinitial(prior_func, prior_func_x, emu, x_emu, None, x_mesh, th_mesh, synth_info, emubias, des)
-                        des = pimse(prior_func, prior_func_x, emu, x_emu, None, x_mesh, th_mesh, synth_info, emubias, des)
-                        x_u           = np.array([e['x'] for e in des])
-                        true_fevals_u = np.array([np.mean(e['feval']) for e in des])[None, :]
-                        reps          = [e['rep'] for e in des]
-                        obsvar_u = np.diag(synth_info.realvar(x_u))
-                                
+                    print('Computer design')
                     prev_complete = complete.copy()
                     new_theta = acquisition_f(mini_batch, 
                                               x_u,
-                                              real_x,
+                                              None,
                                               emu, 
                                               theta, 
                                               fevals, 
@@ -315,8 +292,6 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                               th_mesh,
                                               priortest,
                                               type_init)
-                    
-                    #new_theta  = prior_func.rnd(mini_batch) 
 
                     theta, fevals, pending, prev_pending, complete, prev_complete = \
                         pad_arrays(n_x, new_theta, theta, fevals, pending, prev_pending, complete, prev_complete)

@@ -18,7 +18,7 @@ def add_result(method_name, phat, ptest, s):
     return rep
 
 cls_data = bellcurve()
-cls_data.realdata(x=np.array([0.5])[:, None], seed=0)
+cls_data.realdata(x=np.array([0, 0.25, 0.5, 0.75, 1])[:, None], seed=0)
 args         = parse_arguments()
 
 th_vec = (np.arange(0, 100, 10)/100)[:, None]
@@ -53,13 +53,13 @@ priors = {'prior': prior_xt, 'priorx': prior_x, 'priort': prior_t}
 #plt.plot(thetamesh, ptest)
 #plt.show()
 # # # # # # # # # # # # # # # # # # # # # 
-seeds = 10
-n0 = 10
-nmax = 60
+seeds = 5
+n0 = 20
+nmax = 70
 result = []
 for s in range(seeds):
     al_unimodal = designer(data_cls=cls_data, 
-                           method='SEQEXPDESBIAS', 
+                           method='SEQCOMBINEDDES', 
                            args={'mini_batch': 1,
                                  'n_init_thetas': n0,
                                  'nworkers': 2, 

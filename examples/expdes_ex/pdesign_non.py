@@ -18,8 +18,15 @@ def add_result(method_name, phat, s, ptest):
 
 s = 1
 cls_data = nonlin()
-cls_data.realdata(s)
 
+x = np.linspace(0, 1, 2)
+y = np.linspace(0, 1, 2)
+xr = np.array([[xx, yy] for xx in x for yy in y])
+        
+cls_data.realdata(x=xr, seed=s)
+    
+
+        
 
 prior_xt     = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], b=cls_data.thetalimits[:, 1]) 
 prior_x      = prior_dist(dist='uniform')(a=cls_data.thetalimits[0:2, 0], b=cls_data.thetalimits[0:2, 1]) 
@@ -44,7 +51,7 @@ result2 = []
 for s in range(seeds):
 
     al_unimodal = designer(data_cls=cls_data, 
-                           method='SEQEXPDESBIAS', 
+                           method='SEQCOMBINEDDES', 
                            args={'mini_batch': 1, 
                                  'n_init_thetas': ninit,
                                  'nworkers': 2, 
@@ -67,7 +74,7 @@ for s in range(seeds):
     fdes = np.array([x['feval'] for x in des]).ravel()
     nf = len(xdes)
     
-    plt.scatter(cls_data.real_x[:, 0], cls_data.real_x[:, 1])
+    plt.scatter(cls_data.x[:, 0], cls_data.x[:, 1])
     plt.scatter(xacq[:, 0], xacq[:, 1])
     plt.show()
     
@@ -78,11 +85,19 @@ for s in range(seeds):
     
     plt.legend()
     plt.show()
+
+    unq, cnt = np.unique(xacq, return_counts=True, axis=0)
+    plt.scatter(unq[:, 0], unq[:, 1])
+    for label, x_count, y_count in zip(cnt, unq[:, 0], unq[:, 1]):
+        plt.annotate(label, xy=(x_count, y_count), xytext=(5, -5), textcoords='offset points')
     
+    plt.legend()
+    plt.show()
     
     plt.hist(tacq[ninit:])
     plt.axvline(x =cls_data.true_theta, color = 'r')
     plt.xlabel(r'$\theta$')
+    plt.xlim(0,1)
     plt.show()
 
     # Construct test data

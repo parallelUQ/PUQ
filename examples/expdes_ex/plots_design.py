@@ -78,7 +78,9 @@ def create_test(cls_data):
     xmesh = np.linspace(cls_data.thetalimits[0][0], cls_data.thetalimits[0][1], 100)
     
     #if (cls_data.x).all() != None:
-    if cls_data.x != None:
+    if cls_data.nodata:
+        thetatest, ftest, ptest = None, None, None
+    else:
         xdesign_vec = np.tile(cls_data.x.flatten(), len(thetamesh))
         thetatest   = np.concatenate((xdesign_vec[:, None], np.repeat(thetamesh, len(cls_data.x))[:, None]), axis=1)
         ftest       = np.zeros(len(thetatest))
@@ -94,8 +96,8 @@ def create_test(cls_data):
          
         plt.plot(thetamesh, ptest)
         plt.show()
-    else:
-        thetatest, ftest, ptest = None, None, None
+    
+        
     
     return thetatest, ftest, ptest, thetamesh, xmesh
 
@@ -112,8 +114,8 @@ def create_test_non(cls_data):
     k = 0
     for j in range(n_t):
         for i in range(n_x):
-            xt_test[k, :] = np.array([cls_data.real_x[i, 0], cls_data.real_x[i, 1], thetamesh[j]])
-            ftest[k] = cls_data.function(cls_data.real_x[i, 0], cls_data.real_x[i, 1], thetamesh[j])
+            xt_test[k, :] = np.array([cls_data.x[i, 0], cls_data.x[i, 1], thetamesh[j]])
+            ftest[k] = cls_data.function(cls_data.x[i, 0], cls_data.x[i, 1], thetamesh[j])
             k += 1
 
     ftest = ftest.reshape(n_t, n_x)

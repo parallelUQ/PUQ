@@ -1,6 +1,7 @@
 import numpy as np
 from PUQ.designmethods.gen_funcs.acquisition_funcs_support import multiple_pdfs
 from PUQ.designmethods.gen_funcs.CEIVAR import ceivar
+from PUQ.designmethods.gen_funcs.CEIVARX import ceivarx
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
@@ -228,7 +229,8 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                                   thetatest,
                                                   th_mesh,
                                                   priortest,
-                                                  type_init)
+                                                  type_init,
+                                                  synth_info)
 
                     theta, fevals, pending, prev_pending, complete, prev_complete = \
                         pad_arrays(n_x, new_theta, theta, fevals, pending, prev_pending, complete, prev_complete)

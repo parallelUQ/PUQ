@@ -19,7 +19,7 @@ from smt.sampling_methods import LHS
 
 cls_data = sinfunc()
 #cls_data.realdata(x=np.array([[0.5], [0.5]]), seed=0)
-cls_data.realdata(x=np.array([[0.5]]), seed=0)
+cls_data.realdata(x=np.array([0, 0.25, 0.5, 0.75, 1])[:, None], seed=0)
 args         = parse_arguments()
 
 th_vec = (np.arange(0, 100, 10)/100)[:, None]
@@ -59,7 +59,7 @@ seeds = 10
 n0 = 10
 for s in range(seeds):
     al_unimodal = designer(data_cls=cls_data, 
-                           method='SEQEXPDESBIAS', 
+                           method='SEQCOMBINEDDES', 
                            args={'mini_batch': 1,
                                  'n_init_thetas': n0,
                                  'nworkers': 2, 
