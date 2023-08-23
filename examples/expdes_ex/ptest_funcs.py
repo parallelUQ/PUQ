@@ -167,9 +167,9 @@ class sinfunc:
 
         
 
-class bellcurvesimple:
+class sbellcurve:
     def __init__(self):
-        self.data_name   = 'bellcurve'
+        self.data_name   = 'sbellcurve'
         self.thetalimits = np.array([[0, 1], [0, 1]])
         self.true_theta  = np.array([0.5])  
         self.out         = [('f', float)]
@@ -180,7 +180,7 @@ class bellcurvesimple:
         self.des = []
         self.dx          = 1
         self.nrep        = 1
-        self.sigma2      = 0.03**2
+        self.sigma2      = 0.05**2
         self.nodata      = True  
         
     def function(self, x, theta):
@@ -199,7 +199,7 @@ class bellcurvesimple:
         self.x = x
         self.nodata = False
         self.obsvar = np.diag(np.repeat(self.sigma2, len(self.x)))
-        
+        self.obsvar = np.diag(self.realvar(x))
         np.random.seed(seed)
         self.des = []
         for xid, x in enumerate(self.x):
@@ -216,6 +216,7 @@ class bellcurvesimple:
     def realvar(self, x):
         obsvar = np.zeros(x.shape)
         obsvar[x >= 0] = self.sigma2 
+        #obsvar[x >= 0.6] = 0.1*self.sigma2 
         obsvar = obsvar.ravel()
         return obsvar
 
@@ -231,23 +232,19 @@ class gohbostos:
         self.out         = [('f', float)]
         self.d           = 1
         self.p           = 4
-        #self.x           = np.array([[0.1, 0.1], [0.5, 0.5]])
-        #self.x           = np.array([[0, 0], [1, 0], [0.5, 0.5], [0, 0.5]])
-        self.x           = np.array([[0, 0], [1, 0], [1, 1], [0, 1]])
-        self.x           = np.array([[0, 0], [1, 1]])
-        self.dx          = len(self.x)
+        self.x           = None
+        self.dx          = 2
         self.nrep        = 1
-        self.real_x      = self.x
         self.sigma2      = 0.05**2
-        self.obsvar      = np.diag(np.repeat(self.sigma2/self.nrep, self.dx))
+        self.nodata      = True  
 
     def realvar(self, x):
         if x.ndim == 1:
-            obsvar =  0.05**2
+            obsvar = self.sigma2
         else:
             s = len(x)
             obsvar = np.zeros(s)
-            obsvar[:] = 0.05**2
+            obsvar[:] = self.sigma2
         return obsvar
         
     def function(self, x1, x2, theta1, theta2):
@@ -262,7 +259,12 @@ class gohbostos:
         H_o['f']        = function(H['thetas'][0][0], H['thetas'][0][1], H['thetas'][0][2], H['thetas'][0][3])
         return H_o, persis_info
     
-    def realdata(self, seed):
+    def realdata(self, x, seed):
+        self.x = x
+        self.nodata = False
+        self.obsvar = np.diag(np.repeat(self.sigma2, len(self.x)))
+        
+        
         np.random.seed(seed)
         self.des = []
         for xid, x in enumerate(self.x):
@@ -291,20 +293,76 @@ class nonlin:
         self.out         = [('f', float)]
         self.d           = 1
         self.p           = 3
-        x = np.linspace(0, 1, 2)
-        y = np.linspace(0, 1, 2)
-        self.x           = None #np.array([[xx, yy] for xx in x for yy in y])
+        self.x           = None 
         self.real_data   = None
         self.des = []
         self.dx          = 2
         self.nrep        = 1
-        self.sigma2      = 0.05**2
+        self.sigma2      = 0.1**2
         self.nodata      = True  
         
     def function(self, x1, x2, theta1):
         num = np.exp(-theta1*(x1 - 1.5*x2)**2)
         den =  np.exp(-2*theta1*(x1 + x2 - 0.7)**2)
         f = num + den
+        return f
+    
+    def sim(self, H, persis_info, sim_specs, libE_info):
+        function        = sim_specs['user']['function']
+        H_o             = np.zeros(1, dtype=sim_specs['out'])
+        H_o['f']        = function(H['thetas'][0][0], H['thetas'][0][1], H['thetas'][0][2])
+        
+        return H_o, persis_info
+    
+    def realdata(self, x, seed):
+        self.x = x
+        self.nodata = False
+        self.obsvar = np.diag(np.repeat(self.sigma2, len(self.x)))
+        
+        np.random.seed(seed)
+        self.des = []
+        for xid, x in enumerate(self.x):
+
+            newd = {'x':x, 'feval':[], 'rep':self.nrep}
+            for r in range(self.nrep):
+                fv              = self.genobsdata(x, None)
+                newd['feval'].append(fv)
+            self.des.append(newd)
+        
+        mean_feval       = [np.mean(d['feval']) for d in self.des]
+        self.real_data   = np.array([mean_feval], dtype='float64')    
+    
+    def realvar(self, x):
+        if x.ndim == 1:
+            obsvar = self.sigma2
+        else:
+            s = len(x)
+            obsvar = np.zeros(s)
+            obsvar[:] = self.sigma2
+        return obsvar
+    
+    def genobsdata(self, x, sigma2):
+        varval = self.realvar(x)
+        return self.function(x[0], x[1], self.true_theta[0]) + np.random.normal(0, np.sqrt(varval), 1) 
+
+class pritam:
+    def __init__(self):
+        self.data_name   = 'nonlin'
+        self.thetalimits = np.array([[0, 1], [0, 1], [0, 1]])
+        self.true_theta  = np.array([0.5]) 
+        self.out         = [('f', float)]
+        self.d           = 1
+        self.p           = 3
+        self.x           = None 
+        self.real_data   = None
+        self.des = []
+        self.dx          = 2
+        self.nrep        = 1
+        self.sigma2      = 0.5**2
+        self.nodata      = True  
+        
+    def function(self, x1, x2, theta1):
+        f = (30 + 5*x1*np.sin(5*x1))*(6*theta1 + 1 + np.exp(-5*x2))
         return f
     
     def sim(self, H, persis_info, sim_specs, libE_info):

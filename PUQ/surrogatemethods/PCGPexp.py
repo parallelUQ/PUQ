@@ -697,6 +697,7 @@ def postphimat(fitinfo, n_x, theta, obs, obsvar, theta_cand, covmat_ref, rVh_1_3
     cov2  = covmat_ref - Phi3D
     p1    = multiple_pdfs(obs, pred_mean, cov1)
 
+
     det1  = multiple_determinants(cov2)
     eivar = np.sum((1/((2**n_x)*(np.sqrt(np.pi)**n_x)*np.sqrt(det1)))*p1)
     return eivar

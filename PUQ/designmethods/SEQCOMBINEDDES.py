@@ -1,10 +1,11 @@
 import numpy as np
 from PUQ.designmethods.gen_funcs.acquisition_funcs_des import eivar_des_updated, eivar_des_updated2
 from PUQ.designmethods.gen_funcs.PMAXVAR import pmaxvar, pmaxvar_upd, pmaxvar2
-from PUQ.designmethods.gen_funcs.PEIVAReff import peivareff
+from PUQ.designmethods.gen_funcs.PEIVAReff import peivareff, peivarefffig
 from PUQ.designmethods.gen_funcs.CEIVAR import ceivar
+from PUQ.designmethods.gen_funcs.CEIVARX import ceivarx
 from PUQ.designmethods.gen_funcs.PIMSE import pimse
-from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
+from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition, find_mle
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
 from libensemble.alloc_funcs.start_only_persistent import only_persistent_gens as alloc_f
@@ -106,26 +107,11 @@ def fit(fitinfo, data_cls, args):
         if isinstance(persis_info[key], dict):
             if 'des' in persis_info[key].keys():
                 fitinfo['des'] = persis_info[key]['des']
+            if 'thetamle' in persis_info[key].keys():
+                fitinfo['thetamle'] = persis_info[key]['thetamle']
+                
     return
 
-    
-def obj_mle(parameter, args):
-    emu = args[0]
-    x_u = args[2]
-    x_emu = args[3]
-    true_fevals_u = args[4]
-
-
-    xp      = np.concatenate((x_u, np.repeat(parameter, len(x_u)).reshape(len(x_u), len(parameter))), axis=1)
-
-    emupred = emu.predict(x=x_emu, theta=xp)
-    mu_p    = emupred.mean()
-    var_p   = emupred.var()
-    
-    diff    = (true_fevals_u.flatten() - mu_p.flatten()).reshape((len(x_u), 1))
-    obj     = 0.5*(diff.T@diff)
-    
-    return obj.flatten()
                 
 def gen_f(H, persis_info, gen_specs, libE_info):
 
@@ -140,10 +126,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         synth_info      = gen_specs['user']['synth_cls']
         test_data       = gen_specs['user']['test_data']
         prior_func_all  = gen_specs['user']['prior']
-        type_init       = gen_specs['user']['type_init']
-        unknown_var     = gen_specs['user']['unknown_var']
-        design          = gen_specs['user']['design']
-        
+
         obsvar          = synth_info.obsvar
         data            = synth_info.real_data
         theta_limits    = synth_info.thetalimits
@@ -189,7 +172,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         theta = 0
         
         nf_init = 0
-        
+        mlelist = []
         while tag not in [STOP_TAG, PERSIS_STOP]:
             if not first_iter:
                 # Update fevals from calc_in
@@ -223,49 +206,26 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                fevals, 
                                method='PCGPexp')
 
-
+                theta_mle = find_mle(emu, x_u, x_emu, true_fevals_u, dx, dt, theta_limits)
+                mlelist.append(theta_mle)
+                print('mle:', theta_mle)
+                
                 new_field = True if ((theta.shape[0] % 10) == 0) and (theta.shape[0] > n_init) else False
             
                 if new_field:
-                    print('Field design')
-                    bnd = ()
-                    theta_init = []
-                    for i in range(dx, dx + dt):
-                        bnd += ((theta_limits[i][0], theta_limits[i][1]),)
-                        theta_init.append((theta_limits[i][0] + theta_limits[i][1])/2)
-             
-                    opval = spo.minimize(obj_mle,
-                                         theta_init,
-                                         method='L-BFGS-B',
-                                         options={'gtol': 0.01},
-                                         bounds=bnd,
-                                         args=([emu, real_data_rep, x_u, x_emu, true_fevals_u, unknown_var, obsvar_u, des]))                
-
-                    theta_mle = opval.x
-                    print('mle param:', theta_mle)
-                    
                     des           = peivareff(prior_func, prior_func_x, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
                     
                 x_u           = np.array([e['x'] for e in des])
                 true_fevals_u = np.array([np.mean(e['feval']) for e in des])[None, :]
                 reps          = [e['rep'] for e in des]
                 obsvar_u      = np.diag(synth_info.realvar(x_u))
-           
-                print(obsvar_u)
                 prev_pending   = pending.copy()
                 update_model   = False
                 
                     
             if first_iter:
-
                 n_init = max(n_workers-1, n0)
-
-                if type_init == 'LHS':
-                    sampling = LHS(xlimits=theta_limits, random_state=seed)
-                    theta = sampling(n_init)
-                else:
-                    theta  = prior_func.rnd(n_init, seed) 
-   
+                theta  = prior_func.rnd(n_init, seed) 
                 fevals, pending, prev_pending, complete, prev_complete = create_arrays(n_x, n_init)  
                 H_o    = np.zeros(len(theta), dtype=gen_specs['out'])
                 H_o    = load_H(H_o, theta, TV, HD, generated_no, set_priorities=True)
@@ -289,9 +249,13 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                               prior_func,
                                               prior_func_t,
                                               thetatest,
+                                              x_mesh,
                                               th_mesh,
                                               priortest,
-                                              type_init)
+                                              None,
+                                              synth_info,
+                                              theta_mle)
+                    
 
                     theta, fevals, pending, prev_pending, complete, prev_complete = \
                         pad_arrays(n_x, new_theta, theta, fevals, pending, prev_pending, complete, prev_complete)
@@ -303,5 +267,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                     generated_no += mini_batch
 
         persis_info['des'] =  des
+                
+        persis_info['thetamle'] =  mlelist
         return None, persis_info, FINISHED_PERSISTENT_GEN_TAG
 

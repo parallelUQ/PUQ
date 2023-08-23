@@ -18,9 +18,12 @@ def ceivar(n,
           prior_func,
           prior_func_t,
           thetatest=None, 
+          xmesh=None,
           thetamesh=None, 
           posttest=None,
-          type_init=None):
+          type_init=None,
+          synth_info=None,
+          theta_mle=None):
     
 
     p = theta.shape[1]

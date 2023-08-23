@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PUQ.surrogate import emulator
 import scipy.stats as sps
+from PUQ.surrogatemethods.PCGPexp import  postpred
+from smt.sampling_methods import LHS
 
 def plot_EIVAR(xt, cls_data, ninit, xlim1=0, xlim2=1):
     
@@ -22,12 +24,28 @@ def plot_EIVAR(xt, cls_data, ninit, xlim1=0, xlim2=1):
     
     plt.hist(xt[:, 1][ninit:])
     plt.axvline(x = cls_data.true_theta, color = 'r')
+    #plt.ylim(0, 1)
+    plt.xlim(0, 1)
     plt.xlabel(r'$\theta$')
     plt.show()
     
     plt.hist(xt[:, 0][ninit:])
     plt.xlabel(r'x')
     plt.xlim(xlim1, xlim2)
+    plt.show()
+
+def plot_des(des, xt, n0, cls_data):
+    xdes = np.array([e['x'] for e in des])
+    fdes = np.array([e['feval'][0] for e in des]).T
+    xu_des, xcount = np.unique(xdes, return_counts=True)
+    repeatth = np.repeat(cls_data.true_theta, len(xu_des))
+    for label, x_count, y_count in zip(xcount, xu_des, repeatth):
+        plt.annotate(label, xy=(x_count, y_count), xytext=(x_count, y_count))
+    plt.scatter(xt[0:n0, 0], xt[0:n0, 1], marker='*', color='blue')
+    plt.scatter(xt[:, 0][n0:], xt[:, 1][n0:], marker='+', color='red')
+    plt.axhline(y =cls_data.true_theta, color = 'black')
+    plt.xlabel('x')
+    plt.ylabel(r'$\theta$')
     plt.show()
     
 def plot_LHS(xt, cls_data):
@@ -38,6 +56,16 @@ def plot_LHS(xt, cls_data):
     plt.ylabel(r'$\theta$')
     plt.show()
 
+def plot_post(theta, phat, ptest, phatvar):
+    if theta.shape[1] == 1:
+        plt.plot(theta.flatten(), phat, c='blue', linestyle='dashed')
+        plt.plot(theta.flatten(), ptest, c='black')
+        plt.fill_between(theta.flatten(), phat-np.sqrt(phatvar), phat+np.sqrt(phatvar), alpha=0.2)
+        plt.show()
+    else:
+        plt.scatter(theta[:, 0], theta[:, 1], c=phat)
+        plt.show()
+    
 def obsdata(cls_data):
     th_vec = [0.3, 0.4, 0.5, 0.6, 0.7]
     x_vec  = (np.arange(0, 100, 1)/100)[:, None]
@@ -55,23 +83,6 @@ def obsdata(cls_data):
     plt.legend()
     plt.show()
 
-def obsdata2(cls_data):
-    th_vec = [0.3, 0.4, 0.5, 0.6, 0.7]
-    x_vec  = (np.arange(-300, 300, 1)/100)[:, None]
-    fvec   = np.zeros((len(th_vec), len(x_vec)))
-    colors = ['blue', 'orange', 'green', 'red', 'purple']
-    for t_id, t in enumerate(th_vec):
-        for x_id, x in enumerate(x_vec):
-            fvec[t_id, x_id] = cls_data.function(x, t)
-        plt.plot(x_vec, fvec[t_id, :], label=r'$\theta=$' + str(t), color=colors[t_id]) 
-
-    for d_id, d in enumerate(cls_data.des):
-        for r in range(d['rep']):
-            plt.scatter(d['x'], d['feval'][r], color='black')
-    plt.xlabel('x')
-    plt.legend()
-    plt.show()
-    
     
 def create_test(cls_data):
     thetamesh   = np.linspace(cls_data.thetalimits[1][0], cls_data.thetalimits[1][1], 100)
@@ -149,8 +160,8 @@ def create_test_goh(cls_data):
     k = 0
     for j in range(n_t*n_t):
         for i in range(n_x):
-            xt_test[k, :] = np.array([cls_data.real_x[i, 0], cls_data.real_x[i, 1], thetamesh[j, 0], thetamesh[j, 1]])
-            f[k] = cls_data.function(cls_data.real_x[i, 0], cls_data.real_x[i, 1], thetamesh[j, 0], thetamesh[j, 1])
+            xt_test[k, :] = np.array([cls_data.x[i, 0], cls_data.x[i, 1], thetamesh[j, 0], thetamesh[j, 1]])
+            f[k] = cls_data.function(cls_data.x[i, 0], cls_data.x[i, 1], thetamesh[j, 0], thetamesh[j, 1])
             k += 1
             
     ftest = f.reshape(n_t*n_t, n_x)
@@ -164,14 +175,15 @@ def create_test_goh(cls_data):
     
     return xt_test, ftest, ptest, thetamesh, thetamesh
 
-def fitemu(xt, f, xt_test, thetamesh, x, obs, obsvar):
+def fitemu(xt, f, xt_test, xtrue_test, thetamesh, cls_data):
     x_emu      = np.arange(0, 1)[:, None ]
     emu = emulator(x_emu, 
                    xt, 
                    f, 
                    method='PCGPexp')
-    from PUQ.surrogatemethods.PCGPexp import  postpred
-    pmeanhat, pvarhat = postpred(emu._info, x, xt_test, obs, obsvar)
+    predobj = emu.predict(x=x_emu, theta=xtrue_test)
+    ymeanhat, yvarhat = predobj.mean(), predobj.var()
+    pmeanhat, pvarhat = postpred(emu._info, cls_data.x, xt_test, cls_data.real_data, cls_data.obsvar)
     
 
     #emupredict     = emu.predict(x=x_emu, theta=xt_test)
@@ -185,7 +197,7 @@ def fitemu(xt, f, xt_test, thetamesh, x, obs, obsvar):
     #    posttesthat_c[i] = rnd.pdf(cls_data.real_data)
 
     #print(np.round(posttesthat_c - posttesthat, 4))
-    return pmeanhat, pvarhat
+    return pmeanhat, pvarhat, ymeanhat, yvarhat 
 
 def gather_data(xt, cls_data):
     f    = np.zeros(len(xt))
@@ -201,6 +213,13 @@ def gather_data_non(xt, cls_data):
     
     return f
 
+def gather_data_goh(xt, cls_data):
+    f    = np.zeros(len(xt))
+    for t_id, t in enumerate(xt):
+        f[t_id] = cls_data.function(xt[t_id, 0], xt[t_id, 1], xt[t_id, 2], xt[t_id, 3])
+    
+    return f
+
 def predmle(xt, f, xtmle):
     x_emu      = np.arange(0, 1)[:, None ]
     emu = emulator(x_emu, 
@@ -211,3 +230,54 @@ def predmle(xt, f, xtmle):
     yhat = emu.predict(x=x_emu, theta=xtmle).mean()
     
     return yhat
+
+def add_result(method_name, phat, ptest, yhat, ytest, s):
+    rep = {}
+    rep['method'] = method_name
+    rep['Posterior Error'] = np.mean(np.abs(phat - ptest))
+    rep['Prediction Error'] = np.mean(np.abs(yhat - ytest))
+    
+    rep['repno'] = s
+    return rep
+
+def sampling(typesampling, nmax, cls_data, seed, prior_xt, xt_test, xtrue_test, thetamesh, non=False, goh=False):
+
+    if typesampling == 'LHS':
+        sampling = LHS(xlimits=cls_data.thetalimits, random_state=seed)
+        xt = sampling(nmax)
+    elif typesampling == 'Random':
+        xt = prior_xt.rnd(nmax, seed=seed)
+    elif typesampling == 'Uniform':
+        xuniq = np.unique(cls_data.x, axis=0)
+        nf = len(xuniq)
+        dt = thetamesh.shape[1]
+        if dt == 1:
+            t_unif = sps.uniform.rvs(0, 1, size=int(nmax/nf))[:, None]
+        else:
+            sampling = LHS(xlimits=cls_data.thetalimits[0:2], random_state=seed)
+            t_unif   = sampling(int(nmax/nf))
+        mesh_grid = [np.concatenate([xuniq, np.repeat(th, nf).reshape((nf, dt))], axis=1) for th in t_unif]
+        xt = np.array([m for mesh in mesh_grid for m in mesh])
+
+ 
+    if non:
+        fevals = gather_data_non(xt, cls_data)
+        #plt.scatter(xt[:, 0], xt[:, 1])
+        #plt.show()
+        xacq = xt[:, 0:2]
+        unq, cnt = np.unique(xacq, return_counts=True, axis=0)
+        plt.scatter(unq[:, 0], unq[:, 1])
+        for label, x_count, y_count in zip(cnt, unq[:, 0], unq[:, 1]):
+            plt.annotate(label, xy=(x_count, y_count), xytext=(5, -5), textcoords='offset points')
+        plt.show()
+        
+        plt.hist(xt[:, 2])
+        plt.show()
+    elif goh:
+        fevals = gather_data_goh(xt, cls_data)
+    else:
+        plot_LHS(xt, cls_data)
+        fevals = gather_data(xt, cls_data)
+    phat, pvar, yhat, yvar = fitemu(xt, fevals[:, None], xt_test, xtrue_test, thetamesh, cls_data) 
+    
+    return phat, pvar, yhat, yvar

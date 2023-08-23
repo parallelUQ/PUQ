@@ -1,6 +1,7 @@
 import numpy as np
 from PUQ.surrogate import emulator
 import pyximport
+import scipy.optimize as spo
 pyximport.install(setup_args={"include_dirs":np.get_include()},
                   reload_support=True)
 
@@ -89,7 +90,6 @@ def load_H(H, thetas, mse, hd, generated_no, offset=0, set_priorities=False):
     return H
 
 
-
 def fit_emulator(x, theta, fevals, thetalimits):
     
     idnan = np.isnan(fevals).any(axis=0).flatten()
@@ -102,3 +102,35 @@ def fit_emulator(x, theta, fevals, thetalimits):
                    method='PCGP')
 
     return emu
+
+def obj_mle(parameter, args):
+    emu = args[0]
+    x = args[1]
+    x_emu = args[2]
+    obs = args[3]
+    xp = np.concatenate((x, np.repeat(parameter, len(x)).reshape(len(x), len(parameter))), axis=1)
+
+    emupred = emu.predict(x=x_emu, theta=xp)
+    mu_p    = emupred.mean()
+    var_p   = emupred.var()
+    diff    = (obs.flatten() - mu_p.flatten()).reshape((len(x), 1))
+    obj     = 0.5*(diff.T@diff)
+    return obj.flatten()
+
+def find_mle(emu, x, x_emu, obs, dx, dt, theta_limits):
+    bnd = ()
+    theta_init = []
+    for i in range(dx, dx + dt):
+        bnd += ((theta_limits[i][0], theta_limits[i][1]),)
+        theta_init.append((theta_limits[i][0] + theta_limits[i][1])/2)
+ 
+    opval = spo.minimize(obj_mle,
+                         theta_init,
+                         method='L-BFGS-B',
+                         options={'gtol': 0.01},
+                         bounds=bnd,
+                         args=([emu, x, x_emu, obs]))                
+
+    theta_mle = opval.x
+    theta_mle = theta_mle.reshape(1, dt)
+    return theta_mle

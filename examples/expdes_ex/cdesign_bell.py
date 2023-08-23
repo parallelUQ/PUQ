@@ -4,19 +4,17 @@ import scipy.stats as sps
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
-from plots_design import plot_EIVAR, plot_LHS, obsdata, fitemu, create_test, gather_data
-from smt.sampling_methods import LHS
-from ctest_funcs import bellcurve
+from plots_design import plot_EIVAR, plot_post, obsdata, fitemu, create_test, gather_data, add_result, sampling
+from ptest_funcs import bellcurve
+import pandas as pd
+import seaborn as sns
 
-def add_result(method_name, phat, ptest, s):
-    rep = {}
-    rep['method'] = method_name
-    rep['MAD'] = np.mean(np.abs(phat - ptest))
-    rep['repno'] = s
-    return rep
 
 cls_data = bellcurve()
-cls_data.realdata(0)
+cls_data.realdata(x=np.array([0.1, 0.1, 0.3, 0.3, 0.5, 0.5, 0.7, 0.7, 0.9, 0.9])[:, None], seed=0)
+# Observe
+obsdata(cls_data)
+    
 args         = parse_arguments()
 
 prior_xt     = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], b=cls_data.thetalimits[:, 1]) 
@@ -25,25 +23,28 @@ prior_t      = prior_dist(dist='uniform')(a=np.array([cls_data.thetalimits[1][0]
 
 priors = {'prior': prior_xt, 'priorx': prior_x, 'priort': prior_t}
     
-seeds = 10
+seeds = 1
 ninit = 10
-nmax = 50
+nmax = 35
 result = []
 for s in range(seeds):
-    # Observe
-    obsdata(cls_data)
+
 
     # # # Create a mesh for test set # # # 
-    xt_test, ftest, ptest, thetamesh, _ = create_test(cls_data)
-          
+    xt_test, ftest, ptest, thetamesh, xmesh = create_test(cls_data)
+         
+    cls_data_y = bellcurve()
+    cls_data_y.realdata(x=xmesh[:, None], seed=0)
+    ytest = cls_data_y.real_data
+    
     test_data = {'theta': xt_test, 
                  'f': ftest,
                  'p': ptest,
                  'th': thetamesh[:, None],    
-                 'xmesh': 0,
+                 'xmesh': xmesh[:, None],
                  'p_prior': 1} 
     # # # # # # # # # # # # # # # # # # # # # 
-    al_unimodal = designer(data_cls=cls_data, 
+    al_ceivarx = designer(data_cls=cls_data, 
                            method='SEQCOMPDES', 
                            args={'mini_batch': 1, 
                                  'n_init_thetas': ninit,
@@ -52,71 +53,72 @@ for s in range(seeds):
                                  'seed_n0': s,
                                  'prior': priors,
                                  'data_test': test_data,
-                                 'max_evals': nmax,
-                                 'type_init': None,
-                                 'unknown_var': False,
-                                 'design': False})
+                                 'max_evals': nmax})
     
-    xt_eivar = al_unimodal._info['theta']
-    f_eivar  = al_unimodal._info['f']
-
-    phat_eivar, pvar_eivar = fitemu(xt_eivar, f_eivar[:, None], xt_test, thetamesh, cls_data.x, cls_data.real_data, cls_data.obsvar) 
-    plot_EIVAR(xt_eivar, cls_data, ninit)
-    rep = add_result('eivar', phat_eivar, ptest, s)
+    xt_eivarx = al_ceivarx._info['theta']
+    f_eivarx = al_ceivarx._info['f']
+    theta_mle = al_ceivarx._info['thetamle'][-1]
+    
+    xtrue_test = np.concatenate((xmesh[:, None], np.repeat(theta_mle, len(xmesh[:, None])).reshape(len(xmesh[:, None]), theta_mle.shape[1])), axis=1)
+    
+    phat_eivarx, pvar_eivarx, yhat_eivarx, yvar_eivarx = fitemu(xt_eivarx, f_eivarx[:, None], xt_test, xtrue_test, thetamesh, cls_data) 
+    plot_EIVAR(xt_eivarx, cls_data, ninit)
+    rep = add_result('eivarx', phat_eivarx, ptest, yhat_eivarx, ytest, s)
     result.append(rep)
     
-    print(np.mean(np.abs(phat_eivar - ptest)))
+    plot_post(thetamesh[:, None], phat_eivarx, ptest, pvar_eivarx)
+    # # # # # # # # # # # # # # # # # # # # # 
+    al_ceivar = designer(data_cls=cls_data, 
+                           method='SEQCOMPDES', 
+                           args={'mini_batch': 1, 
+                                 'n_init_thetas': ninit,
+                                 'nworkers': 2, 
+                                 'AL': 'ceivar',
+                                 'seed_n0': s,
+                                 'prior': priors,
+                                 'data_test': test_data,
+                                 'max_evals': nmax})
     
-    plt.plot(thetamesh, phat_eivar, c='blue', linestyle='dashed')
-    plt.plot(thetamesh, ptest, c='black')
-    plt.fill_between(thetamesh, phat_eivar-np.sqrt(pvar_eivar), phat_eivar+np.sqrt(pvar_eivar), alpha=0.2)
-    plt.show()
+    xt_eivar = al_ceivar._info['theta']
+    f_eivar = al_ceivar._info['f']
+    
+    xtrue_test = np.concatenate((xmesh[:, None], np.repeat(theta_mle, len(xmesh[:, None])).reshape(len(xmesh[:, None]), theta_mle.shape[1])), axis=1)
+    
+    phat_eivar, pvar_eivar, yhat_eivar, yvar_eivar = fitemu(xt_eivar, f_eivar[:, None], xt_test, xtrue_test, thetamesh, cls_data) 
+    plot_EIVAR(xt_eivar, cls_data, ninit)
+    rep = add_result('eivar', phat_eivar, ptest, yhat_eivar, ytest, s)
+    result.append(rep)
+    
+    plot_post(thetamesh[:, None], phat_eivar, ptest, pvar_eivar)
+    # # # # # # # # # # # # # # # # # # # # # 
     
     # LHS 
-    sampling = LHS(xlimits=cls_data.thetalimits, random_state=s)
-    xt_lhs   = sampling(nmax)
-    f_lhs    = gather_data(xt_lhs, cls_data)
-    phat_lhs, pvar_lhs = fitemu(xt_lhs, f_lhs[:, None], xt_test, thetamesh, cls_data.x, cls_data.real_data, cls_data.obsvar) 
-    
-    plot_LHS(xt_lhs, cls_data)
-    rep = add_result('lhs', phat_lhs, ptest, s)
+    phat_lhs, pvar_lhs, yhat_lhs, yvar_lhs = sampling('LHS', nmax, cls_data, s, prior_xt, xt_test, xtrue_test, thetamesh[:, None])
+    rep = add_result('lhs', phat_lhs, ptest, yhat_lhs, ytest, s)
     result.append(rep)
     
-    print(np.mean(np.abs(phat_lhs - ptest)))
-
+    plot_post(thetamesh[:, None], phat_lhs, ptest, pvar_lhs)
+    
     # rnd 
-    xt_rnd   = prior_xt.rnd(nmax, seed=s)
-    f_rnd    = gather_data(xt_rnd, cls_data)
-    phat_rnd, pvar_rnd = fitemu(xt_rnd, f_rnd[:, None], xt_test, thetamesh, cls_data.x, cls_data.real_data, cls_data.obsvar) 
-    
-    plot_LHS(xt_rnd, cls_data)
-    rep = add_result('rnd', phat_rnd, ptest, s)
+    phat_rnd, pvar_rnd, yhat_rnd, yvar_rnd = sampling('Random', nmax, cls_data, s, prior_xt, xt_test, xtrue_test, thetamesh[:, None])
+    rep = add_result('rnd', phat_rnd, ptest, yhat_rnd, ytest, s)
     result.append(rep)
+    
+    plot_post(thetamesh[:, None], phat_rnd, ptest, pvar_rnd)
 
-    print(np.mean(np.abs(phat_rnd - ptest)))
-        
     # Unif
-    xuniq = np.unique(cls_data.x)
-    t_unif = sps.uniform.rvs(0, 1, size=int(nmax/len(xuniq)))
-    xvec = np.tile(xuniq, len(t_unif))
-    xt_unif   = np.concatenate((xvec[:, None], np.repeat(t_unif, len(xuniq))[:, None]), axis=1)
-    f_unif    = gather_data(xt_unif, cls_data)
-    phat_unif, pvar_unif = fitemu(xt_unif, f_unif[:, None], xt_test, thetamesh, cls_data.x, cls_data.real_data, cls_data.obsvar)
-    
-    plot_LHS(xt_unif, cls_data)
-    rep = add_result('unif', phat_unif, ptest, s)
+    phat_unif, pvar_unif, yhat_unif, yvar_unif = sampling('Uniform', nmax, cls_data, s, prior_xt, xt_test, xtrue_test, thetamesh[:, None])
+    rep = add_result('unif', phat_unif, ptest, yhat_unif, ytest, s)
     result.append(rep)
 
-    
-    print(np.mean(np.abs(phat_unif - ptest)))
-    
-    plt.plot(thetamesh, phat_unif, c='blue', linestyle='dashed')
-    plt.plot(thetamesh, ptest, c='black')
-    plt.fill_between(thetamesh, phat_unif-np.sqrt(pvar_unif), phat_unif+np.sqrt(pvar_unif), alpha=0.2)
-    plt.show()
+    plot_post(thetamesh[:, None], phat_unif, ptest, pvar_unif)
 
 
-import pandas as pd
-import seaborn as sns
+
+
 df = pd.DataFrame(result)
-sns.boxplot(x='method', y='MAD', data=df)
+sns.boxplot(x='method', y='Posterior Error', data=df)
+plt.show()
+sns.boxplot(x='method', y='Prediction Error', data=df)
+plt.show()
+

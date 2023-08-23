@@ -1,8 +1,8 @@
 import numpy as np
 from PUQ.designmethods.gen_funcs.acquisition_funcs_support import multiple_pdfs
 from PUQ.designmethods.gen_funcs.CEIVAR import ceivar
-from PUQ.designmethods.gen_funcs.CEIVARX import ceivarx
-from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
+from PUQ.designmethods.gen_funcs.CEIVARX import ceivarx, ceivarxfig
+from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition, find_mle
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
 from libensemble.alloc_funcs.start_only_persistent import only_persistent_gens as alloc_f
@@ -12,8 +12,6 @@ from smt.sampling_methods import LHS
 from PUQ.posterior import posterior
 from PUQ.surrogate import emulator
 import scipy.stats as sps
-import scipy.optimize as spo
-import matplotlib.pyplot as plt
 
 def fit(fitinfo, data_cls, args):
 
@@ -47,6 +45,7 @@ def fit(fitinfo, data_cls, args):
         ('obsvar', float, (1,)),
         ('TV', float),
         ('HD', float),
+        ('thetamle', float, (1,)),
     ]
 
     gen_specs = {
@@ -62,9 +61,6 @@ def fit(fitinfo, data_cls, args):
             'synth_cls': data_cls,
             'test_data': test_data,
             'prior': prior,
-            'type_init': args['type_init'],
-            'unknown_var': args['unknown_var'],
-            'design': args['design']
         },
     }
 
@@ -96,6 +92,13 @@ def fit(fitinfo, data_cls, args):
     fitinfo['theta'] = H['thetas']
     fitinfo['TV'] = H['TV']
     fitinfo['HD'] = H['HD']
+    
+    for key in persis_info.keys():
+        #print(type(persis_info[key]))
+        if isinstance(persis_info[key], dict):
+            if 'thetamle' in persis_info[key].keys():
+                fitinfo['thetamle'] = persis_info[key]['thetamle']
+
     return
 
                 
@@ -112,37 +115,27 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         synth_info      = gen_specs['user']['synth_cls']
         test_data       = gen_specs['user']['test_data']
         prior_func_all  = gen_specs['user']['prior']
-        type_init       = gen_specs['user']['type_init']
-        unknown_var     = gen_specs['user']['unknown_var']
-        design          = gen_specs['user']['design']
+ 
         
         obsvar          = synth_info.obsvar
         data            = synth_info.real_data
         theta_limits    = synth_info.thetalimits
+        dim             = synth_info.d 
+        x               = synth_info.x
         
         prior_func = prior_func_all['prior']
         prior_func_x = prior_func_all['priorx']
         prior_func_t = prior_func_all['priort']
         
         des = synth_info.des
-     
-        theta_torun     = synth_info.theta_torun
 
         thetatest, posttest, ftest, priortest = None, None, None, None
         if test_data is not None:
             thetatest, th_mesh, x_mesh, posttest, ftest, priortest = test_data['theta'], test_data['th'], test_data['xmesh'], test_data['p'], test_data['f'], test_data['p_prior']
 
-        
+
         true_fevals = np.reshape(data[0, :], (1, data.shape[1]))
-        n_x     = synth_info.d 
-        x       = synth_info.x
-        real_x  = synth_info.real_x
-        n_x_des    = len(x)
-        x_emu      = np.arange(0, 1)[:, None ]
-        
-        x_u = 1*x
-        true_fevals_u = 1*true_fevals
-        obsvar_u = 1*obsvar
+        x_emu = np.arange(0, 1)[:, None ]
         
         obs_offset, theta_offset, generated_no = 0, 0, 0
         TV, HD = 1000, 1000
@@ -152,13 +145,14 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         update_model = False
         acquisition_f = eval(AL)
         list_id = []
-        emubias = None
         theta = 0
-        
+        dx = x.shape[1]
+        dt = th_mesh.shape[1]
+        mlelist = []
         while tag not in [STOP_TAG, PERSIS_STOP]:
             if not first_iter:
                 # Update fevals from calc_in
-                update_arrays(n_x,
+                update_arrays(dim,
                               fevals, 
                               pending, 
                               complete, 
@@ -174,31 +168,23 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                         break
 
             if update_model:
-                print(theta.shape)
+                
                 emu = emulator(x_emu, 
                                theta, 
                                fevals, 
                                method='PCGPexp')
 
- 
+                theta_mle = find_mle(emu, x, x_emu, true_fevals, dx, dt, theta_limits)
+                mlelist.append(theta_mle)
+                print('mle:', theta_mle)
 
                 prev_pending   = pending.copy()
                 update_model   = False
 
             if first_iter:
-               # print('Selecting theta for the first iteration...\n')
-
                 n_init = max(n_workers-1, n0)
-
-                if type_init == 'LHS':
-                    sampling = LHS(xlimits=theta_limits, random_state=seed)
-                    theta  = sampling(n_init)
-                elif type_init == 'to_run':
-                    theta  = theta_torun[0:n_init, :]
-                else:
-                    theta  = prior_func.rnd(n_init, seed) 
-                
-                fevals, pending, prev_pending, complete, prev_complete = create_arrays(n_x, n_init)
+                theta  = prior_func.rnd(n_init, seed) 
+                fevals, pending, prev_pending, complete, prev_complete = create_arrays(dim, n_init)
                             
                 H_o    = np.zeros(len(theta), dtype=gen_specs['out'])
                 H_o    = load_H(H_o, theta, TV, HD, generated_no, set_priorities=True)
@@ -210,30 +196,28 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 if select_condition(complete, prev_complete, n_theta=mini_batch, n_initial=n0):
 
                     prev_complete = complete.copy()
-                    
-                    if type_init == 'to_run':
-                        new_theta = theta_torun[generated_no:(generated_no+mini_batch), :]
-                    else:
-                        print(obsvar_u)
-                        new_theta = acquisition_f(mini_batch, 
-                                                  x_u,
-                                                  real_x,
-                                                  emu, 
-                                                  theta, 
-                                                  fevals, 
-                                                  true_fevals_u, 
-                                                  obsvar_u, 
-                                                  theta_limits, 
-                                                  prior_func,
-                                                  prior_func_t,
-                                                  thetatest,
-                                                  th_mesh,
-                                                  priortest,
-                                                  type_init,
-                                                  synth_info)
+     
+                    new_theta = acquisition_f(mini_batch, 
+                                              x,
+                                              None,
+                                              emu, 
+                                              theta, 
+                                              fevals, 
+                                              true_fevals, 
+                                              obsvar, 
+                                              theta_limits, 
+                                              prior_func,
+                                              prior_func_t,
+                                              thetatest,
+                                              x_mesh,
+                                              th_mesh,
+                                              priortest,
+                                              None,
+                                              synth_info,
+                                              theta_mle)
 
                     theta, fevals, pending, prev_pending, complete, prev_complete = \
-                        pad_arrays(n_x, new_theta, theta, fevals, pending, prev_pending, complete, prev_complete)
+                        pad_arrays(dim, new_theta, theta, fevals, pending, prev_pending, complete, prev_complete)
         
          
                     H_o = np.zeros(len(new_theta), dtype=gen_specs['out'])
@@ -243,6 +227,6 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                     
         
         
-
+        persis_info['thetamle'] =  mlelist
         return None, persis_info, FINISHED_PERSISTENT_GEN_TAG
 
