@@ -24,7 +24,7 @@ priors = {'prior': prior_xt, 'priorx': prior_x, 'priort': prior_t}
     
 ninit = 10
 nmax = 50
-seeds = 10
+seeds = 1
 result = []
 for s in range(seeds):
 
@@ -48,7 +48,7 @@ for s in range(seeds):
                            args={'mini_batch': 1, 
                                  'n_init_thetas': ninit,
                                  'nworkers': 2, 
-                                 'AL': 'ceivarxfig',
+                                 'AL': 'ceivarx',
                                  'seed_n0': s,
                                  'prior': priors,
                                  'data_test': test_data,

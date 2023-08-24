@@ -23,7 +23,7 @@ prior_t      = prior_dist(dist='uniform')(a=np.array([cls_data.thetalimits[1][0]
 
 priors = {'prior': prior_xt, 'priorx': prior_x, 'priort': prior_t}
     
-seeds = 1
+seeds = 10
 ninit = 10
 nmax = 60
 result = []
@@ -125,12 +125,12 @@ for s in range(seeds):
 
     plot_post(thetamesh[:, None], phat_unif, ptest, pvar_unif)
 
+methods = ['eivar', 'eivarx', 'unif', 'lhs', 'rnd']
+methods = ['eivarx',  'lhs', 'rnd']
+result_filtered = [r for r in result if r['method'] in methods ]
 
-
-
-df = pd.DataFrame(result)
+df = pd.DataFrame(result_filtered)
 sns.boxplot(x='method', y='Posterior Error', data=df)
 plt.show()
 sns.boxplot(x='method', y='Prediction Error', data=df)
 plt.show()
-

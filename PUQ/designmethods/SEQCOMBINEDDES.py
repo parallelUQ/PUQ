@@ -159,7 +159,6 @@ def gen_f(H, persis_info, gen_specs, libE_info):
             des = synth_info.des
             nodesign = False
 
-        reps = 1
         obs_offset, theta_offset, generated_no = 0, 0, 0
         TV, HD = 1000, 1000
         fevals, pending, prev_pending, complete, prev_complete = None, None, None, None, None
@@ -168,11 +167,13 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         update_model = False
         acquisition_f = eval(AL)
         list_id = []
-        emubias = None
         theta = 0
         
         nf_init = 0
         mlelist = []
+        
+        batchcounter, batchfield = 0, 0
+        
         while tag not in [STOP_TAG, PERSIS_STOP]:
             if not first_iter:
                 # Update fevals from calc_in
@@ -213,11 +214,32 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 new_field = True if ((theta.shape[0] % 10) == 0) and (theta.shape[0] > n_init) else False
             
                 if new_field:
-                    des           = peivareff(prior_func, prior_func_x, emu, x_emu, theta_mle, x_mesh, th_mesh, synth_info, emubias, des)
+                    batchcounter += 1
+                    des = peivareff(prior_func, 
+                                    prior_func_x, 
+                                    emu, 
+                                    x_emu, 
+                                    theta_mle, 
+                                    x_mesh, 
+                                    th_mesh,
+                                    synth_info, 
+                                    des, 
+                                    batchfield=batchfield, 
+                                    batchcounter=batchcounter)
                     
                 x_u           = np.array([e['x'] for e in des])
+                
+                if batchfield == batchcounter:
+                    for e in des:
+                        if e['isreal'] == 'No':
+                            xvar = synth_info.realvar(e['x'])
+                            y_new = synth_info.genobsdata(e['x'], xvar) 
+                            e['feval'] = [y_new]
+                            e['isreal'] = 'Yes'
+                    batchcounter = 0
+                        
                 true_fevals_u = np.array([np.mean(e['feval']) for e in des])[None, :]
-                reps          = [e['rep'] for e in des]
+      
                 obsvar_u      = np.diag(synth_info.realvar(x_u))
                 prev_pending   = pending.copy()
                 update_model   = False

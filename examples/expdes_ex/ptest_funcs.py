@@ -44,6 +44,7 @@ class bellcurve:
                 realv = self.realvar(x[0])
                 fv              = self.genobsdata(x, self.true_theta)
                 newd['feval'].append(fv)
+                newd['isreal'] = 'Yes'
             self.des.append(newd)
         
         mean_feval       = [np.mean(d['feval']) for d in self.des]
@@ -150,6 +151,7 @@ class sinfunc:
             for r in range(self.nrep):
                 fv              = self.genobsdata(x, self.true_theta) 
                 newd['feval'].append(fv)
+                newd['isreal'] = 'Yes'
             self.des.append(newd)
         
         mean_feval       = [np.mean(d['feval']) for d in self.des]
