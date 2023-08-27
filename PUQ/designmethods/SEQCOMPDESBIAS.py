@@ -1,8 +1,8 @@
 import numpy as np
 from PUQ.designmethods.gen_funcs.acquisition_funcs_support import multiple_pdfs
-from PUQ.designmethods.gen_funcs.CEIVAR import ceivar
-from PUQ.designmethods.gen_funcs.CEIVARX import ceivarx, ceivarxfig
-from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition, find_mle
+from PUQ.designmethods.gen_funcs.CEIVAR import ceivarbias
+from PUQ.designmethods.gen_funcs.CEIVARX import ceivarxbias
+from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition, find_mle_bias
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
 from libensemble.alloc_funcs.start_only_persistent import only_persistent_gens as alloc_f
@@ -12,7 +12,6 @@ from smt.sampling_methods import LHS
 from PUQ.posterior import posterior
 from PUQ.surrogate import emulator
 import scipy.stats as sps
-from PUQ.surrogatemethods.PCGPexp import  postpred
 
 def fit(fitinfo, data_cls, args):
 
@@ -24,7 +23,7 @@ def fit(fitinfo, data_cls, args):
     prior = args['prior']
     max_evals = args['max_evals']
     test_data = args['data_test']
-    
+    isbias = args['bias']
     
     out = data_cls.out
     sim_f = data_cls.sim
@@ -62,6 +61,7 @@ def fit(fitinfo, data_cls, args):
             'synth_cls': data_cls,
             'test_data': test_data,
             'prior': prior,
+            'isbias': isbias,
         },
     }
 
@@ -102,20 +102,6 @@ def fit(fitinfo, data_cls, args):
 
     return
 
-def collect_data(emu, x_emu, theta_mle, dt, xmesh, xtmesh, nmesh, ytest, ptest, x, obs, obsvar):
-    
-    xtrue_test = np.concatenate((xmesh, np.repeat(theta_mle, nmesh).reshape(nmesh, dt)), axis=1)
-    
-    predobj = emu.predict(x=x_emu, theta=xtrue_test)
-    ymeanhat, yvarhat = predobj.mean(), predobj.var()
-    
-    pred_error = np.mean(np.abs(ymeanhat - ytest))
-    
-    pmeanhat, pvarhat = postpred(emu._info, x, xtmesh, obs, obsvar)
-    
-    post_error = np.mean(np.abs(pmeanhat - ptest))
-    
-    return pred_error, post_error
                 
 def gen_f(H, persis_info, gen_specs, libE_info):
 
@@ -130,7 +116,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         synth_info      = gen_specs['user']['synth_cls']
         test_data       = gen_specs['user']['test_data']
         prior_func_all  = gen_specs['user']['prior']
- 
+        isbias          = gen_specs['user']['isbias']
         
         obsvar          = synth_info.obsvar
         data            = synth_info.real_data
@@ -146,7 +132,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
         thetatest, posttest, ftest, priortest = None, None, None, None
         if test_data is not None:
-            thetatest, th_mesh, x_mesh, ptest, ftest, priortest, ytest = test_data['theta'], test_data['th'], test_data['xmesh'], test_data['p'], test_data['f'], test_data['p_prior'], test_data['y']
+            thetatest, th_mesh, x_mesh, posttest, ftest, priortest = test_data['theta'], test_data['th'], test_data['xmesh'], test_data['p'], test_data['f'], test_data['p_prior']
 
 
         true_fevals = np.reshape(data[0, :], (1, data.shape[1]))
@@ -163,7 +149,6 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         theta = 0
         dx = x.shape[1]
         dt = th_mesh.shape[1]
-        nmesh = len(x_mesh)
         mlelist = []
         while tag not in [STOP_TAG, PERSIS_STOP]:
             if not first_iter:
@@ -190,12 +175,25 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                fevals, 
                                method='PCGPexp')
 
-                theta_mle = find_mle(emu, x, x_emu, true_fevals, dx, dt, theta_limits)
+                theta_mle = find_mle_bias(emu, x, x_emu, true_fevals, dx, dt, theta_limits)
                 mlelist.append(theta_mle)
                 print('mle:', theta_mle)
                 
-                TV, HD = collect_data(emu, x_emu, theta_mle, dt, x_mesh, thetatest, nmesh, ytest, ptest, x, true_fevals, obsvar)
-   
+                # Bias prediction #
+                xp = np.concatenate((x, np.repeat(theta_mle, len(x)).reshape(len(x), len(theta_mle))), axis=1)
+                print(xp)
+                emupred = emu.predict(x=x_emu, theta=xp)
+                mu_p    = emupred.mean()
+                var_p   = emupred.var()
+                bias    = (true_fevals.flatten() - mu_p.flatten()).reshape((len(x), 1))
+                emubias = emulator(x_emu, 
+                                   x, 
+                                   bias.T, 
+                                   method='PCGPexp')
+                #bias_mean = emubias.predict(x=x_emu, theta=x).mean()
+                #bias_var = emubias.predict().var()
+
+                # # #
                 prev_pending   = pending.copy()
                 update_model   = False
 
@@ -230,7 +228,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                               x_mesh,
                                               th_mesh,
                                               priortest,
-                                              None,
+                                              emubias,
                                               synth_info,
                                               theta_mle)
 
@@ -247,4 +245,5 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         
         persis_info['thetamle'] =  mlelist
         return None, persis_info, FINISHED_PERSISTENT_GEN_TAG
+
 

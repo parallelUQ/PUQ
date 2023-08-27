@@ -1,7 +1,5 @@
 import numpy as np
 from PUQ.designmethods.gen_funcs.acquisition_funcs_support import multiple_pdfs
-from PUQ.designmethods.gen_funcs.CEIVAR import ceivar
-from PUQ.designmethods.gen_funcs.CEIVARX import ceivarx, ceivarxfig
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition, find_mle
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
@@ -19,12 +17,11 @@ def fit(fitinfo, data_cls, args):
     mini_batch = args['mini_batch']
     n_init_thetas = args['n_init_thetas']
     nworkers = args['nworkers']
-    AL_type = args['AL']
     seed_n0 = args['seed_n0']
     prior = args['prior']
     max_evals = args['max_evals']
     test_data = args['data_test']
-    
+    theta_torun = args['theta_torun']
     
     out = data_cls.out
     sim_f = data_cls.sim
@@ -57,11 +54,11 @@ def fit(fitinfo, data_cls, args):
             'n_init_thetas': n_init_thetas,  # Num thetas in initial batch
             'mini_batch': mini_batch,  # No. of thetas to generate per step
             'nworkers': nworkers,
-            'AL': AL_type,
             'seed_n0': seed_n0,
             'synth_cls': data_cls,
             'test_data': test_data,
             'prior': prior,
+            'theta_torun': theta_torun,
         },
     }
 
@@ -125,12 +122,11 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         n0              = gen_specs['user']['n_init_thetas']
         mini_batch      = gen_specs['user']['mini_batch']
         n_workers       = gen_specs['user']['nworkers'] 
-        AL              = gen_specs['user']['AL']
         seed            = gen_specs['user']['seed_n0']
         synth_info      = gen_specs['user']['synth_cls']
         test_data       = gen_specs['user']['test_data']
         prior_func_all  = gen_specs['user']['prior']
- 
+        theta_torun     = gen_specs['user']['theta_torun']
         
         obsvar          = synth_info.obsvar
         data            = synth_info.real_data
@@ -158,7 +154,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         first_iter = True
         tag = 0
         update_model = False
-        acquisition_f = eval(AL)
+
         list_id = []
         theta = 0
         dx = x.shape[1]
@@ -201,7 +197,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
             if first_iter:
                 n_init = max(n_workers-1, n0)
-                theta  = prior_func.rnd(n_init, seed) 
+                theta  = theta_torun[0:n_init, :]
                 fevals, pending, prev_pending, complete, prev_complete = create_arrays(dim, n_init)
                             
                 H_o    = np.zeros(len(theta), dtype=gen_specs['out'])
@@ -215,29 +211,11 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
                     prev_complete = complete.copy()
      
-                    new_theta = acquisition_f(mini_batch, 
-                                              x,
-                                              None,
-                                              emu, 
-                                              theta, 
-                                              fevals, 
-                                              true_fevals, 
-                                              obsvar, 
-                                              theta_limits, 
-                                              prior_func,
-                                              prior_func_t,
-                                              thetatest,
-                                              x_mesh,
-                                              th_mesh,
-                                              priortest,
-                                              None,
-                                              synth_info,
-                                              theta_mle)
+                    new_theta = theta_torun[generated_no:(generated_no+mini_batch), :]
 
                     theta, fevals, pending, prev_pending, complete, prev_complete = \
                         pad_arrays(dim, new_theta, theta, fevals, pending, prev_pending, complete, prev_complete)
         
-         
                     H_o = np.zeros(len(new_theta), dtype=gen_specs['out'])
                     H_o = load_H(H_o, new_theta, TV, HD, generated_no, set_priorities=True)
                     tag, Work, calc_in = ps.send_recv(H_o) 

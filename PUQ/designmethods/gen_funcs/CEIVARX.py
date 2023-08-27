@@ -19,57 +19,28 @@ def ceivarx(n,
           prior_func,
           prior_func_t,
           thetatest=None, 
-          x_mesh=None,
-          thetamesh=None, 
+          x_ref=None,
+          theta_ref=None, 
           posttest=None,
           type_init=None,
           synth_info=None,
           theta_mle=None):
     
 
-    p = theta.shape[1]
-    dt = thetamesh.shape[1]
-    dx = x.shape[1]
-    type_init = 'CMB'
-    x_emu      = np.arange(0, 1)[:, None ]
+    x_emu = np.arange(0, 1)[:, None ]
     xuniq = np.unique(x, axis=0)
 
     # Create a candidate list
-    if type_init == 'LHS':
-        n_clist = 500
-        sampling = LHS(xlimits=thetalimits)
-        clist = sampling(n_clist)
-    elif type_init == 'RND':
-        n_clist = 500
-        clist = prior_func.rnd(n_clist, None)
-    elif type_init == 'CMB':
-        n0 = 50
-        n_clist  = n0*len(xuniq)
-        t_unif = prior_func_t.rnd(n0, None)
-        clist1 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
-        clist2 = prior_func.rnd(n_clist, None)
-        
-        clist = np.concatenate((clist1, clist2), axis=0)
-        n_clist += n_clist
-    else:
-        n0 = 50
-        n_clist  = n0*len(xuniq)
-        t_unif   = prior_func_t.rnd(n0, None)
-        clist = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
+    clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t )
 
-    nx_ref = x_mesh.shape[0]
-    dx = x_mesh.shape[1]
-    nt_ref = thetamesh.shape[0]
-    dt = thetamesh.shape[1]
+    nx_ref = x_ref.shape[0]
+    dx = x_ref.shape[1]
+    nt_ref = theta_ref.shape[0]
+    dt = theta_ref.shape[1]
     nf = x.shape[0]
-
-    x_ref     = 1*x_mesh 
-    # nt_ref x d_t
-    theta_ref = 1*thetamesh
 
     # Get estimate for real data at theta_mle for reference x
     # nx_ref x (d_x + d_t)
-    xt_ref = np.concatenate((x_ref, np.repeat(theta_mle, nx_ref).reshape(nx_ref, dt)), axis=1)
     xt_ref = [np.concatenate([xc.reshape(1, dx), theta_mle], axis=1) for xc in x_ref]
     xt_ref = np.array([m for mesh in xt_ref for m in mesh])
 
@@ -106,6 +77,108 @@ def ceivarx(n,
     xnew  = clist[maxid].reshape(1, dx + dt)
     return xnew 
 
+
+def ceivarxbias(n, 
+          x, 
+          real_x,
+          emu, 
+          theta, 
+          fevals, 
+          obs, 
+          obsvar, 
+          thetalimits, 
+          prior_func,
+          prior_func_t,
+          thetatest=None, 
+          x_ref=None,
+          theta_ref=None, 
+          posttest=None,
+          emubias=None,
+          synth_info=None,
+          theta_mle=None):
+    
+
+    x_emu = np.arange(0, 1)[:, None ]
+    xuniq = np.unique(x, axis=0)
+
+    clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
+
+    nx_ref = x_ref.shape[0]
+    dx = x_ref.shape[1]
+    nt_ref = theta_ref.shape[0]
+    dt = theta_ref.shape[1]
+    nf = x.shape[0]
+
+    # Get estimate for real data at theta_mle for reference x
+    # nx_ref x (d_x + d_t)
+    xt_ref = [np.concatenate([xc.reshape(1, dx), theta_mle], axis=1) for xc in x_ref]
+    xt_ref = np.array([m for mesh in xt_ref for m in mesh])
+
+    # 1 x nx_ref
+    y_ref = emu.predict(x=x_emu, theta=xt_ref).mean()
+    bias_ref_mean = emubias.predict(x=x_emu, theta=x_ref).mean()
+    bias_ref_var = emubias.predict(x=x_emu, theta=x_ref).var().flatten()
+    
+    bias_mean = emubias.predict(x=x_emu, theta=x).mean()
+    bias_var = emubias.predict(x=x_emu, theta=x).var().flatten()
+    # nx_ref x nf
+    f_temp_rep  = np.repeat(obs, nx_ref, axis=0)
+    # nx_ref x (nf + 1)
+    f_field_rep = np.concatenate((f_temp_rep, (y_ref).T), axis=1)
+
+
+    xs = [np.concatenate([x, xc.reshape(1, dx)], axis=0) for xc in x_ref]
+    ts = [np.repeat(theta_mle.reshape(1, dt), nf + 1, axis=0)]
+    mesh_grid = [np.concatenate([xc, th], axis=1).tolist() for xc in xs for th in ts]
+    mesh_grid = np.array([m for mesh in mesh_grid for m in mesh])
+    
+    n_x = nf + 1
+    
+    #print(np.array([bias_var, bias_ref_var[0]]))
+    # Construct obsvar
+    obsvar3D = np.zeros(shape=(nx_ref, n_x, n_x)) 
+    for i in range(nx_ref):
+        obsvar3D[i, :, :] = np.diag(np.concatenate([bias_var, np.array([bias_ref_var[i]])])) #np.diag(np.repeat(synth_info.sigma2, n_x))  #np.diag(np.concatenate([bias_var, np.array([bias_ref_var[i]])]))
+    
+    Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, mesh_grid, f_field_rep, obsvar3D)
+    eivar_val = np.zeros(len(clist))
+    for xt_id, x_c in enumerate(clist):
+        xt_cand = x_c.reshape(1, dx + dt)
+        eivar_val[xt_id] = postphimat(emu._info, n_x, mesh_grid, f_field_rep, obsvar3D, xt_cand, Smat3D, rVh_1_3d, pred_mean)
+
+
+    maxid = np.argmax(eivar_val)
+    xnew  = clist[maxid].reshape(1, dx + dt)
+    return xnew 
+
+def construct_candlist(thetalimits, xuniq, prior_func, prior_func_t ):
+    type_init = 'CMB'
+    # Create a candidate list
+    if type_init == 'LHS':
+        n_clist = 500
+        sampling = LHS(xlimits=thetalimits)
+        clist = sampling(n_clist)
+    elif type_init == 'RND':
+        n_clist = 500
+        clist = prior_func.rnd(n_clist, None)
+    elif type_init == 'CMB':
+        n0 = 50
+        n_clist  = n0*len(xuniq)
+        t_unif = prior_func_t.rnd(n0, None)
+        clist1 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
+        clist2 = prior_func.rnd(n_clist, None)
+        
+        clist = np.concatenate((clist1, clist2), axis=0)
+        n_clist += n_clist
+    else:
+        n0 = 50
+        n_clist  = n0*len(xuniq)
+        t_unif   = prior_func_t.rnd(n0, None)
+        clist = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
+        
+    return clist
+        
+    
 def ceivarxfig(n, 
           x, 
           real_x,

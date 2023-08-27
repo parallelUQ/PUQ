@@ -134,3 +134,42 @@ def find_mle(emu, x, x_emu, obs, dx, dt, theta_limits):
     theta_mle = opval.x
     theta_mle = theta_mle.reshape(1, dt)
     return theta_mle
+
+def obj_mle_bias(parameter, args):
+    emu = args[0]
+    x = args[1]
+    x_emu = args[2]
+    obs = args[3]
+    xp = np.concatenate((x, np.repeat(parameter, len(x)).reshape(len(x), len(parameter))), axis=1)
+
+    emupred = emu.predict(x=x_emu, theta=xp)
+    mu_p    = emupred.mean()
+    var_p   = emupred.var()
+    bias    = (obs.flatten() - mu_p.flatten()).reshape((len(x), 1))
+    
+    #emubias = emulator(x_emu, 
+    #                   x, 
+    #                   bias.T, 
+    #                   method='PCGPexp')
+
+    
+    obj     = 0.5*(bias.T@bias)
+    return obj.flatten()
+
+def find_mle_bias(emu, x, x_emu, obs, dx, dt, theta_limits):
+    bnd = ()
+    theta_init = []
+    for i in range(dx, dx + dt):
+        bnd += ((theta_limits[i][0], theta_limits[i][1]),)
+        theta_init.append((theta_limits[i][0] + theta_limits[i][1])/2)
+ 
+    opval = spo.minimize(obj_mle_bias,
+                         theta_init,
+                         method='L-BFGS-B',
+                         options={'gtol': 0.01},
+                         bounds=bnd,
+                         args=([emu, x, x_emu, obs]))                
+
+    theta_mle = opval.x
+    theta_mle = theta_mle.reshape(1, dt)
+    return theta_mle

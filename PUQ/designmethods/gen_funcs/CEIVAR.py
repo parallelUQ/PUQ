@@ -29,11 +29,71 @@ def ceivar(n,
     p = theta.shape[1]
     dt = thetamesh.shape[1]
     dx = x.shape[1]
-    type_init = 'CMB'
+    n_x = x.shape[0]
+    
+    xuniq = np.unique(x, axis=0)
+    clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
+
+    thetatest = np.array([np.concatenate([xc, th]) for th in thetamesh for xc in x])
+    
+    Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, thetatest, obs, obsvar)
+    eivar_val = np.zeros(len(clist))
+    for xt_id, xt_c in enumerate(clist):
+        eivar_val[xt_id] = postphimat(emu._info, n_x, thetatest, obs, obsvar, xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
+
+    th_cand = clist[np.argmax(eivar_val), :].reshape(1, p)
+
+    return th_cand 
+
+def ceivarbias(n, 
+          x, 
+          real_x,
+          emu, 
+          theta, 
+          fevals, 
+          obs, 
+          obsvar, 
+          thetalimits, 
+          prior_func,
+          prior_func_t,
+          thetatest=None, 
+          xmesh=None,
+          thetamesh=None, 
+          posttest=None,
+          emubias=None,
+          synth_info=None,
+          theta_mle=None):
+    
+
+    p = theta.shape[1]
+    dt = thetamesh.shape[1]
+    dx = x.shape[1]
+    n_x = x.shape[0]
+    x_emu = np.arange(0, 1)[:, None ]
+    
+    bias_mean = emubias.predict(x=x_emu, theta=x).mean()
+    bias_var = emubias.predict(x=x_emu, theta=x).var().flatten()
+    
 
     xuniq = np.unique(x, axis=0)
+    clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
 
-    print(xuniq)
+    thetatest = np.array([np.concatenate([xc, th]) for th in thetamesh for xc in x])
+    
+    Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, thetatest, obs, np.diag(bias_var))
+    #Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, thetatest, obs, obsvar)
+    eivar_val = np.zeros(len(clist))
+    
+    print(bias_var)
+    for xt_id, xt_c in enumerate(clist):
+        eivar_val[xt_id] = postphimat(emu._info, n_x, thetatest, obs, np.diag(bias_var), xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
+        #eivar_val[xt_id] = postphimat(emu._info, n_x, thetatest, obs, obsvar, xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
+    th_cand = clist[np.argmax(eivar_val), :].reshape(1, p)
+
+    return th_cand 
+
+def construct_candlist( thetalimits, xuniq, prior_func, prior_func_t ):
+    type_init = 'CMB'
     # Create a candidate list
     if type_init == 'LHS':
         n_clist = 500
@@ -56,16 +116,5 @@ def ceivar(n,
         n_clist  = n0*len(xuniq)
         t_unif   = prior_func_t.rnd(n0, None)
         clist = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
-
-
-    n_x = x.shape[0]
-    thetatest = np.array([np.concatenate([xc, th]) for th in thetamesh for xc in x])
-    
-    Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, thetatest, obs, obsvar)
-    eivar_val = np.zeros(n_clist)
-    for xt_id, xt_c in enumerate(clist):
-        eivar_val[xt_id] = postphimat(emu._info, n_x, thetatest, obs, obsvar, xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
-
-    th_cand = clist[np.argmax(eivar_val), :].reshape(1, p)
-
-    return th_cand 
+        
+    return clist
