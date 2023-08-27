@@ -6,33 +6,8 @@ import matplotlib.pyplot as plt
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
+from test_funcs import unidentifiable
 
-class unidentifiable:
-    def __init__(self):
-
-        self.data_name   = 'unidentifiable'
-        self.thetalimits = np.array([[-8, 8], [-8, 8]])
-        self.obsvar      = np.array([[1/0.01, 0], [0, 1]]) 
-        self.real_data   = np.array([[0, 0]], dtype='float64')  
-        self.out     = [('f', float, (2,))]
-        self.d           = 2
-        self.p           = 2
-        self.x           = np.arange(0, self.d)[:, None]
-        self.real_x      = np.arange(0, self.d)[:, None]
-        
-    def function(self, theta1, theta2):
-        f                = np.array([theta1, theta2])
-        return f
-    
-    def sim(self, H, persis_info, sim_specs, libE_info):
-        """
-        Wraps the unidentifiable function
-        """
-        function         = sim_specs['user']['function']
-        H_o              = np.zeros(1, dtype=sim_specs['out'])
-        H_o['f']         = function(H['thetas'][0][0], H['thetas'][0][1])
-        
-        return H_o, persis_info
 
 args                = parse_arguments()
 cls_unidentifiable  = unidentifiable()

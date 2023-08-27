@@ -6,33 +6,8 @@ import matplotlib.pyplot as plt
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
+from test_funcs import bimodal
 
-class bimodal:
-    def __init__(self):
-
-        self.data_name   = 'bimodal'
-        self.thetalimits = np.array([[-6, 6], [-4, 8]])
-        self.obsvar      = np.array([[1/np.sqrt(0.2), 0], [0, 1/np.sqrt(0.75)]])
-        self.real_data   = np.array([[0, 2]], dtype='float64')
-        self.out     = [('f', float, (2,))]
-        self.d           = 2
-        self.p           = 2
-        self.x           = np.arange(0, self.d)[:, None]
-        self.real_x      = np.arange(0, self.d)[:, None]
-
-    def function(self, theta1, theta2):
-        f = np.array([theta2 - theta1**2, theta2 - theta1])
-        return f
-    
-    def sim(self, H, persis_info, sim_specs, libE_info):
-        """
-        Wraps the bimodal function
-        """
-        function = sim_specs['user']['function']
-        H_o = np.zeros(1, dtype=sim_specs['out'])
-        H_o['f'] = function(H['thetas'][0][0], H['thetas'][0][1])
-
-        return H_o, persis_info
 
 args        = parse_arguments()
 cls_bimodal = bimodal()
@@ -68,16 +43,16 @@ test_data = {'theta': thetatest,
 prior_func      = prior_dist(dist='uniform')(a=cls_bimodal.thetalimits[:, 0], b=cls_bimodal.thetalimits[:, 1])
 
 al_bimodal = designer(data_cls=cls_bimodal, 
-                      method='SEQCALEMU', 
+                      method='SEQCAL', 
                       args={'mini_batch': args.minibatch, 
                             'n_init_thetas': 10,
                             'nworkers': args.nworkers,
-                            'AL': 'ei', #args.al_func,
+                            'AL': args.al_func,
                             'seed_n0': args.seed_n0,
                             'prior': prior_func,
                             'data_test': test_data,
-                            'max_evals': 60,
-                            'type_init': 'LHS'})
+                            'max_evals': 210,
+                            'type_init': None})
 
 save_output(al_bimodal, cls_bimodal.data_name, args.al_func, args.nworkers, args.minibatch, args.seed_n0)
 

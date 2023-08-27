@@ -6,32 +6,7 @@ import matplotlib.pyplot as plt
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
-
-class banana:
-    def __init__(self):
-        self.data_name   = 'banana'
-        self.thetalimits = np.array([[-20, 20], [-10, 5]])
-        self.obsvar      = np.array([[10**2, 0], [0, 1]]) 
-        self.real_data   = np.array([[1, 3]], dtype='float64')  
-        self.out         = [('f', float, (2,))]
-        self.p           = 2
-        self.d           = 2
-        self.x           = np.arange(0, self.d)[:, None]
-        self.real_x      = np.arange(0, self.d)[:, None]
-        
-    def function(self, theta1, theta2):
-        f                = np.array([theta1, theta2 + 0.03*theta1**2])
-        return f
-    
-    def sim(self, H, persis_info, sim_specs, libE_info):
-        """
-        Wraps the banana function
-        """
-        function        = sim_specs['user']['function']
-        H_o             = np.zeros(1, dtype=sim_specs['out'])
-        H_o['f']        = function(H['thetas'][0][0], H['thetas'][0][1])
-
-        return H_o, persis_info
+from test_funcs import banana
 
 args        = parse_arguments()
 cls_banana  = banana()
@@ -71,7 +46,7 @@ al_banana = designer(data_cls=cls_banana,
                      args={'mini_batch': args.minibatch, 
                            'n_init_thetas': 10,
                            'nworkers': args.nworkers,
-                           'AL': args.al_func,
+                           'AL': 'maxexp', #args.al_func,
                            'seed_n0': args.seed_n0,
                            'prior': prior_func,
                            'data_test': test_data,
