@@ -6,28 +6,8 @@ from PUQ.designmethods.gen_funcs.acquisition_funcs_support import compute_postva
 from smt.sampling_methods import LHS
 import scipy
 
-def rnd(n, 
-         x, 
-         real_x,
-         emu, 
-         theta, 
-         fevals, 
-         obs, 
-         obsvar, 
-         thetalimits, 
-         prior_func, 
-         thetatest=None, 
-         posttest=None,
-         type_init=None):
-        
-        theta_acq = prior_func.rnd(n, None)
-        return theta_acq
-        
 
-    
- 
-
-    
+  
 
 def imse(n, 
         x,

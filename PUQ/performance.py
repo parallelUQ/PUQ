@@ -39,15 +39,12 @@ class performanceModel(object):
   
         endtime = [job.end for job in self.jobs]
         sortedjob_ids = np.argsort(endtime)
-
         self.sortedjobs = [self.jobs[i] for i in sortedjob_ids]
-        for jobid, job in enumerate(self.sortedjobs):
-            job.acc = self.acc[jobid]
-
         
         nt = self.n - self.n0
         b = self.batch
-        accrem = self.acc[self.n0:self.n]
+        #accrem = self.acc[self.n0:self.n]
+        accrem = self.acc[0:nt]
         accu     = [accrem[idacc] for idacc in np.arange(b-1, nt, b)]
         accu_all = np.repeat(accu[0:-1], b)
         accu_all = np.concatenate((np.repeat(1, b-1), accu_all))
@@ -59,43 +56,24 @@ class performanceModel(object):
  
     def complete(self, acclevel):
         
-
-        threshold = [a for a in self.acc if a <= acclevel][0]
-        id_thr = np.where(self.acc == threshold)[0][0]
-        endjob = [job.end for job in self.sortedjobs]
-        job_end = endjob[id_thr-1]
+        self.acc_threshold = [a for a in self.acc if a <= acclevel][0]
+        id_thr = np.where(self.acc == self.acc_threshold)[0][0]
         
-        stage_id = 0
-        for job in self.sortedjobs:
-           if (job.end <= job_end) & (job.stageid > stage_id):
-               stage_id = job.stageid
+        self.complete_job_list = []
 
-        #stage_end = np.max([job.end for job in self.stages[stage_id].jobs])
-
-        self.complete_time = job_end#np.max([job_end, stage_end]) 
-    
-        count_finish_job = 0
         sum_total_run_time = 0
-        for job in self.jobs:
-            if job.end <= self.complete_time:
-                count_finish_job += 1
+        for jobid, job in enumerate(self.sortedjobs):
+            job.acc = self.acc[jobid]
+            if jobid <= id_thr - 1:
+                self.complete_job_list.append(job)
                 sum_total_run_time += job.runtime
-        
-        self.computing_hours = self.complete_time*self.worker
-        self.total_idle_time = (self.computing_hours - sum_total_run_time)/self.worker
-                
-        self.complete_no = count_finish_job
-        self.acc_threshold = threshold
-        
-        #sortedjobs = np.argsort(endjob)
-        #for sid, s in enumerate(sortedjobs):
-        #    self.job_list[s]['endid'] = sid
-        #    self.job_list[s]['acc'] = self.acc[sid]
      
-
-        self.completed_stage = stage_id + 1
+        self.complete_time = np.max([j.end for j in self.complete_job_list])
+        self.computing_hours = self.complete_time*self.worker
+        self.avg_idle_time = (self.computing_hours - sum_total_run_time)/self.worker   
+        self.complete_no = len(self.complete_job_list)
+        self.completed_stage = np.max([j.stageid for j in self.complete_job_list])
         self.total_acq_time = np.sum([stage.end - stage.start for stage in self.stages if stage.end <= self.complete_time])
-
 
         return 
         

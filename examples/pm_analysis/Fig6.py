@@ -6,8 +6,9 @@ scale_list = [1, 1.1, 1.2]
 acclevel = [0.1, 0.2, 0.25]
 result = []
 n = 1280
-n0 = 0
+
 worker = 128
+n0 = 0
 batches = [1, 64, 128]
 level = 0.1
 for bid, b in enumerate(batches):

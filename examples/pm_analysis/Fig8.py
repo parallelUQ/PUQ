@@ -10,7 +10,7 @@ varlist = [1]
 acclevel = 0.2
 n = 2560
 worker = 256
-n0 = 0
+n0 = worker
 batches = [1, 2, 4, 8, 16, 32, 64, 128, 256]
 simmeans = [4, 16, 64]
 clist = ['b', 'r', 'g', 'm', 'y', 'c']
@@ -29,7 +29,7 @@ for sid, sim_mean in enumerate(simmeans):
             for r in range(repno):
     
                 for id_b, b in enumerate(batches):
-                    PM = performanceModel(worker=worker, batch=b, n=n, n0=worker)
+                    PM = performanceModel(worker=worker, batch=b, n=n, n0=n0)
                     PM.gen_gentime(genparams[aid], 0.001, typeGen='constant')
                     PM.gen_simtime(simmeans[sid], simmeans[sid], 0.001, typeSim='normal', seed=r)
                     PM.gen_accuracy(acc[0], acc[1] + id_b*0.01, typeAcc='exponential')

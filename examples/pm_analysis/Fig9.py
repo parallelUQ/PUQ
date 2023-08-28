@@ -50,7 +50,7 @@ for varid, var in enumerate(varlist):
             computetime = []
             for wid, w in enumerate(workers):
                 endtime.append(np.mean([res['res'].complete_time for res in res_c if ((res['w'] == w) & (res['b'] == b))]))
-                idletime.append(np.mean([res['res'].total_idle_time for res in res_c if ((res['w'] == w) & (res['b'] == b))]))
+                idletime.append(np.mean([res['res'].avg_idle_time for res in res_c if ((res['w'] == w) & (res['b'] == b))]))
                 computetime.append(np.mean([res['res'].computing_hours for res in res_c if ((res['w'] == w) & (res['b'] == b))]))
                 
             endtimescaled = [e/(endtime[0]) for e in endtime]

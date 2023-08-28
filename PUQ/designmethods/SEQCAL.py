@@ -1,12 +1,12 @@
 import numpy as np
 from PUQ.designmethods.gen_funcs.acquisition_funcs_support import get_emuvar, multiple_pdfs
-from PUQ.designmethods.gen_funcs.acquisition_funcs import rnd, imse
 from PUQ.designmethods.gen_funcs.EIVAR import eivar
 from PUQ.designmethods.gen_funcs.MAXEXP import maxexp
 from PUQ.designmethods.gen_funcs.MAXVAR import maxvar
 from PUQ.designmethods.gen_funcs.EI import ei
 from PUQ.designmethods.gen_funcs.PI import pi
 from PUQ.designmethods.gen_funcs.HYBRID_EI import hybrid_ei
+from PUQ.designmethods.gen_funcs.RND import rnd
 from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
@@ -181,14 +181,16 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
             if update_model:
                 starttime = time.time()
-                print('Updating model...\n')
-
-                print('Percentage Pending: %0.2f ( %d / %d)' % (100*np.round(np.mean(pending), 4),
-                                                                np.sum(pending),
-                                                                np.prod(pending.shape)))
-                print('Percentage Complete: %0.2f ( %d / %d)' % (100*np.round(np.mean(complete), 4),
-                                                                 np.sum(complete),
-                                                                 np.prod(pending.shape)))
+                
+                if len(theta) % 50 == 0:
+                    print('Updating model...\n')
+    
+                    print('Percentage Pending: %0.2f ( %d / %d)' % (100*np.round(np.mean(pending), 4),
+                                                                    np.sum(pending),
+                                                                    np.prod(pending.shape)))
+                    print('Percentage Complete: %0.2f ( %d / %d)' % (100*np.round(np.mean(complete), 4),
+                                                                     np.sum(complete),
+                                                                     np.prod(pending.shape)))
                 
                 emu            = fit_emulator(x, theta, fevals, theta_limits)
                 prev_pending   = pending.copy()
@@ -214,8 +216,6 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                     AE = np.min(np.sum(np.abs(true_fevals - fevals_c.T), axis=1))
 
             if first_iter:
-                print('Selecting theta for the first iteration...\n')
-
                 n_init = max(n_workers-1, n0)
 
                 if type_init == 'LHS':
@@ -236,9 +236,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 
             else: 
                 if select_condition(complete, prev_complete, n_theta=mini_batch, n_initial=n0):
-                    print('Selecting theta...\n')
 
-                       
                     prev_complete = complete.copy()
                     new_theta = acquisition_f(mini_batch, 
                                               x,

@@ -28,7 +28,7 @@ for scaleid, scale in enumerate(acqscale):
             res = []
             for r in range(repno):
                 for id_b, b in enumerate(batches):
-                    PM = performanceModel(worker=worker, batch=b, n=n, n0=0)
+                    PM = performanceModel(worker=worker, batch=b, n=n, n0=worker)
                     PM.gen_gentime(scale, scale, 0.001, typeGen='linear')
                     PM.gen_simtime(sim_mean, sim_mean*var, 0.01, typeSim='normal', seed=r)
                     PM.gen_accuracy(-1, accparams[id_b][1], typeAcc='exponential')

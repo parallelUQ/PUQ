@@ -35,15 +35,15 @@ test_data = {'theta': thetatest,
  # # # # # # # # # # # # # # # # # # # # # 
 prior_func = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], b=cls_data.thetalimits[:, 1])
  # # # # # # # # # # # # # # # # # # # # # 
-init_seeds = 1
-final_seeds = 2
+init_seeds = args.init_seeds
+final_seeds = args.final_seeds
 for s in np.arange(init_seeds, final_seeds):
     al_data = designer(data_cls=cls_data, 
                           method='SEQCAL', 
                           args={'mini_batch': args.minibatch, 
                                 'n_init_thetas': 10,
                                 'nworkers': args.nworkers,
-                                'AL': 'hybrid_ei', 
+                                'AL': args.al_func, 
                                 'seed_n0': int(s),
                                 'prior': prior_func,
                                 'data_test': test_data,
