@@ -144,3 +144,13 @@ def ei(n,
 
     return theta_acq    
 
+def maxvar():
+    return
+def eivar():
+    return
+def pi():
+    return
+def hybrid_ei():
+    return
+def hybrid_pi():
+    return
