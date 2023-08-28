@@ -11,8 +11,10 @@ def normal(*args, n, seed):
     np.random.seed(seed)
     a = args[0]
     b = args[1]
+    cons = args[2]
+    
     time = np.random.normal(loc=a, scale=b, size=n)
-    time[time < 0] = 0.00001
+    time[time < 0] = cons
     return time
 
 def constant(*args, n):

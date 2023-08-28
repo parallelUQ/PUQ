@@ -75,9 +75,14 @@ class performanceModel(object):
         self.complete_time = job_end#np.max([job_end, stage_end]) 
     
         count_finish_job = 0
+        sum_total_run_time = 0
         for job in self.jobs:
             if job.end <= self.complete_time:
                 count_finish_job += 1
+                sum_total_run_time += job.runtime
+        
+        self.computing_hours = self.complete_time*self.worker
+        self.total_idle_time = (self.computing_hours - sum_total_run_time)/self.worker
                 
         self.complete_no = count_finish_job
         self.acc_threshold = threshold

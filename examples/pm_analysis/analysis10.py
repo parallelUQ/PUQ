@@ -32,8 +32,8 @@ for sid, sim_mean in enumerate(simmeans):
                         cons             = np.arange(scale_list[id_b], 1, -(scale_list[id_b]-1)/n)[0:n] 
                         
                     PM = performanceModel(worker=w, batch=b, n=n, n0=w)
-                    PM.gen_gentime(genparams[0][0], typeGen='constant')
-                    PM.gen_simtime(sim_mean, sim_mean*var, typeSim='normal', seed=r)
+                    PM.gen_gentime(genparams[0][0], 0, typeGen='constant')
+                    PM.gen_simtime(sim_mean, sim_mean*var, 0, typeSim='normal', seed=r)
                     PM.gen_accuracy(accparams[0][0], accparams[0][1], typeAcc='exponential')
                     PM.gen_accuracy(cons*PM.acc, typeAcc='batched')
                     PM.simulate()

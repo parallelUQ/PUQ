@@ -93,7 +93,7 @@ def plot_endtime(axes, n, acclevel, rlist, labellist, worker, logscale=False, fo
         axes.hlines(y=endtime[res.complete_no], xmin=0, xmax=res.complete_no, linewidth=2, color=clist[endid], linestyles='dashed')
 
     axes.set_xlabel("# of parameters", fontsize=fontsize)
-    axes.set_ylabel("Completion time", fontsize=fontsize)
+    axes.set_ylabel("Wall-clock time", fontsize=fontsize)
     if logscale:
         axes.set_xscale('log')
         axes.set_yscale('log')
@@ -124,7 +124,7 @@ def plot_errorend(axes, n, acclevel, rlist, labellist, worker, logscale=False, f
         axes.set_yscale('log')
     axes.set_xlim([np.min(minworker), maxtime])
     axes.set_ylim([minacc, np.max([res.acc[worker] for res in rlist])])
-    axes.set_xlabel("Completion time", fontsize=fontsize)
+    axes.set_xlabel("Wall-clock time", fontsize=fontsize)
     axes.set_ylabel("Error", fontsize=fontsize)
     axes.tick_params(axis='both', which='major', labelsize=fontsize-5)    
     

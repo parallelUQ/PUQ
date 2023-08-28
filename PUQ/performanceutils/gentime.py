@@ -4,6 +4,7 @@ from sklearn.linear_model import LinearRegression
 def linear(*args, n, batch, n0):
     a = args[0]
     b = args[1]
+    cons = args[2]
     
     nt = n - n0
     x = np.arange(n0, n)/n
@@ -12,7 +13,7 @@ def linear(*args, n, batch, n0):
     time = np.concatenate((np.repeat(0, n0), time))
 
     if batch > 1:
-        time = get_batched_time(n, batch, time)
+        time = get_batched_time(n, batch, cons, time)
         
     return time
 
@@ -35,12 +36,14 @@ def quadratic(*args, n, batch, n0):
 
 def constant(*args, n, batch, n0):
     a = args[0]
+    cons = args[1]
+    
     nt = n - n0
     time = a * np.repeat(1, nt)
     time = np.concatenate((np.repeat(0, n0), time))
     
     if batch > 1:
-        time = get_batched_time(n, batch, time)
+        time = get_batched_time(n, batch, cons, time)
         
     return time
 
@@ -59,8 +62,8 @@ def regress(*args, n, batch, n0):
         
     return ytest
 
-def get_batched_time(n, b, time):
-    timenew = np.repeat(0.001, n)
+def get_batched_time(n, b, cons, time):
+    timenew = np.repeat(cons, n)
     timenew[0::b] = time[0::b]
     #time = time[0::b]
     #time = np.repeat(time, b)
