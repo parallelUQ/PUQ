@@ -4,39 +4,41 @@ import scipy.stats as sps
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
-from plots_design import plot_EIVAR, plot_post, plot_LHS, obsdata, fitemu, create_test_non, gather_data_non, add_result, sampling, samplingdata
-from smt.sampling_methods import LHS
-from ptest_funcs import nonlin
+from plots_design import plot_EIVAR, plot_post, obsdata, fitemu, create_test, gather_data, add_result, sampling, plot_des, find_mle, samplingdata
+from ptest_funcs import sinfunc
 import pandas as pd
 import seaborn as sns
 
 
 
-
-seeds = 1
-ninit = 30
-nmax = 100
+seeds = 10
+ninit = 20
+nmax = 70
 result = []
+
 for s in range(seeds):
+
+    bias = True
+    cls_data = sinfunc()
+    dt = len(cls_data.true_theta)
+    cls_data.realdata(np.array([0.1, 0.1, 0.3, 0.3, 0.5, 0.5, 0.7, 0.7, 0.9, 0.9])[:, None], seed=s, isbias=bias)
+
+    # Observe
+    obsdata(cls_data)
+        
+    args         = parse_arguments()
     
-    #x = np.linspace(0, 1, 3)
-    #y = np.linspace(0, 1, 3)
-    x = np.linspace(0, 1, 2)
-    y = np.linspace(0, 1, 2)
-    xr = np.array([[xx, yy] for xx in x for yy in y])
-    xr = np.concatenate((xr, xr))  
-    cls_data = nonlin()
-    cls_data.realdata(xr, seed=s)
-
     prior_xt     = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], b=cls_data.thetalimits[:, 1]) 
-    prior_x      = prior_dist(dist='uniform')(a=cls_data.thetalimits[0:2, 0], b=cls_data.thetalimits[0:2, 1]) 
-    prior_t      = prior_dist(dist='uniform')(a=np.array([cls_data.thetalimits[2][0]]), b=np.array([cls_data.thetalimits[2][1]]))
-
+    prior_x      = prior_dist(dist='uniform')(a=np.array([cls_data.thetalimits[0][0]]), b=np.array([cls_data.thetalimits[0][1]])) 
+    prior_t      = prior_dist(dist='uniform')(a=np.array([cls_data.thetalimits[1][0]]), b=np.array([cls_data.thetalimits[1][1]]))
+    
     priors = {'prior': prior_xt, 'priorx': prior_x, 'priort': prior_t}
-
-    xt_test, ftest, ptest, thetamesh, xmesh = create_test_non(cls_data)
-    cls_data_y = nonlin()
-    cls_data_y.realdata(x=xmesh, seed=s)
+    
+    # # # Create a mesh for test set # # # 
+    xt_test, ftest, ptest, thetamesh, xmesh = create_test(cls_data, isbias=bias)
+    nmesh = len(xmesh)
+    cls_data_y = sinfunc()
+    cls_data_y.realdata(x=xmesh, seed=s, isbias=bias)
     ytest = cls_data_y.real_data
     
     test_data = {'theta': xt_test, 
@@ -46,75 +48,51 @@ for s in range(seeds):
                  'th': thetamesh,    
                  'xmesh': xmesh,
                  'p_prior': 1} 
-
+    # # # # # # # # # # # # # # # # # # # # # 
     al_ceivarx = designer(data_cls=cls_data, 
-                           method='SEQCOMPDES', 
+                           method='SEQCOMPDESBIAS', 
                            args={'mini_batch': 1, 
                                  'n_init_thetas': ninit,
                                  'nworkers': 2, 
-                                 'AL': 'ceivarx',
+                                 'AL': 'ceivarxbias',
                                  'seed_n0': s,
                                  'prior': priors,
                                  'data_test': test_data,
                                  'max_evals': nmax,
-                                 'type_init': None})
+                                 'bias': bias})
     
     xt_eivarx = al_ceivarx._info['theta']
     f_eivarx = al_ceivarx._info['f']
-    theta_mle = al_ceivarx._info['thetamle'][-1]
+    thetamle_eivarx = al_ceivarx._info['thetamle'][-1]
     
+    plot_EIVAR(xt_eivarx, cls_data, ninit, xlim1=0, xlim2=1)
+
     res = {'method': 'eivarx', 'repno': s, 'Prediction Error': al_ceivarx._info['TV'], 'Posterior Error': al_ceivarx._info['HD']}
     result.append(res)
-    
-    xacq = xt_eivarx[ninit:nmax, 0:2]
-    tacq = xt_eivarx[ninit:nmax, 2]
-
-    plt.hist(tacq)
-    plt.axvline(x =cls_data.true_theta, color = 'r')
-    plt.xlabel(r'$\theta$')
-    plt.xlim(0, 1)
-    plt.show()
-    
-    unq, cnt = np.unique(xacq, return_counts=True, axis=0)
-    plt.scatter(unq[:, 0], unq[:, 1])
-    for label, x_count, y_count in zip(cnt, unq[:, 0], unq[:, 1]):
-        plt.annotate(label, xy=(x_count, y_count), xytext=(5, -5), textcoords='offset points')
-    plt.show()
     # # # # # # # # # # # # # # # # # # # # # 
     al_ceivar = designer(data_cls=cls_data, 
-                           method='SEQCOMPDES', 
+                           method='SEQCOMPDESBIAS', 
                            args={'mini_batch': 1, 
                                  'n_init_thetas': ninit,
                                  'nworkers': 2, 
-                                 'AL': 'ceivar',
+                                 'AL': 'ceivarbias',
                                  'seed_n0': s,
                                  'prior': priors,
                                  'data_test': test_data,
-                                 'max_evals': nmax})
+                                 'max_evals': nmax,
+                                 'bias': bias})
     
     xt_eivar = al_ceivar._info['theta']
     f_eivar = al_ceivar._info['f']
     thetamle_eivar = al_ceivar._info['thetamle'][-1]
 
+    plot_EIVAR(xt_eivar, cls_data, ninit, xlim1=0, xlim2=1)
+
     res = {'method': 'eivar', 'repno': s, 'Prediction Error': al_ceivar._info['TV'], 'Posterior Error': al_ceivar._info['HD']}
     result.append(res)
-
-    xacq = xt_eivar[ninit:nmax, 0:2]
-    tacq = xt_eivar[ninit:nmax, 2]
-
-    plt.hist(tacq)
-    plt.axvline(x =cls_data.true_theta, color = 'r')
-    plt.xlabel(r'$\theta$')
-    plt.xlim(0, 1)
-    plt.show()
     
-    unq, cnt = np.unique(xacq, return_counts=True, axis=0)
-    plt.scatter(unq[:, 0], unq[:, 1])
-    for label, x_count, y_count in zip(cnt, unq[:, 0], unq[:, 1]):
-        plt.annotate(label, xy=(x_count, y_count), xytext=(5, -5), textcoords='offset points')
-    plt.show()
     # LHS 
-    xt_LHS, f_LHS = samplingdata('LHS', nmax, cls_data, s, prior_xt, non=True)
+    xt_LHS, f_LHS = samplingdata('LHS', nmax, cls_data, s, prior_xt)
     al_LHS = designer(data_cls=cls_data, 
                            method='SEQGIVEN', 
                            args={'mini_batch': 1, 
@@ -125,7 +103,7 @@ for s in range(seeds):
                                  'data_test': test_data,
                                  'max_evals': nmax,
                                  'theta_torun': xt_LHS,
-                                 'bias': False})
+                                 'bias': bias})
     xt_LHS = al_LHS._info['theta']
     f_LHS = al_LHS._info['f']
     thetamle_LHS = al_LHS._info['thetamle'][-1]
@@ -134,7 +112,7 @@ for s in range(seeds):
     result.append(res)
     
     # rnd 
-    xt_RND, f_RND = samplingdata('Random', nmax, cls_data, s, prior_xt, non=True)
+    xt_RND, f_RND = samplingdata('Random', nmax, cls_data, s, prior_xt)
     al_RND = designer(data_cls=cls_data, 
                            method='SEQGIVEN', 
                            args={'mini_batch': 1, 
@@ -145,7 +123,7 @@ for s in range(seeds):
                                  'data_test': test_data,
                                  'max_evals': nmax,
                                  'theta_torun': xt_RND,
-                                 'bias': False})
+                                 'bias': bias})
     xt_RND = al_RND._info['theta']
     f_RND = al_RND._info['f']
     thetamle_RND = al_RND._info['thetamle'][-1]
@@ -154,7 +132,7 @@ for s in range(seeds):
     result.append(res)
     
     # Unif
-    xt_UNIF, f_UNIF = samplingdata('Uniform', nmax, cls_data, s, prior_xt, non=True)
+    xt_UNIF, f_UNIF = samplingdata('Uniform', nmax, cls_data, s, prior_xt)
     al_UNIF = designer(data_cls=cls_data, 
                            method='SEQGIVEN', 
                            args={'mini_batch': 1, 
@@ -165,17 +143,16 @@ for s in range(seeds):
                                  'data_test': test_data,
                                  'max_evals': nmax,
                                  'theta_torun': xt_UNIF,
-                                 'bias': False})
+                                 'bias': bias})
     xt_UNIF = al_UNIF._info['theta']
     f_UNIF = al_UNIF._info['f']
     thetamle_UNIF = al_UNIF._info['thetamle'][-1]
     
     res = {'method': 'unif', 'repno': s, 'Prediction Error': al_UNIF._info['TV'], 'Posterior Error': al_UNIF._info['HD']}
     result.append(res)
-    
-    
+
 cols = ['blue', 'red', 'cyan', 'orange', 'purple']
-meths = ['eivarx', 'lhs', 'rnd']
+meths = ['eivarx','lhs', 'rnd']
 for mid, m in enumerate(meths):   
     p = np.array([r['Prediction Error'][ninit:nmax] for r in result if r['method'] == m])
     meanerror = np.mean(p, axis=0)
@@ -188,7 +165,7 @@ plt.yscale('log')
 plt.show()
 
 
-meths = ['eivar', 'lhs', 'rnd']  
+meths = ['eivarx', 'eivar', 'lhs', 'rnd', 'unif']
 for mid, m in enumerate(meths):   
     p = np.array([r['Posterior Error'][ninit:nmax] for r in result if r['method'] == m])
     meanerror = np.mean(p, axis=0)

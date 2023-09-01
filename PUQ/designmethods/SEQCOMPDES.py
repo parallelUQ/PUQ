@@ -190,7 +190,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                fevals, 
                                method='PCGPexp')
 
-                theta_mle = find_mle(emu, x, x_emu, true_fevals, dx, dt, theta_limits)
+                theta_mle = find_mle(emu, x, x_emu, true_fevals, obsvar, dx, dt, theta_limits)
                 mlelist.append(theta_mle)
                 print('mle:', theta_mle)
                 

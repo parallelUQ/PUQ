@@ -85,7 +85,7 @@ def obsdata(cls_data):
     plt.show()
 
     
-def create_test(cls_data):
+def create_test(cls_data, isbias=False):
     thetamesh   = np.linspace(cls_data.thetalimits[1][0], cls_data.thetalimits[1][1], 100)[:, None]
     xmesh = np.linspace(cls_data.thetalimits[0][0], cls_data.thetalimits[0][1], 100)[:, None]
     
@@ -103,6 +103,8 @@ def create_test(cls_data):
         ftest = ftest.reshape(len(thetamesh), len(cls_data.x))
         for i in range(ftest.shape[0]):
             mean     = ftest[i, :] 
+            if isbias:
+                mean += cls_data.bias(cls_data.x).flatten()
             rnd      = sps.multivariate_normal(mean=mean, cov=cls_data.obsvar)
             ptest[i] = rnd.pdf(cls_data.real_data)
          
@@ -115,7 +117,7 @@ def create_test(cls_data):
 
 
 
-def create_test_non(cls_data):
+def create_test_non(cls_data, is_bias=False):
     n_t = 100
     n_x = cls_data.x.shape[0]
     n_tot = n_t*n_x
@@ -130,13 +132,21 @@ def create_test_non(cls_data):
             ftest[k] = cls_data.function(cls_data.x[i, 0], cls_data.x[i, 1], thetamesh[j])
             k += 1
 
-    ftest = ftest.reshape(n_t, n_x)
-    ptest = np.zeros(n_t)
-    for j in range(n_t):
-        rnd = sps.multivariate_normal(mean=ftest[j, :], cov=cls_data.obsvar)
-        ptest[j] = rnd.pdf(cls_data.real_data)
+    if is_bias:
+        biastrue = cls_data.bias(cls_data.x[:, 0], cls_data.x[:, 1])
+        ftest = ftest.reshape(n_t, n_x)
+        ptest = np.zeros(n_t)
+        for j in range(n_t):
+            rnd = sps.multivariate_normal(mean=ftest[j, :] + biastrue, cov=cls_data.obsvar)
+            ptest[j] = rnd.pdf(cls_data.real_data)
+    else:
+        ftest = ftest.reshape(n_t, n_x)
+        ptest = np.zeros(n_t)
+        for j in range(n_t):
+            rnd = sps.multivariate_normal(mean=ftest[j, :], cov=cls_data.obsvar)
+            ptest[j] = rnd.pdf(cls_data.real_data)
         
-    plt.scatter(thetamesh, ptest)
+    plt.plot(thetamesh, ptest)
     plt.show()
     
     x1 = np.linspace(cls_data.thetalimits[0][0], cls_data.thetalimits[0][1], 20)

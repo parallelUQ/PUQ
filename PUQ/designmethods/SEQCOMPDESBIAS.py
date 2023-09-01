@@ -12,6 +12,8 @@ from smt.sampling_methods import LHS
 from PUQ.posterior import posterior
 from PUQ.surrogate import emulator
 import scipy.stats as sps
+from PUQ.surrogatemethods.PCGPexp import  postpred
+import matplotlib.pyplot as plt
 
 def fit(fitinfo, data_cls, args):
 
@@ -102,6 +104,26 @@ def fit(fitinfo, data_cls, args):
 
     return
 
+def collect_data(emu, emubias, x_emu, theta_mle, dt, xmesh, xtmesh, nmesh, ytest, ptest, x, obs, obsvar):
+    
+    xtrue_test = np.concatenate((xmesh, np.repeat(theta_mle, nmesh).reshape(nmesh, dt)), axis=1)
+    
+    predobj = emu.predict(x=x_emu, theta=xtrue_test)
+    fmeanhat, fvarhat = predobj.mean(), predobj.var()
+    
+    predobj = emubias.predict(x=x_emu, theta=xmesh)
+    bmeanhat, bvarhat = predobj.mean(), predobj.var()
+
+    pred_error = np.mean(np.abs(fmeanhat + bmeanhat - ytest))
+    
+    biasobj = emubias.predict(x=x_emu, theta=x)
+    bmeanhat, bvarhat = biasobj.mean(), biasobj.var()
+    
+    pmeanhat, pvarhat = postpred(emu._info, x, xtmesh, obs - bmeanhat, obsvar)
+    
+    post_error = np.mean(np.abs(pmeanhat - ptest))
+    
+    return pred_error, post_error
                 
 def gen_f(H, persis_info, gen_specs, libE_info):
 
@@ -132,7 +154,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
         thetatest, posttest, ftest, priortest = None, None, None, None
         if test_data is not None:
-            thetatest, th_mesh, x_mesh, posttest, ftest, priortest = test_data['theta'], test_data['th'], test_data['xmesh'], test_data['p'], test_data['f'], test_data['p_prior']
+            thetatest, th_mesh, x_mesh, ptest, ftest, priortest, ytest = test_data['theta'], test_data['th'], test_data['xmesh'], test_data['p'], test_data['f'], test_data['p_prior'], test_data['y']
 
 
         true_fevals = np.reshape(data[0, :], (1, data.shape[1]))
@@ -149,6 +171,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         theta = 0
         dx = x.shape[1]
         dt = th_mesh.shape[1]
+        nmesh = len(x_mesh)
         mlelist = []
         while tag not in [STOP_TAG, PERSIS_STOP]:
             if not first_iter:
@@ -175,13 +198,12 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                fevals, 
                                method='PCGPexp')
 
-                theta_mle = find_mle_bias(emu, x, x_emu, true_fevals, dx, dt, theta_limits)
+                theta_mle = find_mle_bias(emu, x, x_emu, true_fevals, obsvar, dx, dt, theta_limits)
                 mlelist.append(theta_mle)
                 print('mle:', theta_mle)
-                
+  
                 # Bias prediction #
                 xp = np.concatenate((x, np.repeat(theta_mle, len(x)).reshape(len(x), len(theta_mle))), axis=1)
-                print(xp)
                 emupred = emu.predict(x=x_emu, theta=xp)
                 mu_p    = emupred.mean()
                 var_p   = emupred.var()
@@ -190,9 +212,9 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                    x, 
                                    bias.T, 
                                    method='PCGPexp')
-                #bias_mean = emubias.predict(x=x_emu, theta=x).mean()
-                #bias_var = emubias.predict().var()
 
+                TV, HD = collect_data(emu, emubias, x_emu, theta_mle, dt, x_mesh, thetatest, nmesh, ytest, ptest, x, true_fevals, obsvar)
+   
                 # # #
                 prev_pending   = pending.copy()
                 update_model   = False

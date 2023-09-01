@@ -18,6 +18,7 @@ import scipy.stats as sps
 import scipy.optimize as spo
 import matplotlib.pyplot as plt
 from PUQ.designmethods.gen_funcs.PEIVARinit import peivarinitial, pmaxvarinitial
+from PUQ.surrogatemethods.PCGPexp import  postpred
 
 def fit(fitinfo, data_cls, args):
 
@@ -65,10 +66,7 @@ def fit(fitinfo, data_cls, args):
             'seed_n0': seed_n0,
             'synth_cls': data_cls,
             'test_data': test_data,
-            'prior': prior,
-            'type_init': args['type_init'],
-            'unknown_var': args['unknown_var'],
-            'design': args['design']
+            'prior': prior
         },
     }
 
@@ -112,6 +110,20 @@ def fit(fitinfo, data_cls, args):
                 
     return
 
+def collect_data(emu, x_emu, theta_mle, dt, xmesh, xtmesh, nmesh, ytest, ptest, x, obs, obsvar):
+    
+    xtrue_test = np.concatenate((xmesh, np.repeat(theta_mle, nmesh).reshape(nmesh, dt)), axis=1)
+    
+    predobj = emu.predict(x=x_emu, theta=xtrue_test)
+    ymeanhat, yvarhat = predobj.mean(), predobj.var()
+    
+    pred_error = np.mean(np.abs(ymeanhat - ytest))
+    
+    #pmeanhat, pvarhat = postpred(emu._info, x, xtmesh, obs, obsvar)
+    
+    #post_error = np.mean(np.abs(pmeanhat - ptest))
+    
+    return pred_error, None
                 
 def gen_f(H, persis_info, gen_specs, libE_info):
 
@@ -139,8 +151,8 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
         thetatest, posttest, ftest, priortest = None, None, None, None
         if test_data is not None:
-            thetatest, th_mesh, x_mesh, posttest, ftest, priortest = test_data['theta'], test_data['th'], test_data['xmesh'], test_data['p'], test_data['f'], test_data['p_prior']
-        
+            thetatest, th_mesh, x_mesh, ptest, ftest, priortest, ytest = test_data['theta'], test_data['th'], test_data['xmesh'], test_data['p'], test_data['f'], test_data['p_prior'], test_data['y']
+
         n_x     = synth_info.d 
         x       = synth_info.x
         x_emu   = np.arange(0, 1)[:, None ]
@@ -173,7 +185,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         mlelist = []
         
         batchcounter, batchfield = 0, 0
-        
+        nmesh = len(x_mesh)
         while tag not in [STOP_TAG, PERSIS_STOP]:
             if not first_iter:
                 # Update fevals from calc_in
@@ -207,10 +219,12 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                fevals, 
                                method='PCGPexp')
 
-                theta_mle = find_mle(emu, x_u, x_emu, true_fevals_u, dx, dt, theta_limits)
+                theta_mle = find_mle(emu, x_u, x_emu, true_fevals_u, obsvar_u, dx, dt, theta_limits)
                 mlelist.append(theta_mle)
                 print('mle:', theta_mle)
                 
+                TV, HD = collect_data(emu, x_emu, theta_mle, dt, x_mesh, thetatest, nmesh, ytest, ptest, x_u, true_fevals_u, obsvar_u)
+
                 new_field = True if ((theta.shape[0] % 10) == 0) and (theta.shape[0] > n_init) else False
             
                 if new_field:
@@ -229,17 +243,16 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                     
                 x_u           = np.array([e['x'] for e in des])
                 
-                if batchfield == batchcounter:
-                    for e in des:
-                        if e['isreal'] == 'No':
-                            xvar = synth_info.realvar(e['x'])
-                            y_new = synth_info.genobsdata(e['x'], xvar) 
-                            e['feval'] = [y_new]
-                            e['isreal'] = 'Yes'
-                    batchcounter = 0
+                #if batchfield == batchcounter:
+                #    for e in des:
+                #        if e['isreal'] == 'No':
+                #            xvar = synth_info.realvar(e['x'])
+                #            y_new = synth_info.genobsdata(e['x'], xvar) 
+                #            e['feval'] = [y_new]
+                #            e['isreal'] = 'Yes'
+                #    batchcounter = 0
                         
                 true_fevals_u = np.array([np.mean(e['feval']) for e in des])[None, :]
-      
                 obsvar_u      = np.diag(synth_info.realvar(x_u))
                 prev_pending   = pending.copy()
                 update_model   = False

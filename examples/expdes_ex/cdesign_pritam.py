@@ -11,20 +11,16 @@ import pandas as pd
 import seaborn as sns
 
 
-
-
 seeds = 10
 ninit = 30
 nmax = 60
 result = []
 for s in range(seeds):
-    
-    #x = np.linspace(0, 1, 3)
-    #y = np.linspace(0, 1, 3)
+
     x = np.linspace(0, 1, 2)
     y = np.linspace(0, 1, 2)
     xr = np.array([[xx, yy] for xx in x for yy in y])
-
+    xr = np.concatenate((xr, xr))
     cls_data = pritam()
     cls_data.realdata(xr, seed=s)
 
@@ -56,8 +52,7 @@ for s in range(seeds):
                                  'seed_n0': s,
                                  'prior': priors,
                                  'data_test': test_data,
-                                 'max_evals': nmax,
-                                 'type_init': None})
+                                 'max_evals': nmax})
     
     xt_eivarx = al_ceivarx._info['theta']
     f_eivarx = al_ceivarx._info['f']
@@ -124,7 +119,8 @@ for s in range(seeds):
                                  'prior': priors,
                                  'data_test': test_data,
                                  'max_evals': nmax,
-                                 'theta_torun': xt_LHS})
+                                 'theta_torun': xt_LHS,
+                                 'bias': False})
     xt_LHS = al_LHS._info['theta']
     f_LHS = al_LHS._info['f']
     thetamle_LHS = al_LHS._info['thetamle'][-1]
@@ -143,7 +139,8 @@ for s in range(seeds):
                                  'prior': priors,
                                  'data_test': test_data,
                                  'max_evals': nmax,
-                                 'theta_torun': xt_RND})
+                                 'theta_torun': xt_RND,
+                                 'bias': False})
     xt_RND = al_RND._info['theta']
     f_RND = al_RND._info['f']
     thetamle_RND = al_RND._info['thetamle'][-1]
@@ -162,7 +159,8 @@ for s in range(seeds):
                                  'prior': priors,
                                  'data_test': test_data,
                                  'max_evals': nmax,
-                                 'theta_torun': xt_UNIF})
+                                 'theta_torun': xt_UNIF,
+                                 'bias': False})
     xt_UNIF = al_UNIF._info['theta']
     f_UNIF = al_UNIF._info['f']
     thetamle_UNIF = al_UNIF._info['thetamle'][-1]
@@ -172,7 +170,7 @@ for s in range(seeds):
     
     
 cols = ['blue', 'red', 'cyan', 'orange', 'purple']
-meths = ['eivarx', 'lhs', 'rnd']
+meths = ['eivarx', 'eivar', 'lhs', 'rnd']
 for mid, m in enumerate(meths):   
     p = np.array([r['Prediction Error'][ninit:nmax] for r in result if r['method'] == m])
     meanerror = np.mean(p, axis=0)
@@ -185,7 +183,7 @@ plt.ylabel('Prediction Error')
 plt.show()
 
 
-meths = ['eivar', 'lhs', 'rnd', 'unif']  
+meths = ['eivar', 'eivarx', 'lhs', 'rnd', 'unif']  
 for mid, m in enumerate(meths):   
     p = np.array([r['Posterior Error'][ninit:nmax] for r in result if r['method'] == m])
     meanerror = np.mean(p, axis=0)

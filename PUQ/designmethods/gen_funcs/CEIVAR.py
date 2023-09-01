@@ -80,14 +80,14 @@ def ceivarbias(n,
 
     thetatest = np.array([np.concatenate([xc, th]) for th in thetamesh for xc in x])
     
-    Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, thetatest, obs, np.diag(bias_var))
-    #Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, thetatest, obs, obsvar)
+    #Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, thetatest, obs, np.diag(bias_var))
+    Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, thetatest, obs, obsvar)
     eivar_val = np.zeros(len(clist))
     
-    print(bias_var)
+
     for xt_id, xt_c in enumerate(clist):
-        eivar_val[xt_id] = postphimat(emu._info, n_x, thetatest, obs, np.diag(bias_var), xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
-        #eivar_val[xt_id] = postphimat(emu._info, n_x, thetatest, obs, obsvar, xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
+        #eivar_val[xt_id] = postphimat(emu._info, n_x, thetatest, obs, np.diag(bias_var), xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
+        eivar_val[xt_id] = postphimat(emu._info, n_x, thetatest, obs-bias_mean, obsvar, xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
     th_cand = clist[np.argmax(eivar_val), :].reshape(1, p)
 
     return th_cand 

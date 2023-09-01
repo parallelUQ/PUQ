@@ -186,7 +186,7 @@ class pritam:
         self.des = []
         self.dx          = 2
         self.nrep        = 1
-        self.sigma2      = 0.5**2
+        self.sigma2      = 0.5**2 #2
         self.nodata      = True  
         
     def function(self, x1, x2, theta1):

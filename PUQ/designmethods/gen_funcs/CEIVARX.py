@@ -122,7 +122,7 @@ def ceivarxbias(n,
     bias_mean = emubias.predict(x=x_emu, theta=x).mean()
     bias_var = emubias.predict(x=x_emu, theta=x).var().flatten()
     # nx_ref x nf
-    f_temp_rep  = np.repeat(obs, nx_ref, axis=0)
+    f_temp_rep  = np.repeat(obs-bias_mean, nx_ref, axis=0)
     # nx_ref x (nf + 1)
     f_field_rep = np.concatenate((f_temp_rep, (y_ref).T), axis=1)
 
@@ -138,8 +138,8 @@ def ceivarxbias(n,
     # Construct obsvar
     obsvar3D = np.zeros(shape=(nx_ref, n_x, n_x)) 
     for i in range(nx_ref):
-        obsvar3D[i, :, :] = np.diag(np.concatenate([bias_var, np.array([bias_ref_var[i]])])) #np.diag(np.repeat(synth_info.sigma2, n_x))  #np.diag(np.concatenate([bias_var, np.array([bias_ref_var[i]])]))
-    
+        #obsvar3D[i, :, :] = np.diag(np.concatenate([bias_var, np.array([bias_ref_var[i]])])) #np.diag(np.repeat(synth_info.sigma2, n_x))  #np.diag(np.concatenate([bias_var, np.array([bias_ref_var[i]])]))
+        obsvar3D[i, :, :] = np.diag(np.repeat(synth_info.sigma2, n_x))  #np.diag(np.concatenate([bias_var, np.array([bias_ref_var[i]])]))
     Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, mesh_grid, f_field_rep, obsvar3D)
     eivar_val = np.zeros(len(clist))
     for xt_id, x_c in enumerate(clist):

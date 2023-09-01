@@ -26,13 +26,16 @@ prior_t      = prior_dist(dist='uniform')(a=np.array([cls_data.thetalimits[2][0]
 priors = {'prior': prior_xt, 'priorx': prior_x, 'priort': prior_t}
 
 xt_test, ftest, ptest, thetamesh, xmesh = create_test_non(cls_data)
-
+cls_data_y = pritam()
+cls_data_y.realdata(x=xmesh, seed=s, isbias=bias)
+ytest = cls_data_y.real_data
 test_data = {'theta': xt_test, 
              'f': ftest,
              'p': ptest,
              'th': thetamesh,    
              'xmesh': xmesh,
-             'p_prior': 1} 
+             'p_prior': 1,
+             'y': ytest} 
 
 
 a = np.arange(100)/100

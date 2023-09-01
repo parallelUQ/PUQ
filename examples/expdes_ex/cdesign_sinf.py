@@ -11,7 +11,7 @@ import seaborn as sns
 
 
 
-seeds = 30
+seeds = 10
 ninit = 10
 nmax = 50
 result = []
@@ -20,7 +20,7 @@ for s in range(seeds):
 
     cls_data = sinfunc()
     dt = len(cls_data.true_theta)
-    cls_data.realdata(x=np.array([0, 0.25, 0.5, 0.75, 1])[:, None], seed=s)
+    cls_data.realdata(x=np.array([0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1])[:, None], seed=s)
     # Observe
     obsdata(cls_data)
         
@@ -98,7 +98,8 @@ for s in range(seeds):
                                  'prior': priors,
                                  'data_test': test_data,
                                  'max_evals': nmax,
-                                 'theta_torun': xt_LHS})
+                                 'theta_torun': xt_LHS,
+                                 'bias': False})
     xt_LHS = al_LHS._info['theta']
     f_LHS = al_LHS._info['f']
     thetamle_LHS = al_LHS._info['thetamle'][-1]
@@ -117,7 +118,8 @@ for s in range(seeds):
                                  'prior': priors,
                                  'data_test': test_data,
                                  'max_evals': nmax,
-                                 'theta_torun': xt_RND})
+                                 'theta_torun': xt_RND,
+                                 'bias': False})
     xt_RND = al_RND._info['theta']
     f_RND = al_RND._info['f']
     thetamle_RND = al_RND._info['thetamle'][-1]
@@ -136,7 +138,8 @@ for s in range(seeds):
                                  'prior': priors,
                                  'data_test': test_data,
                                  'max_evals': nmax,
-                                 'theta_torun': xt_UNIF})
+                                 'theta_torun': xt_UNIF,
+                                 'bias': False})
     xt_UNIF = al_UNIF._info['theta']
     f_UNIF = al_UNIF._info['f']
     thetamle_UNIF = al_UNIF._info['thetamle'][-1]
