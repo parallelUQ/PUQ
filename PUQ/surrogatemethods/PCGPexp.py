@@ -1243,8 +1243,7 @@ def postpredbias(fitinfo, x, theta, obs, obsvar, biasmean):
     cov1 = 0.5*obsvar3D + Smat3D
     cov2 = Smat3D + obsvar3D
     # cov2 = obsvar3D
-    print(predinfo['mean'].shape)
-    print(biasmean.shape)
+
     p1 = multiple_pdfs(obs, predinfo['mean'] + biasmean, cov1)
     postmean = multiple_pdfs(obs, predinfo['mean'] + biasmean, cov2)
    

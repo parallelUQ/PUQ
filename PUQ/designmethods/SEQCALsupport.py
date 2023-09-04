@@ -158,6 +158,12 @@ def obj_mle_bias(parameter, args):
     bias = (obs - emumean).T
 
     # Fit linear regression model
+    #emubias = emulator(x_emu, 
+    #                   x, 
+    #                   bias.T, 
+    #                   method='PCGPexp')
+    #diff = (bias.T - emubias.predict(x_emu, x).mean()).T
+
     model = LinearRegression()
     model.fit(x, bias)
     r_sq = model.score(x, bias)
@@ -173,7 +179,8 @@ def find_mle_bias(emu, x, x_emu, obs, obsvar, dx, dt, theta_limits):
     #llval = np.zeros(len(parameters))
     #for pid, p in enumerate(parameters):
     #    llval[pid] = obj_mle_bias(np.array([p]), args=([emu, x, x_emu, obs, obsvar]))
-
+    # plt.plot(llval)
+    #plt.show()
     #theta_mle = parameters[np.argmin(llval)]
     bnd = ()
     theta_init = []

@@ -12,9 +12,9 @@ import matplotlib.pyplot as plt
 
 args = parse_arguments()
     
-seeds = 10
+seeds = 30
 ninit = 10
-nmax = 70
+nmax = 100
 result = []
 
 for s in range(seeds):

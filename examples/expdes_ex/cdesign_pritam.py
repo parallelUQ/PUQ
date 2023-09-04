@@ -2,7 +2,7 @@ import numpy as np
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
-from plots_design import create_test_non, add_result, samplingdata
+from plots_design import create_test_non, add_result, samplingdata, plot_des_pri
 from smt.sampling_methods import LHS
 from ptest_funcs import pritam
 import pandas as pd
@@ -10,9 +10,9 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-seeds = 1
+seeds = 30
 ninit = 30
-nmax = 72
+nmax = 180
 result = []
 for s in range(seeds):
 
@@ -55,27 +55,13 @@ for s in range(seeds):
     
     xt_eivarx = al_ceivarx._info['theta']
     f_eivarx = al_ceivarx._info['f']
-    theta_mle = al_ceivarx._info['thetamle'][-1]
     
     save_output(al_ceivarx, cls_data.data_name, 'ceivarx', 2, 1, s)
     
     res = {'method': 'eivarx', 'repno': s, 'Prediction Error': al_ceivarx._info['TV'], 'Posterior Error': al_ceivarx._info['HD']}
     result.append(res)
     
-    xacq = xt_eivarx[ninit:nmax, 0:2]
-    tacq = xt_eivarx[ninit:nmax, 2]
-
-    plt.hist(tacq)
-    plt.axvline(x =cls_data.true_theta, color = 'r')
-    plt.xlabel(r'$\theta$')
-    plt.xlim(0, 1)
-    plt.show()
-    
-    unq, cnt = np.unique(xacq, return_counts=True, axis=0)
-    plt.scatter(unq[:, 0], unq[:, 1])
-    for label, x_count, y_count in zip(cnt, unq[:, 0], unq[:, 1]):
-        plt.annotate(label, xy=(x_count, y_count), xytext=(5, -5), textcoords='offset points')
-    plt.show()
+    # plot_des_pri(xt_eivarx, cls_data, ninit, nmax)
     # # # # # # # # # # # # # # # # # # # # # 
     al_ceivar = designer(data_cls=cls_data, 
                            method='SEQCOMPDES', 
@@ -90,28 +76,13 @@ for s in range(seeds):
     
     xt_eivar = al_ceivar._info['theta']
     f_eivar = al_ceivar._info['f']
-    thetamle_eivar = al_ceivar._info['thetamle'][-1]
-    
     
     save_output(al_ceivar, cls_data.data_name, 'ceivar', 2, 1, s)
 
     res = {'method': 'eivar', 'repno': s, 'Prediction Error': al_ceivar._info['TV'], 'Posterior Error': al_ceivar._info['HD']}
     result.append(res)
 
-    xacq = xt_eivar[ninit:nmax, 0:2]
-    tacq = xt_eivar[ninit:nmax, 2]
-
-    plt.hist(tacq)
-    plt.axvline(x =cls_data.true_theta, color = 'r')
-    plt.xlabel(r'$\theta$')
-    plt.xlim(0, 1)
-    plt.show()
-    
-    unq, cnt = np.unique(xacq, return_counts=True, axis=0)
-    plt.scatter(unq[:, 0], unq[:, 1])
-    for label, x_count, y_count in zip(cnt, unq[:, 0], unq[:, 1]):
-        plt.annotate(label, xy=(x_count, y_count), xytext=(5, -5), textcoords='offset points')
-    plt.show()
+    # plot_des_pri(xt_eivar, cls_data, ninit, nmax)
     # LHS 
     xt_LHS, f_LHS = samplingdata('LHS', nmax, cls_data, s, prior_xt, non=True)
     al_LHS = designer(data_cls=cls_data, 
@@ -127,7 +98,6 @@ for s in range(seeds):
                                  'bias': False})
     xt_LHS = al_LHS._info['theta']
     f_LHS = al_LHS._info['f']
-    thetamle_LHS = al_LHS._info['thetamle'][-1]
 
     save_output(al_LHS, cls_data.data_name, 'lhs', 2, 1, s)
     
@@ -149,7 +119,6 @@ for s in range(seeds):
                                  'bias': False})
     xt_RND = al_RND._info['theta']
     f_RND = al_RND._info['f']
-    thetamle_RND = al_RND._info['thetamle'][-1]
     
     save_output(al_RND, cls_data.data_name, 'rnd', 2, 1, s)
     
@@ -171,7 +140,6 @@ for s in range(seeds):
                                  'bias': False})
     xt_UNIF = al_UNIF._info['theta']
     f_UNIF = al_UNIF._info['f']
-    thetamle_UNIF = al_UNIF._info['thetamle'][-1]
     
     save_output(al_UNIF, cls_data.data_name, 'unif', 2, 1, s)
     

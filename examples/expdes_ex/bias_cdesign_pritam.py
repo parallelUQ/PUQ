@@ -9,7 +9,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-seeds = 2
+seeds = 1
 ninit = 30
 nmax = 72
 result = []

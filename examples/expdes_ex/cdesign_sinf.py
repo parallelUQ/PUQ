@@ -10,9 +10,9 @@ import matplotlib.pyplot as plt
 
 args = parse_arguments()
 
-seeds = 1
+seeds = 30
 ninit = 10
-nmax = 50
+nmax = 100
 result = []
 
 for s in range(seeds):
@@ -155,7 +155,7 @@ for s in range(seeds):
 
 
 
-show = False
+show = True
 if show:
     cols = ['blue', 'red', 'cyan', 'orange', 'purple']
     meths = ['eivarx', 'eivar', 'lhs', 'rnd', 'unif']

@@ -118,8 +118,7 @@ def ceivarxbias(n,
     y_ref = emu.predict(x=x_emu, theta=xt_ref).mean()
 
     # nx_ref x nf
-    # bias_mean = emubias.predict(x).T
-    bias_mean = emubias.predict(x_emu, x).mean()
+    bias_mean = emubias.predict(x)
     f_temp_rep  = np.repeat(obs-bias_mean, nx_ref, axis=0)
     # nx_ref x (nf + 1)
     f_field_rep = np.concatenate((f_temp_rep, (y_ref).T), axis=1)

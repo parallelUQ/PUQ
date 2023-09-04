@@ -105,6 +105,42 @@ def fit(fitinfo, data_cls, args):
 
     return
 
+def bias_predict(emu, theta_mle, x_emu, x, true_fevals):
+    typebias = 'lm'
+    nx = len(x)
+    # Bias prediction #
+    xp = np.concatenate((x, np.repeat(theta_mle, nx).reshape(nx, len(theta_mle))), axis=1)
+    emupred = emu.predict(x=x_emu, theta=xp)
+    mu_sim = emupred.mean()
+    var_sim = emupred.var()
+    bias = (true_fevals - mu_sim).T
+
+    if typebias == 'lm':
+        # Fit linear regression model
+        model = LinearRegression()
+        emubias = model.fit(x, bias)
+    else:
+        emubias = emulator(x_emu, 
+                           x, 
+                           bias.T, 
+                           method='PCGPexp')
+        
+    
+    class biaspred:
+        def __init__(self, typebias, emubias):
+            self.type = typebias
+            self.model = emubias
+
+        def predict(self, x):
+            if self.type == 'lm':
+                return self.model.predict(x).T
+            else:
+                return self.model.predict(x=x_emu, theta=x).mean()
+            
+    biasobj = biaspred(typebias, emubias)
+    return biasobj
+
+
 def collect_data(emu, emubias, x_emu, theta_mle, dt, xmesh, xtmesh, nmesh, ytest, ptest, x, obs, obsvar, synth_info):
     
     xtrue_test = np.concatenate((xmesh, np.repeat(theta_mle, nmesh).reshape(nmesh, dt)), axis=1)
@@ -112,11 +148,10 @@ def collect_data(emu, emubias, x_emu, theta_mle, dt, xmesh, xtmesh, nmesh, ytest
     predobj = emu.predict(x=x_emu, theta=xtrue_test)
     fmeanhat, fvarhat = predobj.mean(), predobj.var()
 
-    #bmeanhat = emubias.predict(xmesh).T
-    bmeanhat = emubias.predict(x_emu, xmesh).mean()
+    bmeanhat = emubias.predict(xmesh)
     pred_error = np.mean(np.abs(fmeanhat + bmeanhat - ytest))
-    #bmeanhat = emubias.predict(x).T
-    bmeanhat = emubias.predict(x_emu, x).mean()
+
+    bmeanhat = emubias.predict(x)
     pmeanhat, pvarhat = postpredbias(emu._info, x, xtmesh, obs, obsvar, bmeanhat)
     post_error = np.mean(np.abs(pmeanhat - ptest))
 
@@ -196,32 +231,14 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                method='PCGPexp')
 
                 theta_mle = find_mle_bias(emu, x, x_emu, true_fevals, obsvar, dx, dt, theta_limits)
-                mlelist.append(theta_mle)
-                print('mle:', theta_mle)
+                if (len(theta) % 10 == 0):
+                    print('mle:', theta_mle)
   
-                # Bias prediction #
-                xp = np.concatenate((x, np.repeat(theta_mle, len(x)).reshape(len(x), len(theta_mle))), axis=1)
-                emupred = emu.predict(x=x_emu, theta=xp)
-                mu_p = emupred.mean()
-                var_p = emupred.var()
-                biasval = (true_fevals - mu_p).T
-
-                # Fit linear regression model
-                model = LinearRegression()
-                emubias = model.fit(x, biasval)
+                # Bias prediction 
+                bias_pred = bias_predict(emu, theta_mle, x_emu, x, true_fevals)
                 
-                # # #
-                
-                emubiastry = emulator(x_emu, 
-                   x, 
-                   biasval.T, 
-                   method='PCGPexp')
-
-                #plt.plot(synth_info.bias(x[:, 0], x[:, 1]).flatten())
-                #plt.plot(emubiastry.predict(x=x_emu, theta=x).mean().flatten())
-                #plt.show()
-    
-                TV, HD = collect_data(emu, emubiastry, x_emu, theta_mle, dt, x_mesh, thetatest, nmesh, ytest, ptest, x, true_fevals, obsvar, synth_info)
+                # Data collect   
+                TV, HD = collect_data(emu, bias_pred, x_emu, theta_mle, dt, x_mesh, thetatest, nmesh, ytest, ptest, x, true_fevals, obsvar, synth_info)
    
                 # # #
                 prev_pending   = pending.copy()
@@ -258,7 +275,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                               x_mesh,
                                               th_mesh,
                                               priortest,
-                                              emubiastry,
+                                              bias_pred,
                                               synth_info,
                                               theta_mle)
 

@@ -10,7 +10,8 @@ from smt.sampling_methods import LHS
 from PUQ.posterior import posterior
 from PUQ.surrogate import emulator
 import scipy.stats as sps
-from PUQ.surrogatemethods.PCGPexp import  postpred
+from PUQ.surrogatemethods.PCGPexp import postpred, postpredbias
+from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 
 def fit(fitinfo, data_cls, args):
@@ -102,27 +103,60 @@ def fit(fitinfo, data_cls, args):
 
     return
 
-def collect_data(emu, emubias, x_emu, theta_mle, dt, xmesh, xtmesh, nmesh, ytest, ptest, x, obs, obsvar):
+def bias_predict(emu, theta_mle, x_emu, x, true_fevals):
+    typebias = 'lm'
+    nx = len(x)
+    # Bias prediction #
+    xp = np.concatenate((x, np.repeat(theta_mle, nx).reshape(nx, len(theta_mle))), axis=1)
+    emupred = emu.predict(x=x_emu, theta=xp)
+    mu_sim = emupred.mean()
+    var_sim = emupred.var()
+    bias = (true_fevals - mu_sim).T
+
+    if typebias == 'lm':
+        # Fit linear regression model
+        model = LinearRegression()
+        emubias = model.fit(x, bias)
+    else:
+        emubias = emulator(x_emu, 
+                           x, 
+                           bias.T, 
+                           method='PCGPexp')
+        
+    
+    class biaspred:
+        def __init__(self, typebias, emubias):
+            self.type = typebias
+            self.model = emubias
+
+        def predict(self, x):
+            if self.type == 'lm':
+                return self.model.predict(x).T
+            else:
+                return self.model.predict(x=x_emu, theta=x).mean()
+            
+    biasobj = biaspred(typebias, emubias)
+    return biasobj
+
+
+def collect_data(emu, emubias, x_emu, theta_mle, dt, xmesh, xtmesh, nmesh, ytest, ptest, x, obs, obsvar, synth_info):
     
     xtrue_test = np.concatenate((xmesh, np.repeat(theta_mle, nmesh).reshape(nmesh, dt)), axis=1)
-    
     predobj = emu.predict(x=x_emu, theta=xtrue_test)
-    ymeanhat, yvarhat = predobj.mean(), predobj.var()
-    
-    if emubias == None:
-        pred_error = np.mean(np.abs(ymeanhat - ytest))
-        pmeanhat, pvarhat = postpred(emu._info, x, xtmesh, obs, obsvar)
-    else:
-        predobj = emubias.predict(x=x_emu, theta=xmesh)
-        bmeanhat, bvarhat = predobj.mean(), predobj.var()
-        pred_error = np.mean(np.abs(ymeanhat + bmeanhat - ytest))
-        biasobj = emubias.predict(x=x_emu, theta=x)
-        bmeanhat, bvarhat = biasobj.mean(), biasobj.var()
-        pmeanhat, pvarhat = postpred(emu._info, x, xtmesh, obs - bmeanhat, obsvar)
-        #pmeanhat, pvarhat = postpred(emu._info, x, xtmesh, obs, obsvar)
+    fmeanhat, fvarhat = predobj.mean(), predobj.var()
 
-    post_error = np.mean(np.abs(pmeanhat - ptest))
-    
+    if emubias == None:
+        pred_error = np.mean(np.abs(fmeanhat - ytest))
+        pmeanhat, pvarhat = postpred(emu._info, x, xtmesh, obs, obsvar)
+        post_error = np.mean(np.abs(pmeanhat - ptest))
+    else:
+        bmeanhat = emubias.predict(xmesh)
+        pred_error = np.mean(np.abs(fmeanhat + bmeanhat - ytest))
+
+        bmeanhat = emubias.predict(x)
+        pmeanhat, pvarhat = postpredbias(emu._info, x, xtmesh, obs, obsvar, bmeanhat)
+        post_error = np.mean(np.abs(pmeanhat - ptest))
+
     return pred_error, post_error
                 
 def gen_f(H, persis_info, gen_specs, libE_info):
@@ -174,7 +208,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         dt = th_mesh.shape[1]
         nmesh = len(x_mesh)
         mlelist = []
-        emubias = None
+        bias_pred = None
         while tag not in [STOP_TAG, PERSIS_STOP]:
             if not first_iter:
                 # Update fevals from calc_in
@@ -202,23 +236,17 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
                 if isbias:
                     theta_mle = find_mle_bias(emu, x, x_emu, true_fevals, obsvar, dx, dt, theta_limits)
-                    # Bias prediction #
-                    xp = np.concatenate((x, np.repeat(theta_mle, len(x)).reshape(len(x), len(theta_mle))), axis=1)
-                    emupred = emu.predict(x=x_emu, theta=xp)
-                    mu_p    = emupred.mean()
-                    var_p   = emupred.var()
-                    bias    = (true_fevals.flatten() - mu_p.flatten()).reshape((len(x), 1))
-                    emubias = emulator(x_emu, 
-                                       x, 
-                                       bias.T, 
-                                       method='PCGPexp')
+                    bias_pred = bias_predict(emu, theta_mle, x_emu, x, true_fevals)
                 else:
                     theta_mle = find_mle(emu, x, x_emu, true_fevals, obsvar, dx, dt, theta_limits)
+                
                 mlelist.append(theta_mle)
-                print('mle:', theta_mle)
+                if (len(theta) % 10 == 0):
+                    print('mle:', theta_mle)
 
-                TV, HD = collect_data(emu, emubias, x_emu, theta_mle, dt, x_mesh, thetatest, nmesh, ytest, ptest, x, true_fevals, obsvar)
-   
+                # Data collect   
+                TV, HD = collect_data(emu, bias_pred, x_emu, theta_mle, dt, x_mesh, thetatest, nmesh, ytest, ptest, x, true_fevals, obsvar, synth_info)
+                                
                 prev_pending   = pending.copy()
                 update_model   = False
 

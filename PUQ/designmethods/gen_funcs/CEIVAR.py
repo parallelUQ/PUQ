@@ -71,10 +71,7 @@ def ceivarbias(n,
     n_x = x.shape[0]
     x_emu = np.arange(0, 1)[:, None ]
     
-    bias_mean = emubias.predict(x=x_emu, theta=x).mean()
-    #bias_mean = emubias.predict(x).T
-    #bias_var = emubias.predict(x=x_emu, theta=x).var().flatten()
-    
+    bias_mean = emubias.predict(x)
 
     xuniq = np.unique(x, axis=0)
     clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
