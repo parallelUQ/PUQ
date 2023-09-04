@@ -202,12 +202,6 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
                 if isbias:
                     theta_mle = find_mle_bias(emu, x, x_emu, true_fevals, obsvar, dx, dt, theta_limits)
-                else:
-                    theta_mle = find_mle(emu, x, x_emu, true_fevals, obsvar, dx, dt, theta_limits)
-                mlelist.append(theta_mle)
-                print('mle:', theta_mle)
-
-                if isbias:
                     # Bias prediction #
                     xp = np.concatenate((x, np.repeat(theta_mle, len(x)).reshape(len(x), len(theta_mle))), axis=1)
                     emupred = emu.predict(x=x_emu, theta=xp)
@@ -218,6 +212,11 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                        x, 
                                        bias.T, 
                                        method='PCGPexp')
+                else:
+                    theta_mle = find_mle(emu, x, x_emu, true_fevals, obsvar, dx, dt, theta_limits)
+                mlelist.append(theta_mle)
+                print('mle:', theta_mle)
+
                 TV, HD = collect_data(emu, emubias, x_emu, theta_mle, dt, x_mesh, thetatest, nmesh, ytest, ptest, x, true_fevals, obsvar)
    
                 prev_pending   = pending.copy()

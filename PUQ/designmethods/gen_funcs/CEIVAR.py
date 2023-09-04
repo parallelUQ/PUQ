@@ -72,7 +72,8 @@ def ceivarbias(n,
     x_emu = np.arange(0, 1)[:, None ]
     
     bias_mean = emubias.predict(x=x_emu, theta=x).mean()
-    bias_var = emubias.predict(x=x_emu, theta=x).var().flatten()
+    #bias_mean = emubias.predict(x).T
+    #bias_var = emubias.predict(x=x_emu, theta=x).var().flatten()
     
 
     xuniq = np.unique(x, axis=0)

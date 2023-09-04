@@ -111,20 +111,14 @@ def obj_mle(parameter, args):
     x_emu = args[2]
     obs = args[3]
     obsvar = args[4]
+    nx = len(x)
 
-
-    xp = np.concatenate((x, np.repeat(parameter, len(x)).reshape(len(x), len(parameter))), axis=1)
-
+    xp = np.concatenate((x, np.repeat(parameter, nx).reshape(nx, len(parameter))), axis=1)
     emupred = emu.predict(x=x_emu, theta=xp)
-    mu_p    = emupred.mean()
-    var_p   = emupred.var()
-    covx   = emupred.covx()
-    diff    = (obs.flatten() - mu_p.flatten()).reshape((len(x), 1))
+    mu_p = emupred.mean()
+    diff = (obs.flatten() - mu_p.flatten()).reshape((nx, 1))
     ll = diff.T@diff
-    #mat = obsvar + covx 
-    #obsvarinv = np.linalg.inv(mat)
-    #det = np.linalg.det(mat)
-    #ll = 0.5*np.log(det) +0.5*(diff.T@obsvarinv@diff)
+
     return ll.flatten()
 
 def find_mle(emu, x, x_emu, obs, obsvar, dx, dt, theta_limits):
@@ -145,54 +139,8 @@ def find_mle(emu, x, x_emu, obs, obsvar, dx, dt, theta_limits):
     theta_mle = theta_mle.reshape(1, dt)
     return theta_mle
 
+
 def obj_mle_bias(parameter, args):
-    emu = args[0]
-    x = args[1]
-    x_emu = args[2]
-    obs = args[3]
-    obsvar = args[4]
-    
-    xp = np.concatenate((x, np.repeat(parameter, len(x)).reshape(len(x), len(parameter))), axis=1)
-
-    emupred = emu.predict(x=x_emu, theta=xp)
-    mu_p    = emupred.mean()
-    var_p   = emupred.var()
-    covx = emupred.covx()
-    
-    bias    = (obs.flatten() - mu_p.flatten()).reshape((len(x), 1))
-
-    emubias = emulator(x_emu, 
-                       x, 
-                       bias.T, 
-                       method='PCGPexp')
-
-    bias_pred = emubias.predict(x=x_emu, theta=x)
-    bmean, bvar, bcov = bias_pred.mean(), bias_pred.var(), bias_pred.covx()
-
-
-    cov = covx + bcov +  1e-8 * np.eye(bmean.shape[1])
-    ll = 0.5 * np.log( np.linalg.det(cov)) + \
-           0.5 * bmean.dot(np.linalg.inv(cov).dot(bmean.T)) 
-           
-
-    #var_estimated = np.diag(bvar.flatten()) + np.diag(var_p.flatten())
-    #var_estimated = covx + obsvar #np.diag(bvar.flatten())
-
-    #obsvarinv = np.linalg.inv(var_estimated)
-
-    #det = np.linalg.det(var_estimated)
-
-    #ll = -(1/np.sqrt(det))*np.exp(-0.5*(bmean@obsvarinv@bmean.T))
-
-    #ll = 0.5*np.log(det) +0.5*((bmean+50)@obsvarinv@(bmean+50).T)
-    #ll = (bmean@obsvarinv@bmean.T)
-    #bmean = bmean*(np.sqrt(var_p + bvar))
-    #print(np.round(bmean, 3))
-    #ll = (bmean@var_estimated@bmean.T)
-    #obj     = 0.5*(bias.T@bias)
-    return ll.flatten()#obj.flatten()
-
-def objmle(parameter, args):
     
     emu = args[0]
     x = args[1]
@@ -221,26 +169,26 @@ def objmle(parameter, args):
 
 def find_mle_bias(emu, x, x_emu, obs, obsvar, dx, dt, theta_limits):
     
-    parameters = np.arange(0, 1, 0.01)
-    llval = np.zeros(len(parameters))
-    for pid, p in enumerate(parameters):
-        llval[pid] = objmle(np.array([p]), args=([emu, x, x_emu, obs, obsvar]))
+    #parameters = np.arange(0, 1, 0.01)
+    #llval = np.zeros(len(parameters))
+    #for pid, p in enumerate(parameters):
+    #    llval[pid] = obj_mle_bias(np.array([p]), args=([emu, x, x_emu, obs, obsvar]))
 
-    theta_mle = parameters[np.argmin(llval)]
-    #bnd = ()
-    #theta_init = []
-    #for i in range(dx, dx + dt):
-    #    bnd += ((theta_limits[i][0], theta_limits[i][1]),)
-   #     theta_init.append((theta_limits[i][0] + theta_limits[i][1])/2)
+    #theta_mle = parameters[np.argmin(llval)]
+    bnd = ()
+    theta_init = []
+    for i in range(dx, dx + dt):
+        bnd += ((theta_limits[i][0], theta_limits[i][1]),)
+        theta_init.append((theta_limits[i][0] + theta_limits[i][1])/2)
 
 
-    #opval = spo.minimize(objmle,
-   #                      theta_init,
-   #                      method='L-BFGS-B',
-   #                      options={'gtol': 0.01},
-   #                      bounds=bnd,
-   #                      args=([emu, x, x_emu, obs, obsvar]))                
+    opval = spo.minimize(obj_mle_bias,
+                         theta_init,
+                         method='L-BFGS-B',
+                         options={'gtol': 0.01},
+                         bounds=bnd,
+                         args=([emu, x, x_emu, obs, obsvar]))                
 
-    #theta_mle = opval.x
+    theta_mle = opval.x
     theta_mle = theta_mle.reshape(1, dt)
     return theta_mle

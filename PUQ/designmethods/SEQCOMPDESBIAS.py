@@ -12,8 +12,9 @@ from smt.sampling_methods import LHS
 from PUQ.posterior import posterior
 from PUQ.surrogate import emulator
 import scipy.stats as sps
-from PUQ.surrogatemethods.PCGPexp import  postpred
+from PUQ.surrogatemethods.PCGPexp import  postpredbias
 import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
 
 def fit(fitinfo, data_cls, args):
 
@@ -104,25 +105,21 @@ def fit(fitinfo, data_cls, args):
 
     return
 
-def collect_data(emu, emubias, x_emu, theta_mle, dt, xmesh, xtmesh, nmesh, ytest, ptest, x, obs, obsvar):
+def collect_data(emu, emubias, x_emu, theta_mle, dt, xmesh, xtmesh, nmesh, ytest, ptest, x, obs, obsvar, synth_info):
     
     xtrue_test = np.concatenate((xmesh, np.repeat(theta_mle, nmesh).reshape(nmesh, dt)), axis=1)
     
     predobj = emu.predict(x=x_emu, theta=xtrue_test)
     fmeanhat, fvarhat = predobj.mean(), predobj.var()
-    
-    predobj = emubias.predict(x=x_emu, theta=xmesh)
-    bmeanhat, bvarhat = predobj.mean(), predobj.var()
 
+    #bmeanhat = emubias.predict(xmesh).T
+    bmeanhat = emubias.predict(x_emu, xmesh).mean()
     pred_error = np.mean(np.abs(fmeanhat + bmeanhat - ytest))
-    
-    biasobj = emubias.predict(x=x_emu, theta=x)
-    bmeanhat, bvarhat = biasobj.mean(), biasobj.var()
-    
-    pmeanhat, pvarhat = postpred(emu._info, x, xtmesh, obs - bmeanhat, obsvar)
-    
+    #bmeanhat = emubias.predict(x).T
+    bmeanhat = emubias.predict(x_emu, x).mean()
+    pmeanhat, pvarhat = postpredbias(emu._info, x, xtmesh, obs, obsvar, bmeanhat)
     post_error = np.mean(np.abs(pmeanhat - ptest))
-    
+
     return pred_error, post_error
                 
 def gen_f(H, persis_info, gen_specs, libE_info):
@@ -205,15 +202,26 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 # Bias prediction #
                 xp = np.concatenate((x, np.repeat(theta_mle, len(x)).reshape(len(x), len(theta_mle))), axis=1)
                 emupred = emu.predict(x=x_emu, theta=xp)
-                mu_p    = emupred.mean()
-                var_p   = emupred.var()
-                bias    = (true_fevals.flatten() - mu_p.flatten()).reshape((len(x), 1))
-                emubias = emulator(x_emu, 
-                                   x, 
-                                   bias.T, 
-                                   method='PCGPexp')
+                mu_p = emupred.mean()
+                var_p = emupred.var()
+                biasval = (true_fevals - mu_p).T
 
-                TV, HD = collect_data(emu, emubias, x_emu, theta_mle, dt, x_mesh, thetatest, nmesh, ytest, ptest, x, true_fevals, obsvar)
+                # Fit linear regression model
+                model = LinearRegression()
+                emubias = model.fit(x, biasval)
+                
+                # # #
+                
+                emubiastry = emulator(x_emu, 
+                   x, 
+                   biasval.T, 
+                   method='PCGPexp')
+
+                #plt.plot(synth_info.bias(x[:, 0], x[:, 1]).flatten())
+                #plt.plot(emubiastry.predict(x=x_emu, theta=x).mean().flatten())
+                #plt.show()
+    
+                TV, HD = collect_data(emu, emubiastry, x_emu, theta_mle, dt, x_mesh, thetatest, nmesh, ytest, ptest, x, true_fevals, obsvar, synth_info)
    
                 # # #
                 prev_pending   = pending.copy()
@@ -250,7 +258,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                               x_mesh,
                                               th_mesh,
                                               priortest,
-                                              emubias,
+                                              emubiastry,
                                               synth_info,
                                               theta_mle)
 

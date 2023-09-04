@@ -7,11 +7,9 @@ Created on Thu Jul 13 14:18:15 2023
 """
 import matplotlib.pyplot as plt
 import numpy as np
-from PUQ.surrogate import emulator
 import scipy.stats as sps
 from PUQ.surrogatemethods.PCGPexp import  postpred
 from smt.sampling_methods import LHS
-import scipy.optimize as spo
 
 def plot_EIVAR(xt, cls_data, ninit, xlim1=0, xlim2=1):
     
@@ -49,6 +47,22 @@ def plot_des(des, xt, n0, cls_data):
     plt.ylabel(r'$\theta$')
     plt.show()
     
+def plot_des_pri(xt, cls_data, ninit, nmax):
+    xacq = xt[ninit:nmax, 0:2]
+    tacq = xt[ninit:nmax, 2]
+
+    plt.hist(tacq)
+    plt.axvline(x =cls_data.true_theta, color = 'r')
+    plt.xlabel(r'$\theta$')
+    plt.xlim(0, 1)
+    plt.show()
+    
+    unq, cnt = np.unique(xacq, return_counts=True, axis=0)
+    plt.scatter(unq[:, 0], unq[:, 1])
+    for label, x_count, y_count in zip(cnt, unq[:, 0], unq[:, 1]):
+        plt.annotate(label, xy=(x_count, y_count), xytext=(5, -5), textcoords='offset points')
+    plt.show()
+    
 def plot_LHS(xt, cls_data):
     plt.scatter(cls_data.x, np.repeat(cls_data.true_theta, len(cls_data.x)), marker='o', color='black')
     plt.scatter(xt[:, 0], xt[:, 1], marker='*', color='blue')
@@ -77,6 +91,13 @@ def obsdata(cls_data):
             fvec[t_id, x_id] = cls_data.function(x, t)
         plt.plot(x_vec, fvec[t_id, :], label=r'$\theta=$' + str(t), color=colors[t_id]) 
 
+    fvec   = np.zeros(len(x_vec))
+    for x_id, x in enumerate(x_vec):
+        fvec[x_id] = cls_data.function(x, cls_data.true_theta) 
+        
+    fvec += cls_data.bias(x_vec).flatten()
+    plt.plot(x_vec, fvec)
+        
     for d_id, d in enumerate(cls_data.des):
         for r in range(d['rep']):
             plt.scatter(d['x'], d['feval'][r], color='black')
@@ -108,8 +129,8 @@ def create_test(cls_data, isbias=False):
             rnd      = sps.multivariate_normal(mean=mean, cov=cls_data.obsvar)
             ptest[i] = rnd.pdf(cls_data.real_data)
          
-        plt.plot(thetamesh, ptest)
-        plt.show()
+        # plt.plot(thetamesh, ptest)
+        # plt.show()
     
         
     
@@ -146,8 +167,8 @@ def create_test_non(cls_data, is_bias=False):
             rnd = sps.multivariate_normal(mean=ftest[j, :], cov=cls_data.obsvar)
             ptest[j] = rnd.pdf(cls_data.real_data)
         
-    plt.plot(thetamesh, ptest)
-    plt.show()
+    #plt.plot(thetamesh, ptest)
+    #plt.show()
     
     x1 = np.linspace(cls_data.thetalimits[0][0], cls_data.thetalimits[0][1], 20)
     x2 = np.linspace(cls_data.thetalimits[1][0], cls_data.thetalimits[1][1], 20)
@@ -186,92 +207,6 @@ def create_test_goh(cls_data):
     
     return xt_test, ftest, ptest, thetamesh, thetamesh
 
-def fitemu(xt, f, xt_test, xtrue_test, thetamesh, cls_data):
-    x_emu      = np.arange(0, 1)[:, None ]
-    emu = emulator(x_emu, 
-                   xt, 
-                   f, 
-                   method='PCGPexp')
-    predobj = emu.predict(x=x_emu, theta=xtrue_test)
-    ymeanhat, yvarhat = predobj.mean(), predobj.var()
-    pmeanhat, pvarhat = postpred(emu._info, cls_data.x, xt_test, cls_data.real_data, cls_data.obsvar)
-
-    return pmeanhat, pvarhat, ymeanhat, yvarhat 
-
-def fitemubias(xt, f, xt_test, xtrue_test, thetamesh, cls_data, theta_mle):
-    x_emu      = np.arange(0, 1)[:, None ]
-    emu = emulator(x_emu, 
-                   xt, 
-                   f, 
-                   method='PCGPexp')
-    predobj = emu.predict(x=x_emu, theta=xtrue_test)
-    fmeanhat, fvarhat = predobj.mean(), predobj.var()
-    x = cls_data.x
-    obs = cls_data.real_data
-    xp = np.concatenate((x, np.repeat(theta_mle, len(x)).reshape(len(x), len(theta_mle))), axis=1)
-    mu_p = emu.predict(x=x_emu, theta=xp).mean()
-    bias = (obs.flatten() - mu_p.flatten()).reshape((len(x), 1))
-    
-
-    emubias = emulator(x_emu, 
-                       x, 
-                       bias.T, 
-                       method='PCGPexp')
-    predobjbias = emubias.predict(x=x_emu, theta=xtrue_test[:, 0][:, None])
-    biasmeanhat, biasvarhat = predobjbias.mean(), predobjbias.var()
-    ymeanhat = fmeanhat + biasmeanhat
-    yvarhat = fvarhat + biasvarhat
-    pmeanhat, pvarhat = postpred(emu._info, cls_data.x, xt_test, cls_data.real_data, cls_data.obsvar)
-
-    return pmeanhat, pvarhat, ymeanhat, yvarhat 
-
-def obj_mle(parameter, args):
-    emu = args[0]
-    x = args[1]
-    x_emu = args[2]
-    obs = args[3]
-    xp = np.concatenate((x, np.repeat(parameter, len(x)).reshape(len(x), len(parameter))), axis=1)
-
-    emupred = emu.predict(x=x_emu, theta=xp)
-    mu_p    = emupred.mean()
-    var_p   = emupred.var()
-    bias    = (obs.flatten() - mu_p.flatten()).reshape((len(x), 1))
-    
-    #emubias = emulator(x_emu, 
-    #                   x, 
-    #                   bias.T, 
-    #                   method='PCGPexp')
-
-    
-    obj     = 0.5*(bias.T@bias)
-    return obj.flatten()
-
-def find_mle(xt, f, cls_data):
-    
-    x, obs, dx, dt, theta_limits = cls_data.x, cls_data.real_data, cls_data.dx, len(cls_data.true_theta), cls_data.thetalimits
-    
-    x_emu = np.arange(0, 1)[:, None ]
-    emu = emulator(x_emu, 
-                   xt, 
-                   f, 
-                   method='PCGPexp')
-    
-    bnd = ()
-    theta_init = []
-    for i in range(dx, dx + dt):
-        bnd += ((theta_limits[i][0], theta_limits[i][1]),)
-        theta_init.append((theta_limits[i][0] + theta_limits[i][1])/2)
- 
-    opval = spo.minimize(obj_mle,
-                         theta_init,
-                         method='L-BFGS-B',
-                         options={'gtol': 0.01},
-                         bounds=bnd,
-                         args=([emu, x, x_emu, obs]))                
-
-    theta_mle = opval.x
-    theta_mle = theta_mle.reshape(1, dt)
-    return theta_mle
 
 def gather_data(xt, cls_data):
     f    = np.zeros(len(xt))
@@ -314,41 +249,6 @@ def add_result(method_name, phat, ptest, yhat, ytest, s):
     rep['repno'] = s
     return rep
 
-def sampling(typesampling, nmax, cls_data, seed, prior_xt, xt_test, xtrue_test, thetamesh, non=False, goh=False, isbias=False):
-
-    if typesampling == 'LHS':
-        sampling = LHS(xlimits=cls_data.thetalimits, random_state=seed)
-        xt = sampling(nmax)
-    elif typesampling == 'Random':
-        xt = prior_xt.rnd(nmax, seed=seed)
-    elif typesampling == 'Uniform':
-        xuniq = np.unique(cls_data.x, axis=0)
-        nf = len(xuniq)
-        dt = thetamesh.shape[1]
-        if dt == 1:
-            t_unif = sps.uniform.rvs(0, 1, size=int(nmax/nf))[:, None]
-        else:
-            sampling = LHS(xlimits=cls_data.thetalimits[0:2], random_state=seed)
-            t_unif   = sampling(int(nmax/nf))
-        mesh_grid = [np.concatenate([xuniq, np.repeat(th, nf).reshape((nf, dt))], axis=1) for th in t_unif]
-        xt = np.array([m for mesh in mesh_grid for m in mesh])
-
- 
-    if non:
-        fevals = gather_data_non(xt, cls_data)
-    elif goh:
-        fevals = gather_data_goh(xt, cls_data)
-    else:
-        plot_LHS(xt, cls_data)
-        fevals = gather_data(xt, cls_data)
-    
-    if isbias:
-        theta_mle = np.array([[xtrue_test[0, 1]]])
-        phat, pvar, yhat, yvar = fitemubias(xt, fevals[:, None], xt_test, xtrue_test, thetamesh, cls_data, theta_mle) 
-    else:
-        phat, pvar, yhat, yvar = fitemu(xt, fevals[:, None], xt_test, xtrue_test, thetamesh, cls_data) 
-    
-    return phat, pvar, yhat, yvar
 
 def samplingdata(typesampling, nmax, cls_data, seed, prior_xt, non=False, goh=False):
 
@@ -375,7 +275,7 @@ def samplingdata(typesampling, nmax, cls_data, seed, prior_xt, non=False, goh=Fa
     elif goh:
         fevals = gather_data_goh(xt, cls_data)
     else:
-        plot_LHS(xt, cls_data)
+        # plot_LHS(xt, cls_data)
         fevals = gather_data(xt, cls_data)
 
     return xt, fevals

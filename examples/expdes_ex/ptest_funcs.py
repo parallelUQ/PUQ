@@ -175,7 +175,7 @@ class sinfunc:
         
 class pritam:
     def __init__(self):
-        self.data_name   = 'nonlin'
+        self.data_name   = 'pritam'
         self.thetalimits = np.array([[0, 1], [0, 1], [0, 1]])
         self.true_theta  = np.array([0.5]) 
         self.out         = [('f', float)]

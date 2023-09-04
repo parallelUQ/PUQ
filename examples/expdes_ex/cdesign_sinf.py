@@ -1,17 +1,16 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import scipy.stats as sps
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
-from plots_design import plot_EIVAR, plot_post, obsdata, fitemu, create_test, gather_data, add_result, sampling, plot_des, find_mle, samplingdata
+from plots_design import plot_EIVAR, obsdata, create_test, add_result, samplingdata
 from ptest_funcs import sinfunc
 import pandas as pd
 import seaborn as sns
+import matplotlib.pyplot as plt
 
+args = parse_arguments()
 
-
-seeds = 10
+seeds = 1
 ninit = 10
 nmax = 50
 result = []
@@ -20,12 +19,10 @@ for s in range(seeds):
 
     cls_data = sinfunc()
     dt = len(cls_data.true_theta)
-    cls_data.realdata(x=np.array([0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1])[:, None], seed=s)
+    cls_data.realdata(x=np.array([0.1, 0.1, 0.3, 0.3, 0.5, 0.5, 0.7, 0.7, 0.9, 0.9])[:, None], seed=s)
     # Observe
-    obsdata(cls_data)
-        
-    args         = parse_arguments()
-    
+    # obsdata(cls_data)
+            
     prior_xt     = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], b=cls_data.thetalimits[:, 1]) 
     prior_x      = prior_dist(dist='uniform')(a=np.array([cls_data.thetalimits[0][0]]), b=np.array([cls_data.thetalimits[0][1]])) 
     prior_t      = prior_dist(dist='uniform')(a=np.array([cls_data.thetalimits[1][0]]), b=np.array([cls_data.thetalimits[1][1]]))
@@ -62,7 +59,9 @@ for s in range(seeds):
     f_eivarx = al_ceivarx._info['f']
     thetamle_eivarx = al_ceivarx._info['thetamle'][-1]
     
-    plot_EIVAR(xt_eivarx, cls_data, ninit, xlim1=0, xlim2=1)
+    save_output(al_ceivarx, cls_data.data_name, 'ceivarx', 2, 1, s)
+
+    # plot_EIVAR(xt_eivarx, cls_data, ninit, xlim1=0, xlim2=1)
 
     res = {'method': 'eivarx', 'repno': s, 'Prediction Error': al_ceivarx._info['TV'], 'Posterior Error': al_ceivarx._info['HD']}
     result.append(res)
@@ -82,7 +81,8 @@ for s in range(seeds):
     f_eivar = al_ceivar._info['f']
     thetamle_eivar = al_ceivar._info['thetamle'][-1]
 
-    plot_EIVAR(xt_eivar, cls_data, ninit, xlim1=0, xlim2=1)
+    save_output(al_ceivar, cls_data.data_name, 'ceivar', 2, 1, s)
+    # plot_EIVAR(xt_eivar, cls_data, ninit, xlim1=0, xlim2=1)
 
     res = {'method': 'eivar', 'repno': s, 'Prediction Error': al_ceivar._info['TV'], 'Posterior Error': al_ceivar._info['HD']}
     result.append(res)
@@ -104,6 +104,8 @@ for s in range(seeds):
     f_LHS = al_LHS._info['f']
     thetamle_LHS = al_LHS._info['thetamle'][-1]
 
+    save_output(al_LHS, cls_data.data_name, 'lhs', 2, 1, s)
+    
     res = {'method': 'lhs', 'repno': s, 'Prediction Error': al_LHS._info['TV'], 'Posterior Error': al_LHS._info['HD']}
     result.append(res)
     
@@ -123,6 +125,8 @@ for s in range(seeds):
     xt_RND = al_RND._info['theta']
     f_RND = al_RND._info['f']
     thetamle_RND = al_RND._info['thetamle'][-1]
+    
+    save_output(al_RND, cls_data.data_name, 'rnd', 2, 1, s)
     
     res = {'method': 'rnd', 'repno': s, 'Prediction Error': al_RND._info['TV'], 'Posterior Error': al_RND._info['HD']}
     result.append(res)
@@ -144,31 +148,36 @@ for s in range(seeds):
     f_UNIF = al_UNIF._info['f']
     thetamle_UNIF = al_UNIF._info['thetamle'][-1]
     
+    save_output(al_UNIF, cls_data.data_name, 'unif', 2, 1, s)
+    
     res = {'method': 'unif', 'repno': s, 'Prediction Error': al_UNIF._info['TV'], 'Posterior Error': al_UNIF._info['HD']}
     result.append(res)
 
-cols = ['blue', 'red', 'cyan', 'orange', 'purple']
-meths = ['eivarx', 'eivar', 'lhs', 'rnd', 'unif']
-for mid, m in enumerate(meths):   
-    p = np.array([r['Prediction Error'][ninit:nmax] for r in result if r['method'] == m])
-    meanerror = np.mean(p, axis=0)
-    sderror = np.std(p, axis=0)
-    plt.plot(meanerror, label=m, c=cols[mid])
-    plt.fill_between(np.arange(0, nmax-ninit), meanerror-1.96*sderror/np.sqrt(seeds), meanerror+1.96*sderror/np.sqrt(seeds), color=cols[mid], alpha=0.1)
-plt.legend(bbox_to_anchor=(1.04, -0.1), ncol=len(meths))  
-plt.ylabel('Prediction Error')
-plt.yscale('log')
-plt.show()
 
 
+show = False
+if show:
+    cols = ['blue', 'red', 'cyan', 'orange', 'purple']
+    meths = ['eivarx', 'eivar', 'lhs', 'rnd', 'unif']
+    for mid, m in enumerate(meths):   
+        p = np.array([r['Prediction Error'][ninit:nmax] for r in result if r['method'] == m])
+        meanerror = np.mean(p, axis=0)
+        sderror = np.std(p, axis=0)
+        plt.plot(meanerror, label=m, c=cols[mid])
+        plt.fill_between(np.arange(0, nmax-ninit), meanerror-1.96*sderror/np.sqrt(seeds), meanerror+1.96*sderror/np.sqrt(seeds), color=cols[mid], alpha=0.1)
+    plt.legend(bbox_to_anchor=(1.04, -0.1), ncol=len(meths))  
+    plt.ylabel('Prediction Error')
+    plt.yscale('log')
+    plt.show()
     
-for mid, m in enumerate(meths):   
-    p = np.array([r['Posterior Error'][ninit:nmax] for r in result if r['method'] == m])
-    meanerror = np.mean(p, axis=0)
-    sderror = np.std(p, axis=0)
-    plt.plot(np.mean(p, axis=0), label=m, c=cols[mid])
-    plt.fill_between(np.arange(0, nmax-ninit), meanerror-1.96*sderror/np.sqrt(seeds), meanerror+1.96*sderror/np.sqrt(seeds), color=cols[mid], alpha=0.1)
-plt.legend(bbox_to_anchor=(1.04, -0.1), ncol=len(meths))  
-plt.ylabel('Posterior Error')
-plt.yscale('log')
-plt.show()
+        
+    for mid, m in enumerate(meths):   
+        p = np.array([r['Posterior Error'][ninit:nmax] for r in result if r['method'] == m])
+        meanerror = np.mean(p, axis=0)
+        sderror = np.std(p, axis=0)
+        plt.plot(meanerror, label=m, c=cols[mid])
+        plt.fill_between(np.arange(0, nmax-ninit), meanerror-1.96*sderror/np.sqrt(seeds), meanerror+1.96*sderror/np.sqrt(seeds), color=cols[mid], alpha=0.1)
+    plt.legend(bbox_to_anchor=(1.04, -0.1), ncol=len(meths))  
+    plt.ylabel('Posterior Error')
+    plt.yscale('log')
+    plt.show()

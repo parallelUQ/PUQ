@@ -1,14 +1,13 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import scipy.stats as sps
 from PUQ.design import designer
 from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
-from plots_design import plot_EIVAR, plot_post, plot_LHS, obsdata, fitemu, create_test_non, gather_data_non, add_result, sampling
+from plots_design import create_test_non, add_result
 from smt.sampling_methods import LHS
 from ptest_funcs import pritam
 import pandas as pd
 import seaborn as sns
+import matplotlib.pyplot as plt
 
 bias = True
 x = np.linspace(0, 1, 2)
@@ -50,7 +49,7 @@ plt.contour(X, Y, Z1 + Z2)
 plt.show()
 
 
-seeds = 10
+seeds = 1
 ninit = 30
 nmax = 60
 result = []
