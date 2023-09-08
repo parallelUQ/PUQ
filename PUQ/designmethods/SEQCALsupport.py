@@ -20,6 +20,14 @@ def rebuild_condition(complete, prev_complete, n_theta=2, n_initial=10):
         nflag = True
     return nflag
 
+def rebuild_condition_opt(complete, prev_complete, n_theta=2):  
+
+    if (np.sum(complete) - np.sum(prev_complete) < n_theta):
+        nflag = False
+    else:
+        nflag = True
+    return nflag
+
 def create_arrays(n_x, n_thetas):
     """Create 2D (point * rows) arrays fevals, pending and complete"""
 
@@ -95,9 +103,13 @@ def load_H(H, thetas, mse, hd, ae, time, generated_no, offset=0, set_priorities=
 def fit_emulator(x, theta, fevals, thetalimits):
     
     idnan = np.isnan(fevals).any(axis=0).flatten()
+
     fevals_c = fevals[:, ~idnan]
     theta_c = theta[~idnan, :]
-
+    
+    print('total param:', theta.shape[0])
+    print('total emu:', theta_c.shape[0])
+    
     emu = emulator(x, 
                    theta_c, 
                    fevals_c, 

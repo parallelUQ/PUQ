@@ -7,13 +7,13 @@ from PUQ.performanceutils.utils import find_threshold, plot_workers, plot_acc, p
 
 repno = 2
 varlist = [ 1]
-acclevel = 0.1
-n = 2560
+acclevel = 0.2
+n = 2048
 workers  = [16, 32, 64, 128, 256, 512]
 batches  = [4, 8, 16]
 simmeans = [2, 4, 16]
 accparams = [[-1, 0.2], [-1, 0.21], [-1, 0.22]]
-genparams = [[0.1, 0.1]]
+genparams = [[0.2, 0.2]]
               
 result = []
 

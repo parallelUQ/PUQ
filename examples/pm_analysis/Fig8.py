@@ -8,7 +8,7 @@ from PUQ.performanceutils.utils import find_threshold, plot_workers, plot_acc, p
 repno = 10
 varlist = [1]
 acclevel = 0.2
-n = 2560
+n = 2048
 worker = 256
 n0 = worker
 batches = [1, 2, 4, 8, 16, 32, 64, 128, 256]

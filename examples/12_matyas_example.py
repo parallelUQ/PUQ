@@ -36,10 +36,19 @@ test_data = {'theta': thetatest,
 prior_func = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], b=cls_data.thetalimits[:, 1])
  # # # # # # # # # # # # # # # # # # # # # 
 init_seeds = 1
-final_seeds = 10
+final_seeds = 2
+n_init = 10
 for s in np.arange(init_seeds, final_seeds):
+    
+    thetainit  = prior_func.rnd(n_init, s) 
+    finit = np.zeros(n_init)
+    for tid, t in enumerate(thetainit):
+        finit[tid] = cls_data.function(t[0], t[1])
+    test_data['thetainit'] = thetainit
+    test_data['finit'] = finit[None, :]
+    
     al_data = designer(data_cls=cls_data, 
-                          method='SEQCAL', 
+                          method='SEQCALOPT', 
                           args={'mini_batch': args.minibatch, 
                                 'n_init_thetas': 10,
                                 'nworkers': args.nworkers,
@@ -50,8 +59,7 @@ for s in np.arange(init_seeds, final_seeds):
                                 'max_evals': 20,
                                 'candsize': args.candsize, 
                                 'refsize': args.refsize,
-                                'believer': args.believer,
-                                'type_init': 'LHS'})
+                                'believer': args.believer})
     
     save_output(al_data, cls_data.data_name, args.al_func, args.nworkers, args.minibatch, int(s))
     
@@ -66,27 +74,28 @@ for s in np.arange(init_seeds, final_seeds):
         
         sns.pairplot(pd.DataFrame(theta_al))
         plt.show()
-        plt.scatter(np.arange(len(TV[10:])), TV[10:])
+        plt.scatter(np.arange(len(TV)), TV)
         plt.yscale('log')
         plt.ylabel('MAD')
         plt.show()
         
-        plt.scatter(np.arange(len(AE[10:])), AE[10:])
+        plt.scatter(np.arange(len(AE)), AE)
         plt.yscale('log')
         plt.ylabel('AE')
         plt.show()
         
-        plt.scatter(np.arange(len(time[11:])), time[11:])
+        plt.scatter(np.arange(len(time[1:])), time[1:])
         plt.yscale('log')
         plt.ylabel('Time')
         plt.show()
         
         fig, ax = plt.subplots()    
         cp = ax.contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap='RdGy')
-        ax.scatter(theta_al[10:, 0], theta_al[10:, 1], c='black', marker='+', zorder=2)
-        ax.scatter(theta_al[0:10, 0], theta_al[0:10, 1], zorder=2, marker='o', facecolors='none', edgecolors='blue')
+        ax.scatter(theta_al[:, 0], theta_al[:, 1], c='black', marker='+', zorder=2)
+        ax.scatter(thetainit[:, 0], thetainit[:, 1], zorder=2, marker='o', facecolors='none', edgecolors='blue')
         ax.set_xlabel(r'$\theta_1$', fontsize=16)
         ax.set_ylabel(r'$\theta_2$', fontsize=16)
         ax.tick_params(axis='both', labelsize=16)
         plt.show()
+        
         

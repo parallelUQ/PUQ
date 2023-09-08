@@ -3,7 +3,7 @@ from threading import Event
 
 def artificial_time(persis_info, sim_specs):
     rand_stream = persis_info['rand_stream']
-    run_time = rand_stream.normal(1, 1, 1)
+    run_time = rand_stream.normal(2, 1, 1)
     if run_time[0] < 0.5:
         r = 0.5
     else:
@@ -265,7 +265,7 @@ class sphere:
 class matyas:
     def __init__(self):
 
-        self.data_name   = 'unimodal2'
+        self.data_name   = 'matyas'
         self.thetalimits = np.array([[-10, 10], [-10, 10]])
         self.obsvar      = np.array([[10]], dtype='float64') 
         self.real_data   = np.array([[0]], dtype='float64') 
