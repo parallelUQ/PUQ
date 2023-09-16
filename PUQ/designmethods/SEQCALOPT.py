@@ -212,10 +212,11 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 
                 # Obtain the accuracy on the test set
                 if test_data is not None:
-                    TV, HD, AE = collect_data(emu, x, fevals, real_x, thetatest, priortest, posttest, true_fevals, obsvar3d)
+                    TV, HD, AE = collect_data(emu, x, fcomb, real_x, thetatest, priortest, posttest, true_fevals, obsvar3d)
 
             if first_iter:
                 emuinit = fit_emulator(x, thetainit, finit, theta_limits)
+                TV, HD, AE = collect_data(emuinit, x, finit, real_x, thetatest, priortest, posttest, true_fevals, obsvar3d)
                 n_init = n_workers - 1
                 theta = acquisition_f(n_init, 
                                       x,

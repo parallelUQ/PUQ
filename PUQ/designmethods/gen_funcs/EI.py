@@ -86,7 +86,7 @@ def ei(n,
             theta_acq.append(ctheta)
             clist = np.delete(clist, idc, 0)
             
-            # Kriging believer strategy
+            # Constant-liar strategy
             fevalsnew = liar.reshape(1,1)
             emu.update(theta=ctheta, f=fevalsnew) 
         
