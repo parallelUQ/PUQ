@@ -3,9 +3,9 @@ from threading import Event
 
 def artificial_time(persis_info, sim_specs):
     rand_stream = persis_info['rand_stream']
-    run_time = rand_stream.normal(2, 1, 1)
-    if run_time[0] < 0.5:
-        r = 0.5
+    run_time = rand_stream.normal(0.1, 0.1, 1)
+    if run_time[0] < 0.01:
+        r = 0.01
     else:
         r = run_time[0]
     Event().wait(r)
@@ -125,7 +125,8 @@ class himmelblau:
     def __init__(self):
 
         self.data_name   = 'himmelblau'
-        self.thetalimits = np.array([[-5, 5], [-5, 5]])
+        self.thetalimits = np.array([[0, 1], [0, 1]])
+        self.truelimits = np.array([[-5, 5], [-5, 5]])
         self.obsvar      = np.array([[1]], dtype='float64') 
         self.real_data   = np.array([[1]], dtype='float64') 
         self.out     = [('f', float)]
@@ -135,6 +136,9 @@ class himmelblau:
         self.real_x      = np.arange(0, self.d)[:, None]
 
     def function(self, theta1, theta2):
+        
+        theta1 = self.truelimits[0][0] + theta1*(self.truelimits[0][1] - self.truelimits[0][0])
+        theta2 = self.truelimits[1][0] + theta2*(self.truelimits[1][1] - self.truelimits[1][0])
         f = (theta1**2 + theta2 - 11)**2 + (theta1 + theta2**2 -7)**2
         return f
     
@@ -153,7 +157,8 @@ class holder:
     def __init__(self):
 
         self.data_name   = 'holder'
-        self.thetalimits = np.array([[-10, 10], [-10, 10]])
+        self.thetalimits = np.array([[0, 1], [0, 1]]) 
+        self.truelimits = np.array([[-10, 10], [-10, 10]])
         self.obsvar      = np.array([[50]], dtype='float64') 
         self.real_data   = np.array([[-19.208502567767606]], dtype='float64') 
         self.out     = [('f', float)]
@@ -163,6 +168,9 @@ class holder:
         self.real_x      = np.arange(0, self.d)[:, None]
 
     def function(self, theta1, theta2):
+        
+        theta1 = self.truelimits[0][0] + theta1*(self.truelimits[0][1] - self.truelimits[0][0])
+        theta2 = self.truelimits[1][0] + theta2*(self.truelimits[1][1] - self.truelimits[1][0])
         f = -np.abs(np.sin(theta1) * np.cos(theta2) * np.exp(np.abs(1 - (np.sqrt(theta1**2 + theta2**2)/np.pi))))
         return f
     
@@ -181,7 +189,8 @@ class ackley:
     def __init__(self):
 
         self.data_name   = 'ackley'
-        self.thetalimits = np.array([[-5, 5], [-5, 5]])
+        self.thetalimits = np.array([[0, 1], [0, 1]])
+        self.truelimits = np.array([[-5, 5], [-5, 5]])
         self.obsvar      = np.array([[10]], dtype='float64') 
         self.real_data   = np.array([[0]], dtype='float64') 
         self.out     = [('f', float)]
@@ -191,6 +200,9 @@ class ackley:
         self.real_x      = np.arange(0, self.d)[:, None]
 
     def function(self, theta1, theta2):
+        
+        theta1 = self.truelimits[0][0] + theta1*(self.truelimits[0][1] - self.truelimits[0][0])
+        theta2 = self.truelimits[1][0] + theta2*(self.truelimits[1][1] - self.truelimits[1][0])
         f = -20.0 * np.exp(-0.2 * np.sqrt(0.5 * (theta1**2 + theta2**2))) - np.exp(0.5 * (np.cos(2 * np.pi * theta1) + np.cos(2 * np.pi * theta2))) + np.e + 20
  
         return f
@@ -210,7 +222,8 @@ class easom:
     def __init__(self):
 
         self.data_name   = 'easom'
-        self.thetalimits = np.array([[-10, 10], [-10, 10]])
+        self.thetalimits = np.array([[0, 1], [0, 1]])
+        self.truelimits = np.array([[-10, 10], [-10, 10]])
         self.obsvar      = np.array([[10]], dtype='float64') 
         self.real_data   = np.array([[-1]], dtype='float64') 
         self.out     = [('f', float)]
@@ -220,6 +233,9 @@ class easom:
         self.real_x      = np.arange(0, self.d)[:, None]
 
     def function(self, theta1, theta2):
+        
+        theta1 = self.truelimits[0][0] + theta1*(self.truelimits[0][1] - self.truelimits[0][0])
+        theta2 = self.truelimits[1][0] + theta2*(self.truelimits[1][1] - self.truelimits[1][0])
         f = -np.cos(theta1) * np.cos(theta2) * np.exp(-((theta1 - np.pi)**2 + (theta2 - np.pi)**2))
         return f
     
@@ -238,7 +254,8 @@ class sphere:
     def __init__(self):
 
         self.data_name   = 'sphere'
-        self.thetalimits = np.array([[-5, 5], [-5, 5]])
+        self.thetalimits = np.array([[0, 1], [0, 1]])
+        self.truelimits = np.array([[-5, 5], [-5, 5]])
         self.obsvar      = np.array([[10]], dtype='float64') 
         self.real_data   = np.array([[0]], dtype='float64') 
         self.out     = [('f', float)]
@@ -248,6 +265,8 @@ class sphere:
         self.real_x      = np.arange(0, self.d)[:, None]
 
     def function(self, theta1, theta2):
+        theta1 = self.truelimits[0][0] + theta1*(self.truelimits[0][1] - self.truelimits[0][0])
+        theta2 = self.truelimits[1][0] + theta2*(self.truelimits[1][1] - self.truelimits[1][0])
         f = theta1**2 + theta2**2
         return f
     
@@ -266,7 +285,8 @@ class matyas:
     def __init__(self):
 
         self.data_name   = 'matyas'
-        self.thetalimits = np.array([[-10, 10], [-10, 10]])
+        self.thetalimits = np.array([[0, 1], [0, 1]])
+        self.truelimits = np.array([[-10, 10], [-10, 10]])
         self.obsvar      = np.array([[10]], dtype='float64') 
         self.real_data   = np.array([[0]], dtype='float64') 
         self.out     = [('f', float)]
@@ -276,6 +296,8 @@ class matyas:
         self.real_x      = np.arange(0, self.d)[:, None]
 
     def function(self, theta1, theta2):
+        theta1 = self.truelimits[0][0] + theta1*(self.truelimits[0][1] - self.truelimits[0][0])
+        theta2 = self.truelimits[1][0] + theta2*(self.truelimits[1][1] - self.truelimits[1][0])
         f = 0.26 * (theta1**2 + theta2**2) - 0.48 * theta1 * theta2
         return f
     
