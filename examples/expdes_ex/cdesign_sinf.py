@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 args = parse_arguments()
 
-seeds = 30
+seeds = 1
 ninit = 10
 nmax = 100
 result = []
