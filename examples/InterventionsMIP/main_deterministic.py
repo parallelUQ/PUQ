@@ -87,12 +87,10 @@ def runfunction(x, param, truelims, point=True):
     else:
         policy_ub = None
 
-    #lims = #[[1, 5], [0.1, 5], [1, 7], [1, 7]]
-    #print(param)
+
     for th_id, th in enumerate(param):
         param[th_id] = truelims[th_id][0] + th*(truelims[th_id][1] - truelims[th_id][0])
         
-    #print([(1/param[0]), (param[1]), (1/param[2]), (1/param[3])])
     res = run_det(instance=instance,
             tiers=tiers,
             obj_func=multi_tier_objective,

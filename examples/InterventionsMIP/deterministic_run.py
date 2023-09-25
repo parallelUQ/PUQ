@@ -1,7 +1,5 @@
-import pickle
 import numpy as np
 import pandas as pd
-import multiprocessing as mp
 import datetime as dt
 from collections import defaultdict
 import multiprocessing as mp
@@ -21,11 +19,6 @@ from instances import load_instance, load_tiers, load_seeds
 from policies import MultiTierPolicy as MTP
 from itertools import product
 import warnings
-from scipy.optimize import least_squares
-from scipy.optimize._lsq.least_squares import IMPLEMENTED_LOSSES
-from scipy.optimize._lsq.common import EPS, make_strictly_feasible
-from scipy.optimize import minimize
-from scipy.optimize import LinearConstraint
 import math 
 def deterministic_path(instance, 
                        tiers, 
@@ -123,7 +116,7 @@ def residual_error(x_beta, **kwargs):
     n_replicas_test = 1
     
     # Create the pool (Note: pool needs to be created only once to run on a cluster)
-    mp_pool = mp.Pool(n_proc) if n_proc > 1 else None
+    mp_pool = None
     
     # check if the "do-nothing" / 'Stage 1 option is in the tiers. If not, add it
     originInt = {
@@ -183,12 +176,7 @@ def residual_error(x_beta, **kwargs):
                                     policy_field='IYIH',
                                     policy_ub=policy_ub)
 
- 
-        
-    #print(instance.epi.sigma_E)
-    #print(instance.epi.omega_IA)
-    #print(instance.epi.gamma_IY)
-    #print(instance.epi.gamma_IA)
+
     if instance.city == 'austin':
         hosp_benchmark = None
         real_hosp = [a_i - b_i for a_i, b_i in zip(instance.cal.real_hosp, real_icu)] 

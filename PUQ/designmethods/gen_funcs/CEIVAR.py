@@ -33,8 +33,7 @@ def ceivar(n,
     
     xuniq = np.unique(x, axis=0)
     clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
-    
-    print(clist)
+
     thetatest = np.array([np.concatenate([xc, th]) for th in thetamesh for xc in x])
     
     Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, thetatest, obs, obsvar)

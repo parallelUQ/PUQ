@@ -12,7 +12,6 @@ from PUQ.surrogate import emulator
 import scipy.stats as sps
 from PUQ.surrogatemethods.PCGPexp import postpred, postpredbias
 from sklearn.linear_model import LinearRegression
-import matplotlib.pyplot as plt
 
 def fit(fitinfo, data_cls, args):
 

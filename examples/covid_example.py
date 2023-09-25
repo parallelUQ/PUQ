@@ -4,10 +4,8 @@ from PUQ.prior import prior_dist
 import matplotlib.pyplot as plt
 from smt.sampling_methods import LHS
 import scipy.stats as sps
-import seaborn as sns
-import pandas as pd
 from PUQ.design import designer
-
+from PUQ.designmethods.utils import save_output
     
 class covid19:
     def __init__(self):
@@ -128,7 +126,7 @@ test_data = {'theta': xt_test,
              'p_prior': 1} 
 # # # # # # # # # # # # # # # # # # # # # 
 ninit = 50
-nmax = 200
+nmax = 51
 result = []
 seeds = 1
 for s in range(seeds):
@@ -147,6 +145,7 @@ for s in range(seeds):
     res = {'method': 'eivar', 'repno': s, 'Prediction Error': al_ceivar._info['TV'], 'Posterior Error': al_ceivar._info['HD']}
     result.append(res)
 
+    save_output(al_ceivar, cls_data.data_name, 'ceivar', 2, 1, s)
 
     al_ceivarx = designer(data_cls=cls_data, 
                            method='SEQCOMPDES', 
@@ -166,6 +165,7 @@ for s in range(seeds):
     res = {'method': 'eivarx', 'repno': s, 'Prediction Error': al_ceivarx._info['TV'], 'Posterior Error': al_ceivarx._info['HD']}
     result.append(res)
     
+    save_output(al_ceivarx, cls_data.data_name, 'ceivarx', 2, 1, s)
     
     # LHS 
     sampling = LHS(xlimits=cls_data.thetalimits, random_state=s)
@@ -188,8 +188,10 @@ for s in range(seeds):
     res = {'method': 'lhs', 'repno': s, 'Prediction Error': al_LHS._info['TV'], 'Posterior Error': al_LHS._info['HD']}
     result.append(res)
     
+    save_output(al_LHS, cls_data.data_name, 'lhs', 2, 1, s)
+    
     # rnd 
-    xt_RND = prior_xt.rnd(nmax, seed=s) #samplingdata('Random', nmax, cls_data, s, prior_xt)
+    xt_RND = prior_xt.rnd(nmax, seed=s) 
     al_RND = designer(data_cls=cls_data, 
                            method='SEQGIVEN', 
                            args={'mini_batch': 1, 
@@ -207,6 +209,8 @@ for s in range(seeds):
     
     res = {'method': 'rnd', 'repno': s, 'Prediction Error': al_RND._info['TV'], 'Posterior Error': al_RND._info['HD']}
     result.append(res)
+    
+    save_output(al_RND, cls_data.data_name, 'rnd', 2, 1, s)
     
 show = True
 if show:

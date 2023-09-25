@@ -191,11 +191,6 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                                method='PCGPexp')
 
                 theta_mle = find_mle(emu, x, x_emu, true_fevals, obsvar, dx, dt, theta_limits)
-                #theta_mle[0][0] = synth_info.true_theta[0]
-                #theta_mle[0][1] = synth_info.true_theta[1]
-                #theta_mle[0][2] = synth_info.true_theta[2]
-                #theta_mle[0][3] = synth_info.true_theta[3] 
-                
                 mlelist.append(theta_mle)
                 
                 if (len(theta) % 10 == 0):

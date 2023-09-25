@@ -34,7 +34,7 @@ def ceivarx(n,
     #clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t )
 
     clist = construct_candlist_covid(thetalimits, x_ref, prior_func, prior_func_t )
-    print(clist.shape)
+
     nx_ref = x_ref.shape[0]
     dx = x_ref.shape[1]
     nt_ref = theta_ref.shape[0]
@@ -154,7 +154,6 @@ def construct_candlist_covid(thetalimits, xref, prior_func, prior_func_t ):
 
     n0 = 50
     xref_sample = np.random.choice(a=221, size=50)[:, None]/221
-    print(xref_sample[0:10])
     n_clist = n0*len(xref_sample)
     t_unif = prior_func_t.rnd(n0, None)
     clist = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xref_sample])
