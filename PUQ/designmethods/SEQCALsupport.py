@@ -105,6 +105,15 @@ def fit_emulator(x, theta, fevals, thetalimits):
 
     return emu
 
+def fit_emulator1d(x_emu, theta, fevals):
+    
+    emu = emulator(x_emu, 
+                   theta, 
+                   fevals, 
+                   method='PCGPexp')
+
+    return emu
+
 def obj_mle(parameter, args):
     emu = args[0]
     x = args[1]

@@ -1,6 +1,6 @@
 import numpy as np
 from PUQ.designmethods.gen_funcs.acquisition_funcs_support import multiple_pdfs
-from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition, find_mle, find_mle_bias
+from PUQ.designmethods.SEQCALsupport import fit_emulator1d, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition, find_mle, find_mle_bias
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
 from libensemble.alloc_funcs.start_only_persistent import only_persistent_gens as alloc_f
@@ -8,7 +8,6 @@ from libensemble.libE import libE
 from libensemble.tools import parse_args, save_libE_output, add_unique_random_streams
 from smt.sampling_methods import LHS
 from PUQ.posterior import posterior
-from PUQ.surrogate import emulator
 import scipy.stats as sps
 from PUQ.surrogatemethods.PCGPexp import postpred, postpredbias
 from sklearn.linear_model import LinearRegression
@@ -228,10 +227,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
             if update_model:
                 
-                emu = emulator(x_emu, 
-                               theta, 
-                               fevals, 
-                               method='PCGPexp')
+                emu = fit_emulator1d(x_emu, theta, fevals)
 
                 if isbias:
                     theta_mle = find_mle_bias(emu, x, x_emu, true_fevals, obsvar, dx, dt, theta_limits)
