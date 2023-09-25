@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 args = parse_arguments()
     
-seeds = 30
+seeds = 1
 ninit = 10
 nmax = 100
 result = []
@@ -49,7 +49,7 @@ for s in range(seeds):
                  'p_prior': 1} 
     # # # # # # # # # # # # # # # # # # # # # 
     al_ceivarx = designer(data_cls=cls_data, 
-                           method='SEQCOMPDESBIAS', 
+                           method='SEQDESBIAS', 
                            args={'mini_batch': 1, 
                                  'n_init_thetas': ninit,
                                  'nworkers': 2, 
@@ -65,13 +65,13 @@ for s in range(seeds):
     
     save_output(al_ceivarx, cls_data.data_name, 'ceivarx', 2, 1, s)
     
-    # plot_EIVAR(xt_eivarx, cls_data, ninit, xlim1=0, xlim2=1)
+    plot_EIVAR(xt_eivarx, cls_data, ninit, xlim1=0, xlim2=1)
 
     res = {'method': 'eivarx', 'repno': s, 'Prediction Error': al_ceivarx._info['TV'], 'Posterior Error': al_ceivarx._info['HD']}
     result.append(res)
     # # # # # # # # # # # # # # # # # # # # # 
     al_ceivar = designer(data_cls=cls_data, 
-                           method='SEQCOMPDESBIAS', 
+                           method='SEQDESBIAS', 
                            args={'mini_batch': 1, 
                                  'n_init_thetas': ninit,
                                  'nworkers': 2, 
@@ -85,13 +85,13 @@ for s in range(seeds):
     xt_eivar = al_ceivar._info['theta']
     f_eivar = al_ceivar._info['f']
 
-    # plot_EIVAR(xt_eivar, cls_data, ninit, xlim1=0, xlim2=1)
+    plot_EIVAR(xt_eivar, cls_data, ninit, xlim1=0, xlim2=1)
 
     save_output(al_ceivar, cls_data.data_name, 'ceivar', 2, 1, s)
     
     res = {'method': 'eivar', 'repno': s, 'Prediction Error': al_ceivar._info['TV'], 'Posterior Error': al_ceivar._info['HD']}
     result.append(res)
-    
+ 
     # LHS 
     xt_LHS, f_LHS = samplingdata('LHS', nmax, cls_data, s, prior_xt)
     al_LHS = designer(data_cls=cls_data, 

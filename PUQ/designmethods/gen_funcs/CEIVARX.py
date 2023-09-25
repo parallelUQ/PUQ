@@ -31,8 +31,10 @@ def ceivarx(n,
     xuniq = np.unique(x, axis=0)
 
     # Create a candidate list
-    clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t )
+    #clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t )
 
+    clist = construct_candlist_covid(thetalimits, x_ref, prior_func, prior_func_t )
+    print(clist.shape)
     nx_ref = x_ref.shape[0]
     dx = x_ref.shape[1]
     nt_ref = theta_ref.shape[0]
@@ -134,8 +136,9 @@ def ceivarxbias(n,
     # Construct obsvar
     obsvar3D = np.zeros(shape=(nx_ref, n_x, n_x)) 
     for i in range(nx_ref):
-        #obsvar3D[i, :, :] = np.diag(np.concatenate([bias_var, np.array([bias_ref_var[i]])])) #np.diag(np.repeat(synth_info.sigma2, n_x))  #np.diag(np.concatenate([bias_var, np.array([bias_ref_var[i]])]))
-        obsvar3D[i, :, :] = np.diag(np.repeat(synth_info.sigma2, n_x)) 
+        xnew = np.concatenate((x, x_ref[i].reshape(1, dx)), axis=0)
+        bias_var = emubias.predictcov(xnew) 
+        obsvar3D[i, :, :] = bias_var#np.diag(np.repeat(synth_info.sigma2, n_x)) 
     Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, mesh_grid, f_field_rep, obsvar3D)
     eivar_val = np.zeros(len(clist))
     for xt_id, x_c in enumerate(clist):
@@ -147,6 +150,17 @@ def ceivarxbias(n,
     xnew  = clist[maxid].reshape(1, dx + dt)
     return xnew 
 
+def construct_candlist_covid(thetalimits, xref, prior_func, prior_func_t ):
+
+    n0 = 50
+    xref_sample = np.random.choice(a=221, size=50)[:, None]/221
+    print(xref_sample[0:10])
+    n_clist = n0*len(xref_sample)
+    t_unif = prior_func_t.rnd(n0, None)
+    clist = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xref_sample])
+    return clist
+ 
+        
 def construct_candlist(thetalimits, xuniq, prior_func, prior_func_t ):
     type_init = 'CMB'
     # Create a candidate list
@@ -158,7 +172,7 @@ def construct_candlist(thetalimits, xuniq, prior_func, prior_func_t ):
         n_clist = 500
         clist = prior_func.rnd(n_clist, None)
     elif type_init == 'CMB':
-        n0 = 50
+        n0 = 100
         n_clist  = n0*len(xuniq)
         t_unif = prior_func_t.rnd(n0, None)
         clist1 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
@@ -253,18 +267,20 @@ def ceivarxfig(n,
         for j in range(nmesh):
             xt_cand = np.array([X[i, j], Y[i, j]]).reshape(1, dx + dt)
             Z[i, j] = postphimat(emu._info, n_x, mesh_grid, f_field_rep, obsvar3D, xt_cand, Smat3D, rVh_1_3d, pred_mean) 
-    plt.contourf(X, Y, Z, cmap='Purples')
+    plt.contourf(X, Y, Z, cmap='Purples', alpha=0.5)
     plt.hlines(synth_info.true_theta, 0, 1, linestyles='dotted', colors='green')
     for xitem in x:
-        plt.vlines(xitem, 0, 1, linestyles='dotted', colors='orange')
+        plt.vlines(xitem, 0, 1, linestyles='dotted', colors='orange', zorder=1)
     ids = np.where(Z==Z.max())
     xnew = np.array([X[ids[0].flatten(), ids[1].flatten()], Y[ids[0].flatten(), ids[1].flatten()]]).reshape(1, dx + dt)
-    plt.scatter(xnew[0,0], xnew[0,1], marker='x', c='red')
-    plt.scatter(theta[0:10, 0], theta[0:10, 1], marker='o', c='blue')
-    plt.scatter(theta[10:, 0], theta[10:, 1], marker='+', c='black')
+    plt.scatter(xnew[0,0], xnew[0,1], marker='x', c='black', s=60, zorder=2)
+    plt.scatter(theta[0:10, 0], theta[0:10, 1], marker='*', c='blue', s=50)
+    plt.scatter(theta[10:, 0], theta[10:, 1], marker='+', c='red', s=50)
 
-    plt.xlabel('x')
-    plt.ylabel(r'$\theta$')
+    plt.xlabel(r'$x$', fontsize=20)
+    plt.ylabel(r'$\theta$', fontsize=20)
+    plt.xticks(fontsize=15)
+    plt.yticks(fontsize=15)
     plt.show()
     
 

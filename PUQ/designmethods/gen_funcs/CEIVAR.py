@@ -33,7 +33,8 @@ def ceivar(n,
     
     xuniq = np.unique(x, axis=0)
     clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
-
+    
+    print(clist)
     thetatest = np.array([np.concatenate([xc, th]) for th in thetamesh for xc in x])
     
     Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, thetatest, obs, obsvar)
@@ -72,20 +73,20 @@ def ceivarbias(n,
     x_emu = np.arange(0, 1)[:, None ]
     
     bias_mean = emubias.predict(x)
+    bias_var = emubias.predictcov(x)
+    #print(bias_var)
 
     xuniq = np.unique(x, axis=0)
     clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
 
     thetatest = np.array([np.concatenate([xc, th]) for th in thetamesh for xc in x])
     
-    #Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, thetatest, obs, np.diag(bias_var))
-    Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, thetatest, obs, obsvar)
+    Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, thetatest, obs, bias_var)
     eivar_val = np.zeros(len(clist))
     
 
     for xt_id, xt_c in enumerate(clist):
-        #eivar_val[xt_id] = postphimat(emu._info, n_x, thetatest, obs, np.diag(bias_var), xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
-        eivar_val[xt_id] = postphimat(emu._info, n_x, thetatest, obs-bias_mean, obsvar, xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
+        eivar_val[xt_id] = postphimat(emu._info, n_x, thetatest, obs-bias_mean, bias_var, xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
     th_cand = clist[np.argmax(eivar_val), :].reshape(1, p)
 
     return th_cand 
@@ -101,14 +102,14 @@ def construct_candlist( thetalimits, xuniq, prior_func, prior_func_t ):
         n_clist = 500
         clist = prior_func.rnd(n_clist, None)
     elif type_init == 'CMB':
-        n0 = 50
+        n0 = 100
         n_clist  = n0*len(xuniq)
         t_unif = prior_func_t.rnd(n0, None)
-        clist1 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
-        clist2 = prior_func.rnd(n_clist, None)
+        clist = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
+        #clist2 = prior_func.rnd(n_clist, None)
         
-        clist = np.concatenate((clist1, clist2), axis=0)
-        n_clist += n_clist
+        #clist = np.concatenate((clist1, clist2), axis=0)
+        #n_clist += n_clist
     else:
         n0 = 50
         n_clist  = n0*len(xuniq)

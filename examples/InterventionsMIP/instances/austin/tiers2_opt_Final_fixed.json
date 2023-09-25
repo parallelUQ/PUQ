@@ -1,0 +1,38 @@
+{
+"type": "constant",
+"tiers": [
+    {
+        "name": "Stage 3",
+        "transmission_reduction": 0.602637,
+        "cocooning": 0.743577,
+        "school_closure": 0,
+        "min_enforcing_time": 14,
+        "daily_cost": 10,
+        "color": "yellow",
+        "candidate_thresholds": [
+            10,
+            20,
+            30
+        ]
+    },
+    {
+        "name": "Stage 5",
+        "transmission_reduction": 0.781558,
+        "cocooning": 0.781558,
+        "school_closure": 1,
+        "min_enforcing_time": 14,
+        "daily_cost": 10000,
+        "color": "red",
+        "candidate_thresholds": [
+            50,
+            60,
+            70,
+            80,
+            90,
+            100,
+            110,
+            120
+        ]
+    }
+    ]
+}
