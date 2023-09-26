@@ -1,11 +1,9 @@
 import numpy as np
 from PUQ.design import designer
-from PUQ.designmethods.utils import parse_arguments, save_output
+from PUQ.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
 from plots_design import plot_EIVAR, obsdata, create_test, add_result, samplingdata
 from ptest_funcs import sinfunc
-import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
 
 args = parse_arguments()
@@ -45,7 +43,7 @@ for s in range(seeds):
                  'p_prior': 1} 
     # # # # # # # # # # # # # # # # # # # # # 
     al_ceivarx = designer(data_cls=cls_data, 
-                           method='SEQCOMPDES', 
+                           method='SEQDES', 
                            args={'mini_batch': 1, 
                                  'n_init_thetas': ninit,
                                  'nworkers': 2, 
@@ -53,7 +51,8 @@ for s in range(seeds):
                                  'seed_n0': s,
                                  'prior': priors,
                                  'data_test': test_data,
-                                 'max_evals': nmax})
+                                 'max_evals': nmax,
+                                 'theta_torun': None})
     
     xt_eivarx = al_ceivarx._info['theta']
     f_eivarx = al_ceivarx._info['f']
@@ -67,7 +66,7 @@ for s in range(seeds):
     result.append(res)
     # # # # # # # # # # # # # # # # # # # # # 
     al_ceivar = designer(data_cls=cls_data, 
-                           method='SEQCOMPDES', 
+                           method='SEQDES', 
                            args={'mini_batch': 1, 
                                  'n_init_thetas': ninit,
                                  'nworkers': 2, 
@@ -75,7 +74,8 @@ for s in range(seeds):
                                  'seed_n0': s,
                                  'prior': priors,
                                  'data_test': test_data,
-                                 'max_evals': nmax})
+                                 'max_evals': nmax,
+                                 'theta_torun': None})
     
     xt_eivar = al_ceivar._info['theta']
     f_eivar = al_ceivar._info['f']
@@ -88,18 +88,18 @@ for s in range(seeds):
     result.append(res)
     
     # LHS 
-    xt_LHS, f_LHS = samplingdata('LHS', nmax, cls_data, s, prior_xt)
+    xt_LHS, f_LHS = samplingdata('LHS', nmax-ninit, cls_data, s, prior_xt)
     al_LHS = designer(data_cls=cls_data, 
-                           method='SEQGIVEN', 
+                           method='SEQDES', 
                            args={'mini_batch': 1, 
                                  'n_init_thetas': ninit,
                                  'nworkers': 2, 
+                                 'AL': None,
                                  'seed_n0': s,
                                  'prior': priors,
                                  'data_test': test_data,
                                  'max_evals': nmax,
-                                 'theta_torun': xt_LHS,
-                                 'bias': False})
+                                 'theta_torun': xt_LHS})
     xt_LHS = al_LHS._info['theta']
     f_LHS = al_LHS._info['f']
     thetamle_LHS = al_LHS._info['thetamle'][-1]
@@ -110,18 +110,18 @@ for s in range(seeds):
     result.append(res)
     
     # rnd 
-    xt_RND, f_RND = samplingdata('Random', nmax, cls_data, s, prior_xt)
+    xt_RND, f_RND = samplingdata('Random', nmax-ninit, cls_data, s, prior_xt)
     al_RND = designer(data_cls=cls_data, 
-                           method='SEQGIVEN', 
+                           method='SEQDES', 
                            args={'mini_batch': 1, 
                                  'n_init_thetas': ninit,
                                  'nworkers': 2, 
+                                 'AL': None,
                                  'seed_n0': s,
                                  'prior': priors,
                                  'data_test': test_data,
                                  'max_evals': nmax,
-                                 'theta_torun': xt_RND,
-                                 'bias': False})
+                                 'theta_torun': xt_RND})
     xt_RND = al_RND._info['theta']
     f_RND = al_RND._info['f']
     thetamle_RND = al_RND._info['thetamle'][-1]
@@ -130,35 +130,13 @@ for s in range(seeds):
     
     res = {'method': 'rnd', 'repno': s, 'Prediction Error': al_RND._info['TV'], 'Posterior Error': al_RND._info['HD']}
     result.append(res)
-    
-    # Unif
-    xt_UNIF, f_UNIF = samplingdata('Uniform', nmax, cls_data, s, prior_xt)
-    al_UNIF = designer(data_cls=cls_data, 
-                           method='SEQGIVEN', 
-                           args={'mini_batch': 1, 
-                                 'n_init_thetas': ninit,
-                                 'nworkers': 2, 
-                                 'seed_n0': s,
-                                 'prior': priors,
-                                 'data_test': test_data,
-                                 'max_evals': nmax,
-                                 'theta_torun': xt_UNIF,
-                                 'bias': False})
-    xt_UNIF = al_UNIF._info['theta']
-    f_UNIF = al_UNIF._info['f']
-    thetamle_UNIF = al_UNIF._info['thetamle'][-1]
-    
-    save_output(al_UNIF, cls_data.data_name, 'unif', 2, 1, s)
-    
-    res = {'method': 'unif', 'repno': s, 'Prediction Error': al_UNIF._info['TV'], 'Posterior Error': al_UNIF._info['HD']}
-    result.append(res)
 
 
 
 show = True
 if show:
-    cols = ['blue', 'red', 'cyan', 'orange', 'purple']
-    meths = ['eivarx', 'eivar', 'lhs', 'rnd', 'unif']
+    cols = ['blue', 'red', 'cyan', 'orange']
+    meths = ['eivarx', 'eivar', 'lhs', 'rnd']
     for mid, m in enumerate(meths):   
         p = np.array([r['Prediction Error'][ninit:nmax] for r in result if r['method'] == m])
         meanerror = np.mean(p, axis=0)

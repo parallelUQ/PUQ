@@ -1,11 +1,9 @@
 import numpy as np
-from PUQ.surrogatemethods.PCGPexp import temp_postphimat, postphimat, postpred, postphimat2, postphimat3
+from PUQ.surrogatemethods.PCGPexp import temp_postphimat, postphimat
 from smt.sampling_methods import LHS
-import matplotlib.pyplot as plt
 from numpy.random import rand
 import scipy.stats as sps
-from PUQ.surrogatemethods.PCGPexp import  postpred
-   
+
 def ceivar(n, 
           x, 
           real_x,
@@ -62,7 +60,8 @@ def ceivarbias(n,
           posttest=None,
           emubias=None,
           synth_info=None,
-          theta_mle=None):
+          theta_mle=None,
+          unknowncov=None):
     
 
     p = theta.shape[1]
@@ -72,8 +71,12 @@ def ceivarbias(n,
     x_emu = np.arange(0, 1)[:, None ]
     
     bias_mean = emubias.predict(x)
-    bias_var = emubias.predictcov(x)
-    #print(bias_var)
+    if unknowncov:
+        bias_var = emubias.predictcov(x)
+        print(bias_var)
+    else:
+        bias_var = obsvar
+
 
     xuniq = np.unique(x, axis=0)
     clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)

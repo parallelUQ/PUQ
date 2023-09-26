@@ -1,17 +1,13 @@
 import numpy as np
-from PUQ.designmethods.gen_funcs.acquisition_funcs_support import multiple_pdfs
 from PUQ.designmethods.gen_funcs.CEIVAR import ceivar
-from PUQ.designmethods.gen_funcs.CEIVARX import ceivarx, ceivarxfig
-from PUQ.designmethods.SEQCALsupport import fit_emulator1d, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition, find_mle
+from PUQ.designmethods.gen_funcs.CEIVARX import ceivarx
+from PUQ.designmethods.SEQCALsupport import load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
+from PUQ.designmethods.utils import collect_data, fit_emulator1d, find_mle
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
 from libensemble.alloc_funcs.start_only_persistent import only_persistent_gens as alloc_f
 from libensemble.libE import libE
 from libensemble.tools import parse_args, save_libE_output, add_unique_random_streams
-from smt.sampling_methods import LHS
-from PUQ.posterior import posterior
-import scipy.stats as sps
-from PUQ.surrogatemethods.PCGPexp import  postpred
 
 def fit(fitinfo, data_cls, args):
 
@@ -23,7 +19,7 @@ def fit(fitinfo, data_cls, args):
     prior = args['prior']
     max_evals = args['max_evals']
     test_data = args['data_test']
-    
+    theta_torun = args['theta_torun']
     
     out = data_cls.out
     sim_f = data_cls.sim
@@ -61,6 +57,7 @@ def fit(fitinfo, data_cls, args):
             'synth_cls': data_cls,
             'test_data': test_data,
             'prior': prior,
+            'theta_torun': theta_torun,
         },
     }
 
@@ -101,20 +98,6 @@ def fit(fitinfo, data_cls, args):
 
     return
 
-def collect_data(emu, x_emu, theta_mle, dt, xmesh, xtmesh, nmesh, ytest, ptest, x, obs, obsvar):
-    
-    xtrue_test = np.concatenate((xmesh, np.repeat(theta_mle, nmesh).reshape(nmesh, dt)), axis=1)
-    
-    predobj = emu.predict(x=x_emu, theta=xtrue_test)
-    ymeanhat, yvarhat = predobj.mean(), predobj.var()
-    
-    pred_error = np.mean(np.abs(ymeanhat - ytest))
-    
-    pmeanhat, pvarhat = postpred(emu._info, x, xtmesh, obs, obsvar)
-    
-    post_error = np.mean(np.abs(pmeanhat - ptest))
-    
-    return pred_error, post_error
                 
 def gen_f(H, persis_info, gen_specs, libE_info):
 
@@ -126,44 +109,38 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         n_workers       = gen_specs['user']['nworkers'] 
         AL              = gen_specs['user']['AL']
         seed            = gen_specs['user']['seed_n0']
-        synth_info      = gen_specs['user']['synth_cls']
-        test_data       = gen_specs['user']['test_data']
+        theta_torun     = gen_specs['user']['theta_torun']
+        
+        # Prior functions
         prior_func_all  = gen_specs['user']['prior']
- 
+        prior_func, prior_func_x, prior_func_t = prior_func_all['prior'], prior_func_all['priorx'], prior_func_all['priort']
         
-        obsvar          = synth_info.obsvar
-        data            = synth_info.real_data
-        theta_limits    = synth_info.thetalimits
-        dim             = synth_info.d 
-        x               = synth_info.x
-        
-        prior_func = prior_func_all['prior']
-        prior_func_x = prior_func_all['priorx']
-        prior_func_t = prior_func_all['priort']
-        
-        des = synth_info.des
+        # Simulation info
+        synth_info      = gen_specs['user']['synth_cls']
+        obsvar, data, theta_limits, dim, x, des = synth_info.obsvar, synth_info.real_data, synth_info.thetalimits, synth_info.d, synth_info.x, synth_info.des
 
+        # Test data
+        test_data = gen_specs['user']['test_data']
         thetatest, posttest, ftest, priortest = None, None, None, None
         if test_data is not None:
             thetatest, th_mesh, x_mesh, ptest, ftest, priortest, ytest = test_data['theta'], test_data['th'], test_data['xmesh'], test_data['p'], test_data['f'], test_data['p_prior'], test_data['y']
 
-
+        # Additional set
         true_fevals = np.reshape(data[0, :], (1, data.shape[1]))
         x_emu = np.arange(0, 1)[:, None ]
-        
+        dx, dt, nmesh = x.shape[1], th_mesh.shape[1], len(x_mesh)
         obs_offset, theta_offset, generated_no = 0, 0, 0
-        TV, HD = 1000, 1000
+        TV, HD, tag, theta = 1000, 1000, 0, 0
         fevals, pending, prev_pending, complete, prev_complete = None, None, None, None, None
-        first_iter = True
-        tag = 0
-        update_model = False
-        acquisition_f = eval(AL)
-        list_id = []
-        theta = 0
-        dx = x.shape[1]
-        dt = th_mesh.shape[1]
-        nmesh = len(x_mesh)
-        mlelist = []
+        first_iter, update_model = True, False
+        list_id, mlelist = [], []
+        
+        if AL == None:
+            pass
+        else:
+            acquisition_f = eval(AL)
+            
+
         while tag not in [STOP_TAG, PERSIS_STOP]:
             if not first_iter:
                 # Update fevals from calc_in
@@ -191,8 +168,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 if (len(theta) % 10 == 0):
                     print('mle:', theta_mle)
                 
-                TV, HD = collect_data(emu, x_emu, theta_mle, dt, x_mesh, thetatest, nmesh, ytest, ptest, x, true_fevals, obsvar)
-   
+                TV, HD = collect_data(emu, None, x_emu, theta_mle, dt, x_mesh, thetatest, nmesh, ytest, ptest, x, true_fevals, obsvar, synth_info)  
                 prev_pending   = pending.copy()
                 update_model   = False
 
@@ -211,25 +187,29 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 if select_condition(complete, prev_complete, n_theta=mini_batch, n_initial=n0):
 
                     prev_complete = complete.copy()
-     
-                    new_theta = acquisition_f(mini_batch, 
-                                              x,
-                                              None,
-                                              emu, 
-                                              theta, 
-                                              fevals, 
-                                              true_fevals, 
-                                              obsvar, 
-                                              theta_limits, 
-                                              prior_func,
-                                              prior_func_t,
-                                              thetatest,
-                                              x_mesh,
-                                              th_mesh,
-                                              priortest,
-                                              None,
-                                              synth_info,
-                                              theta_mle)
+                    
+                    if AL == None:
+                        new_theta = theta_torun[(generated_no-n_init):(generated_no-n_init+mini_batch), :]
+                    else:
+                        new_theta = acquisition_f(mini_batch, 
+                                                  x,
+                                                  None,
+                                                  emu, 
+                                                  theta, 
+                                                  fevals, 
+                                                  true_fevals, 
+                                                  obsvar, 
+                                                  theta_limits, 
+                                                  prior_func,
+                                                  prior_func_t,
+                                                  thetatest,
+                                                  x_mesh,
+                                                  th_mesh,
+                                                  priortest,
+                                                  None,
+                                                  synth_info,
+                                                  theta_mle)
+                        
 
                     theta, fevals, pending, prev_pending, complete, prev_complete = \
                         pad_arrays(dim, new_theta, theta, fevals, pending, prev_pending, complete, prev_complete)

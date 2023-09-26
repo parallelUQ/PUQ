@@ -2,20 +2,13 @@ import numpy as np
 from PUQ.designmethods.gen_funcs.acquisition_funcs_support import multiple_pdfs
 from PUQ.designmethods.gen_funcs.CEIVAR import ceivarbias
 from PUQ.designmethods.gen_funcs.CEIVARX import ceivarxbias
-from PUQ.designmethods.SEQCALsupport import fit_emulator, load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition, find_mle_bias
+from PUQ.designmethods.SEQCALsupport import load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
+from PUQ.designmethods.utils import collect_data, fit_emulator1d, find_mle_bias, bias_predict
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
 from libensemble.alloc_funcs.start_only_persistent import only_persistent_gens as alloc_f
 from libensemble.libE import libE
 from libensemble.tools import parse_args, save_libE_output, add_unique_random_streams
-from smt.sampling_methods import LHS
-from PUQ.posterior import posterior
-from PUQ.surrogate import emulator
-import scipy.stats as sps
-from PUQ.surrogatemethods.PCGPexp import  postpredbias
-import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression
-import scipy.optimize as spo
 
 def fit(fitinfo, data_cls, args):
 
@@ -27,7 +20,8 @@ def fit(fitinfo, data_cls, args):
     prior = args['prior']
     max_evals = args['max_evals']
     test_data = args['data_test']
-    isbias = args['bias']
+    unknowncov = args['unknowncov']
+    theta_torun = args['theta_torun']
     
     out = data_cls.out
     sim_f = data_cls.sim
@@ -65,7 +59,8 @@ def fit(fitinfo, data_cls, args):
             'synth_cls': data_cls,
             'test_data': test_data,
             'prior': prior,
-            'isbias': isbias,
+            'unknowncov': unknowncov,
+            'theta_torun': theta_torun,
         },
     }
 
@@ -105,122 +100,7 @@ def fit(fitinfo, data_cls, args):
                 fitinfo['thetamle'] = persis_info[key]['thetamle']
 
     return
-
-def obj_covmle(parameter, args):
-
-    x = args[0]
-    biasdiff = args[1]
-    nx = len(x)
-    d = x.shape[1]
-    #print(x)
-    #print(d)
-    diff = np.zeros((nx, nx))
-    for i in range(nx):
-        for j in range(nx):
-            for k in range(d):
-                diff[i, j] += np.abs(x[i, k] - x[j, k])
-            
-    covmat = np.diag(np.repeat(parameter[0], nx)) + parameter[1]*np.exp(-parameter[2]*diff)
-    covmatinv = np.linalg.inv(covmat)
-
-    ll =  np.log(np.linalg.det(covmat)) + biasdiff@covmatinv@biasdiff.T
-
-    return ll.flatten()
-
-def find_covparam(x, biasdiff):
-    bnd = ()
-    theta_init = []
-    limits = [0.0001, 0.1]
-    for i in range(0, 3):
-        bnd += ((limits[0], limits[1]),)
-        theta_init.append((limits[1])/2)
- 
-    opval = spo.minimize(obj_covmle,
-                         theta_init,
-                         method='L-BFGS-B',
-                         options={'gtol': 0.01},
-                         bounds=bnd,
-                         args=([x, biasdiff]))                
-
-    theta_mle = opval.x
-    theta_mle = theta_mle.reshape(1, 3)
-    return theta_mle[0, 0], theta_mle[0, 1], theta_mle[0, 2]
-
-
-def bias_predict(emu, theta_mle, x_emu, x, true_fevals):
-    typebias = 'lm'
-    nx = len(x)
-    # Bias prediction #
-    xp = np.concatenate((x, np.repeat(theta_mle, nx).reshape(nx, len(theta_mle))), axis=1)
-    emupred = emu.predict(x=x_emu, theta=xp)
-    mu_sim = emupred.mean()
-    var_sim = emupred.var()
-    bias = (true_fevals - mu_sim).T
-
-    if typebias == 'lm':
-        # Fit linear regression model
-        model = LinearRegression()
-        emubias = model.fit(x, bias)
-        biasmean = emubias.predict(x).T
-        
-        sigmae_sq, sigmab_sq, lambdap = find_covparam(x, bias.T - biasmean)
-
-        
-    else:
-        emubias = emulator(x_emu, 
-                           x, 
-                           bias.T, 
-                           method='PCGPexp')
-        
-    
-    class biaspred:
-        def __init__(self, typebias, emubias):
-            self.type = typebias
-            self.model = emubias
          
-        def predict(self, x):
-            if self.type == 'lm':
-                return self.model.predict(x).T
-            else:
-                return self.model.predict(x=x_emu, theta=x).mean()
-        
-        def predictcov(self, x):
-            if self.type == 'lm':
-                nx = len(x)
-                d = x.shape[1]
-                diff = np.zeros((nx, nx))
-                for i in range(nx):
-                    for j in range(nx):
-                        for k in range(d):
-                            diff[i, j] += np.abs(x[i, k] - x[j, k])
-                        
-                covmat = np.diag(np.repeat(sigmae_sq, nx)) + sigmab_sq*np.exp(-lambdap*diff)
-                
-                return covmat
-
-            
-    biasobj = biaspred(typebias, emubias)
-    return biasobj
-
-
-def collect_data(emu, emubias, x_emu, theta_mle, dt, xmesh, xtmesh, nmesh, ytest, ptest, x, obs, obsvar, synth_info):
-    
-    xtrue_test = np.concatenate((xmesh, np.repeat(theta_mle, nmesh).reshape(nmesh, dt)), axis=1)
-    
-    predobj = emu.predict(x=x_emu, theta=xtrue_test)
-    fmeanhat, fvarhat = predobj.mean(), predobj.var()
-
-    bmeanhat = emubias.predict(xmesh)
-    pred_error = np.mean(np.abs(fmeanhat + bmeanhat - ytest))
-    
-    #print(pred_error)
-
-    bmeanhat = emubias.predict(x)
-    pmeanhat, pvarhat = postpredbias(emu._info, x, xtmesh, obs, obsvar, bmeanhat)
-    post_error = np.mean(np.abs(pmeanhat - ptest))
-
-    return pred_error, post_error
-                
 def gen_f(H, persis_info, gen_specs, libE_info):
 
         """Generator to select and obviate parameters for calibration."""
@@ -231,44 +111,39 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         n_workers       = gen_specs['user']['nworkers'] 
         AL              = gen_specs['user']['AL']
         seed            = gen_specs['user']['seed_n0']
-        synth_info      = gen_specs['user']['synth_cls']
-        test_data       = gen_specs['user']['test_data']
+        theta_torun     = gen_specs['user']['theta_torun']
+        unknowncov      = gen_specs['user']['unknowncov']
+        
+        # Prior functions
         prior_func_all  = gen_specs['user']['prior']
-        isbias          = gen_specs['user']['isbias']
+        prior_func, prior_func_x, prior_func_t = prior_func_all['prior'], prior_func_all['priorx'], prior_func_all['priort']
         
-        obsvar          = synth_info.obsvar
-        data            = synth_info.real_data
-        theta_limits    = synth_info.thetalimits
-        dim             = synth_info.d 
-        x               = synth_info.x
-        
-        prior_func = prior_func_all['prior']
-        prior_func_x = prior_func_all['priorx']
-        prior_func_t = prior_func_all['priort']
-        
-        des = synth_info.des
+        # Simulation info
+        synth_info      = gen_specs['user']['synth_cls']
+        obsvar, data, theta_limits, dim, x, des = synth_info.obsvar, synth_info.real_data, synth_info.thetalimits, synth_info.d, synth_info.x, synth_info.des
 
+        # Test data
+        test_data = gen_specs['user']['test_data']
         thetatest, posttest, ftest, priortest = None, None, None, None
         if test_data is not None:
             thetatest, th_mesh, x_mesh, ptest, ftest, priortest, ytest = test_data['theta'], test_data['th'], test_data['xmesh'], test_data['p'], test_data['f'], test_data['p_prior'], test_data['y']
 
-
+        # Additional set
         true_fevals = np.reshape(data[0, :], (1, data.shape[1]))
         x_emu = np.arange(0, 1)[:, None ]
-        
+        dx, dt, nmesh = x.shape[1], th_mesh.shape[1], len(x_mesh)
         obs_offset, theta_offset, generated_no = 0, 0, 0
-        TV, HD = 1000, 1000
+        TV, HD, tag, theta = 1000, 1000, 0, 0
         fevals, pending, prev_pending, complete, prev_complete = None, None, None, None, None
-        first_iter = True
-        tag = 0
-        update_model = False
-        acquisition_f = eval(AL)
-        list_id = []
-        theta = 0
-        dx = x.shape[1]
-        dt = th_mesh.shape[1]
-        nmesh = len(x_mesh)
-        mlelist = []
+        first_iter, update_model = True, False
+        list_id, mlelist = [], []
+        
+        if AL == None:
+            pass
+        else:
+            acquisition_f = eval(AL)
+        
+        
         while tag not in [STOP_TAG, PERSIS_STOP]:
             if not first_iter:
                 # Update fevals from calc_in
@@ -288,18 +163,13 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                         break
 
             if update_model:
-                
-                emu = emulator(x_emu, 
-                               theta, 
-                               fevals, 
-                               method='PCGPexp')
-
+                emu = fit_emulator1d(x_emu, theta, fevals)
                 theta_mle = find_mle_bias(emu, x, x_emu, true_fevals, obsvar, dx, dt, theta_limits)
                 if (len(theta) % 10 == 0):
                     print('mle:', theta_mle)
   
                 # Bias prediction 
-                bias_pred = bias_predict(emu, theta_mle, x_emu, x, true_fevals)
+                bias_pred = bias_predict(emu, theta_mle, x_emu, x, true_fevals, unknowncov)
                 
                 # Data collect   
                 TV, HD = collect_data(emu, bias_pred, x_emu, theta_mle, dt, x_mesh, thetatest, nmesh, ytest, ptest, x, true_fevals, obsvar, synth_info)
@@ -324,24 +194,28 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
                     prev_complete = complete.copy()
      
-                    new_theta = acquisition_f(mini_batch, 
-                                              x,
-                                              None,
-                                              emu, 
-                                              theta, 
-                                              fevals, 
-                                              true_fevals, 
-                                              obsvar, 
-                                              theta_limits, 
-                                              prior_func,
-                                              prior_func_t,
-                                              thetatest,
-                                              x_mesh,
-                                              th_mesh,
-                                              priortest,
-                                              bias_pred,
-                                              synth_info,
-                                              theta_mle)
+                    if AL == None:
+                        new_theta = theta_torun[(generated_no-n_init):(generated_no-n_init+mini_batch), :]
+                    else:
+                        new_theta = acquisition_f(mini_batch, 
+                                                  x,
+                                                  None,
+                                                  emu, 
+                                                  theta, 
+                                                  fevals, 
+                                                  true_fevals, 
+                                                  obsvar, 
+                                                  theta_limits, 
+                                                  prior_func,
+                                                  prior_func_t,
+                                                  thetatest,
+                                                  x_mesh,
+                                                  th_mesh,
+                                                  priortest,
+                                                  bias_pred,
+                                                  synth_info,
+                                                  theta_mle,
+                                                  unknowncov)
 
                     theta, fevals, pending, prev_pending, complete, prev_complete = \
                         pad_arrays(dim, new_theta, theta, fevals, pending, prev_pending, complete, prev_complete)
