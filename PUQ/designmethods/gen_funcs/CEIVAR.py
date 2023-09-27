@@ -30,14 +30,17 @@ def ceivar(n,
     n_x = x.shape[0]
     
     xuniq = np.unique(x, axis=0)
-    clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
+    if synth_info.data_name == 'covid19':
+        construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t)
+    else:
+        clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
 
-    thetatest = np.array([np.concatenate([xc, th]) for th in thetamesh for xc in x])
+    xt_ref = np.array([np.concatenate([xc, th]) for th in thetamesh for xc in x])
     
-    Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, thetatest, obs, obsvar)
+    Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, xt_ref, obs, obsvar)
     eivar_val = np.zeros(len(clist))
     for xt_id, xt_c in enumerate(clist):
-        eivar_val[xt_id] = postphimat(emu._info, n_x, thetatest, obs, obsvar, xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
+        eivar_val[xt_id] = postphimat(emu._info, n_x, xt_ref, obs, obsvar, xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
 
     th_cand = clist[np.argmax(eivar_val), :].reshape(1, p)
 
@@ -93,29 +96,27 @@ def ceivarbias(n,
 
     return th_cand 
 
-def construct_candlist( thetalimits, xuniq, prior_func, prior_func_t ):
-    type_init = 'CMB'
-    # Create a candidate list
-    if type_init == 'LHS':
-        n_clist = 500
-        sampling = LHS(xlimits=thetalimits)
-        clist = sampling(n_clist)
-    elif type_init == 'RND':
-        n_clist = 500
-        clist = prior_func.rnd(n_clist, None)
-    elif type_init == 'CMB':
-        n0 = 100
-        n_clist  = n0*len(xuniq)
-        t_unif = prior_func_t.rnd(n0, None)
-        clist = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
-        #clist2 = prior_func.rnd(n_clist, None)
-        
-        #clist = np.concatenate((clist1, clist2), axis=0)
-        #n_clist += n_clist
-    else:
-        n0 = 50
-        n_clist  = n0*len(xuniq)
-        t_unif   = prior_func_t.rnd(n0, None)
-        clist = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
-        
+def construct_candlist(thetalimits, xuniq, prior_func, prior_func_t):
+
+    n0 = 100
+    n_clist = n0*len(xuniq)
+    t_unif = prior_func_t.rnd(n0, None)
+    clist1 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
+    clist2 = prior_func.rnd(n_clist, None)
+    clist = np.concatenate((clist1, clist2), axis=0)
+
+    return clist
+
+def construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t):
+
+    n0 = 100
+    n_clist = n0*len(xuniq)
+    t_unif = prior_func_t.rnd(n0, None)
+    clist1 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
+    
+    
+    xref_sample = np.random.choice(a=221, size=50)[:, None]/221
+    n_clist = n0*len(xref_sample)
+    t_unif = prior_func_t.rnd(n0, None)
+    clist1 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xref_sample])
     return clist

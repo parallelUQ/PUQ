@@ -19,11 +19,16 @@ def parse_arguments():
                         default=100,
                         type=int,
                         help='Number of parameters to acquire.')
-    parser.add_argument("-n_init_thetas",
+    parser.add_argument("-seedmin",
                         metavar='N2',
-                        default=8,
+                        default=0,
                         type=int,
-                        help='Number of parameters from LHS.')
+                        help='Initial seed.')
+    parser.add_argument("-seedmax",
+                        metavar='N2',
+                        default=30,
+                        type=int,
+                        help='Final seed.')
     parser.add_argument("-seed_n0",
                         metavar='N2',
                         default=1,

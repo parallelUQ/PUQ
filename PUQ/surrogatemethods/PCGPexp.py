@@ -754,27 +754,28 @@ def temp_postphimat(fitinfo, n_x, theta, obs, obsvar):
         id_row = np.arange(0, n_tot_ref)
         id_col = np.arange(0, n_tot_ref).reshape(n_ref, n_x)
         id_col = np.repeat(id_col, repeats=n_x, axis=0)
-        
+
+        # r_3 : n_tot_ref x n_tot_ref
+        # r_3_3D : n_ref x n_x x n_x
         r_3_3D = r_3[id_row[:, None], id_col].reshape(n_ref, n_x, n_x)
 
+        # rVh_1 : n_tot_ref x n_t
+        # rVh_1_3d : n_ref x n_x x n_t
         rVh_1_3d = rVh_1.reshape(n_ref, n_x, n_t)
+        # rVh_1_3dT : n_ref x n_t x n_x
         rVh_1_3dT = np.transpose(rVh_1_3d, (0, 2, 1))
         cov3D = np.matmul(rVh_1_3d, rVh_1_3dT)
+
+        # cov3D : n_ref x n_x x n_x
         cov_ref_3D = infos[k]['sig2'] * (r_3_3D - cov3D)
         predmean_ref[:, k] = r_1 @ infos[k]['pw']
 
-    
+
     # calculate predictive mean and variance
-    pctscale     = (fitinfo['pcti'].T * fitinfo['standardpcinfo']['scale']).T
-    Smat3D       = cov_ref_3D*(pctscale[:, :] ** 2)
-
-
+    pctscale = (fitinfo['pcti'].T * fitinfo['standardpcinfo']['scale']).T
+    Smat3D = cov_ref_3D*(pctscale[:, :] ** 2)
     pred_mean = ((predmean_ref @ pctscale.T) + fitinfo['standardpcinfo']['offset']).T
     pred_mean = pred_mean.reshape(n_ref, n_x)
-
-    #obsvar3D  = obsvar.reshape(1, n_x, n_x)
-    #print(Smat3D.shape)
-    #covmat_ref = Smat3D + obsvar3D
     covmat_ref = Smat3D + obsvar
     return covmat_ref, rVh_1_3d, pred_mean
 

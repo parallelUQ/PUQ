@@ -7,17 +7,19 @@ from plots_design import plot_EIVAR, obsdata, create_test, add_result, samplingd
 from ptest_funcs import sinfunc
 import matplotlib.pyplot as plt
 
-
 args = parse_arguments()
     
 seeds = 1
 ninit = 10
 nmax = 100
 result = []
+args.seedmin = 0
+args.seedmax = 1
+for s in np.arange(args.seedmin, args.seedmax):
 
-for s in range(seeds):
-
+    s = int(s)
     bias = True
+    
     cls_data = sinfunc()
     dt = len(cls_data.true_theta)
     cls_data.realdata(np.array([0.1, 0.1, 0.3, 0.3, 0.5, 0.5, 0.7, 0.7, 0.9, 0.9])[:, None], seed=s, isbias=bias)

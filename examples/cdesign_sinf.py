@@ -13,8 +13,11 @@ ninit = 10
 nmax = 100
 result = []
 
-for s in range(seeds):
+args.seedmin = 0
+args.seedmax = 1
+for s in np.arange(args.seedmin, args.seedmax):
 
+    s = int(s)
     cls_data = sinfunc()
     dt = len(cls_data.true_theta)
     cls_data.realdata(x=np.array([0.1, 0.1, 0.3, 0.3, 0.5, 0.5, 0.7, 0.7, 0.9, 0.9])[:, None], seed=s)

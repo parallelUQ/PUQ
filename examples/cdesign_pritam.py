@@ -6,12 +6,17 @@ from plots_design import create_test_non, add_result, samplingdata, plot_des_pri
 from ptest_funcs import pritam
 import matplotlib.pyplot as plt
 
+args = parse_arguments()
 
 seeds = 1
 ninit = 30
 nmax = 40
 result = []
-for s in range(seeds):
+args.seedmin = 0
+args.seedmax = 1
+for s in np.arange(args.seedmin, args.seedmax):
+
+    s = int(s)
 
     x = np.linspace(0, 1, 3)
     y = np.linspace(0, 1, 3)

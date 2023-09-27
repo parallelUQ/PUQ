@@ -6,11 +6,17 @@ from plots_design import create_test_non, gather_data_non, add_result, samplingd
 from ptest_funcs import pritam
 import matplotlib.pyplot as plt
 
+args = parse_arguments()
+
 seeds = 1
 ninit = 30
 nmax = 40
 result = []
-for s in range(seeds):
+args.seedmin = 0
+args.seedmax = 1
+for s in np.arange(args.seedmin, args.seedmax):
+
+    s = int(s)
     bias = True
 
     x = np.linspace(0, 1, 3)
@@ -65,7 +71,7 @@ for s in range(seeds):
     
     save_output(al_ceivarx, cls_data.data_name, 'ceivarxbias', 2, 1, s)
     
-    res = {'method': 'eivarx', 'repno': s, 'Prediction Error': al_ceivarx._info['TV'], 'Posterior Error': al_ceivarx._info['HD']}
+    res = {'method': 'ceivarxbias', 'repno': s, 'Prediction Error': al_ceivarx._info['TV'], 'Posterior Error': al_ceivarx._info['HD']}
     result.append(res)
     
 
@@ -90,7 +96,7 @@ for s in range(seeds):
     
     save_output(al_ceivar, cls_data.data_name, 'ceivarbias', 2, 1, s)
 
-    res = {'method': 'eivar', 'repno': s, 'Prediction Error': al_ceivar._info['TV'], 'Posterior Error': al_ceivar._info['HD']}
+    res = {'method': 'ceivarbias', 'repno': s, 'Prediction Error': al_ceivar._info['TV'], 'Posterior Error': al_ceivar._info['HD']}
     result.append(res)
 
     # LHS 
@@ -116,7 +122,7 @@ for s in range(seeds):
     result.append(res)
     
     # rnd 
-    xt_RND, f_RND = samplingdata('Random', nmax-init, cls_data, s, prior_xt, non=True)
+    xt_RND, f_RND = samplingdata('Random', nmax-ninit, cls_data, s, prior_xt, non=True)
     al_RND = designer(data_cls=cls_data, 
                            method='SEQDESBIAS', 
                            args={'mini_batch': 1, 
