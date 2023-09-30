@@ -18,23 +18,50 @@ def fit_emulator1d(x_emu, theta, fevals):
 
     return emu
 
-def obj_mle(parameter, args):
-    emu = args[0]
-    x = args[1]
-    x_emu = args[2]
-    obs = args[3]
-    obsvar = args[4]
-    nx = len(x)
-
+def compute_diff(x, 
+                 parameter, 
+                 nx, 
+                 emu, 
+                 x_emu, 
+                 obs, 
+                 is_bias):
+    # obs : 1 x n_x
+    # emumean : 1 x n_x
+    # bias : n_x x 1
     xp = np.concatenate((x, np.repeat(parameter, nx).reshape(nx, len(parameter))), axis=1)
+    
+    # Predict computer model
     emupred = emu.predict(x=x_emu, theta=xp)
-    mu_p = emupred.mean()
-    diff = (obs.flatten() - mu_p.flatten()).reshape((nx, 1))
-    ll = diff.T@diff
+    emumean = emupred.mean()
+    
+    # Predict linear bias mean  
+    bias = (obs - emumean).T
+    if is_bias:
+        model = LinearRegression().fit(x, bias)
+        mu_bias = model.predict(x)
+        diff = bias - mu_bias
+        return diff
+    else:
+        return bias
 
+
+def obj_mle(parameter, args):
+    emu, x, x_emu, obs, obsvar, is_bias = args[0], args[1], args[2], args[3], args[4], args[5]
+    nx = len(x)
+    diff = compute_diff(x, parameter, nx, emu, x_emu, obs, is_bias)
+    ll = diff.T@diff
     return ll.flatten()
 
-def find_mle(emu, x, x_emu, obs, obsvar, dx, dt, theta_limits):
+def find_mle(emu, 
+             x, 
+             x_emu, 
+             obs, 
+             obsvar, 
+             dx, 
+             dt, 
+             theta_limits, 
+             is_bias):
+
     bnd = ()
     theta_init = []
     for i in range(dx, dx + dt):
@@ -46,57 +73,11 @@ def find_mle(emu, x, x_emu, obs, obsvar, dx, dt, theta_limits):
                          method='L-BFGS-B',
                          options={'gtol': 0.01},
                          bounds=bnd,
-                         args=([emu, x, x_emu, obs, obsvar]))                
+                         args=([emu, x, x_emu, obs, obsvar, is_bias]))                
 
     theta_mle = opval.x
     theta_mle = theta_mle.reshape(1, dt)
     return theta_mle
-
-
-def obj_mle_bias(parameter, args):
-    
-    emu = args[0]
-    x = args[1]
-    x_emu = args[2]
-    obs = args[3]
-    obsvar = args[4]
-    nx = len(x)
-
-    xtval = np.concatenate((x, np.repeat(parameter, nx).reshape(nx, len(parameter))), axis=1)
-
-    # Predict computer model
-    emupred = emu.predict(x=x_emu, theta=xtval)
-    emumean = emupred.mean()
-
-    # Predict linear bias mean  
-    bias = (obs - emumean).T
-    model = LinearRegression()
-    model.fit(x, bias)
-    mu_bias = model.predict(x)
-    diff = bias - mu_bias
-
-    ll = (diff.T).dot(diff) 
-    return ll.flatten()
-
-def find_mle_bias(emu, x, x_emu, obs, obsvar, dx, dt, theta_limits):
-    
-    bnd = ()
-    theta_init = []
-    for i in range(dx, dx + dt):
-        bnd += ((theta_limits[i][0], theta_limits[i][1]),)
-        theta_init.append((theta_limits[i][0] + theta_limits[i][1])/2)
-
-    opval = spo.minimize(obj_mle_bias,
-                         theta_init,
-                         method='L-BFGS-B',
-                         options={'gtol': 0.01},
-                         bounds=bnd,
-                         args=([emu, x, x_emu, obs, obsvar]))                
-
-    theta_mle = opval.x
-    theta_mle = theta_mle.reshape(1, dt)
-    return theta_mle
-
 
 
 def collect_data(emu, emubias, x_emu, theta_mle, dt, xmesh, xtmesh, nmesh, ytest, ptest, x, obs, obsvar, synth_info):
@@ -106,7 +87,6 @@ def collect_data(emu, emubias, x_emu, theta_mle, dt, xmesh, xtmesh, nmesh, ytest
     fmeanhat, fvarhat = predobj.mean(), predobj.var()
 
     if emubias == None:
-        
         pred_error = np.mean(np.abs(fmeanhat - ytest))
         pmeanhat, pvarhat = postpred(emu._info, x, xtmesh, obs, obsvar)
         post_error = np.mean(np.abs(pmeanhat - ptest))
@@ -121,30 +101,43 @@ def collect_data(emu, emubias, x_emu, theta_mle, dt, xmesh, xtmesh, nmesh, ytest
     return pred_error, post_error
 
 
+def find_abs_diff(nx, d, x):
+    #diff = np.zeros((nx, nx))
+    #for i in range(nx):
+    #    for j in range(nx):
+     #       for k in range(d):
+     #           diff[i, j] += np.abs(x[i, k] - x[j, k])
+    diff = np.sum(np.abs(x[:, None, :] - x[None, :, :]), axis=-1)
+    return diff
+
+def gen_cov(sigmae_sq, sigmab_sq, lambdap, nx, abs_dist):
+    return np.diag(np.repeat(sigmae_sq, nx)) + sigmab_sq*np.exp(-lambdap*abs_dist)
+    
 def obj_covmle(parameter, args):
 
-    x = args[0]
-    biasdiff = args[1]
-    nx = len(x)
-    d = x.shape[1]
+    x, biasdiff = args[0], args[1]
+    nx, d = x.shape[0], x.shape[1]
 
-    diff = np.zeros((nx, nx))
-    for i in range(nx):
-        for j in range(nx):
-            for k in range(d):
-                diff[i, j] += np.abs(x[i, k] - x[j, k])
-            
-    covmat = np.diag(np.repeat(parameter[0], nx)) + parameter[1]*np.exp(-parameter[2]*diff)
+    abs_dist = find_abs_diff(nx, d, x)
+    # Generate cov
+    covmat = gen_cov(sigmae_sq=parameter[0], 
+                     sigmab_sq=parameter[1],
+                     lambdap=parameter[2],
+                     nx=nx,
+                     abs_dist=abs_dist)
+    
+    # Inverse of covmat
     covmatinv = np.linalg.inv(covmat)
 
+    # Negative likelihood
     ll =  np.log(np.linalg.det(covmat)) + biasdiff@covmatinv@biasdiff.T
-
+    # print(ll)
     return ll.flatten()
 
 def find_covparam(x, biasdiff):
     bnd = ()
     theta_init = []
-    limits = [0.0001, 0.1]
+    limits = [0.0001, 0.5]
     for i in range(0, 3):
         bnd += ((limits[0], limits[1]),)
         theta_init.append((limits[1])/2)
@@ -156,53 +149,51 @@ def find_covparam(x, biasdiff):
                          bounds=bnd,
                          args=([x, biasdiff]))                
 
-    theta_mle = opval.x
-    theta_mle = theta_mle.reshape(1, 3)
-    return theta_mle[0, 0], theta_mle[0, 1], theta_mle[0, 2]
+    return opval.x[0], opval.x[1], opval.x[2]
 
 
-def bias_predict(emu, theta_mle, x_emu, x, true_fevals, unknowncov=False):
+def bias_predict(emu, 
+                 theta_mle, 
+                 x_emu, 
+                 x, 
+                 obs, 
+                 unknowncov=False):
 
     nx = len(x)
-    
-    # Bias prediction 
     xp = np.concatenate((x, np.repeat(theta_mle, nx).reshape(nx, len(theta_mle))), axis=1)
-    emupred = emu.predict(x=x_emu, theta=xp)
-    mu_sim = emupred.mean()
-    var_sim = emupred.var()
-    bias = (true_fevals - mu_sim).T
-
-
-    # Fit linear regression model
-    model = LinearRegression()
-    emubias = model.fit(x, bias)
-    biasmean = emubias.predict(x).T
     
+    # Predict computer model
+    emupred = emu.predict(x=x_emu, theta=xp)
+    emumean = emupred.mean()
+    
+    # Predict linear bias mean  
+    bias = (obs - emumean).T
+    model = LinearRegression().fit(x, bias)
+    mu_bias = model.predict(x)
+    diff = bias - mu_bias
+
     if unknowncov:
-        sigmae_sq, sigmab_sq, lambdap = find_covparam(x, bias.T - biasmean)
+        sigmae_sq, sigmab_sq, lambdap = find_covparam(x, diff.T)
 
     
     class biaspred:
-        def __init__(self, emubias):
-            self.model = emubias
+        def __init__(self, model):
+            self.model = model
          
-        def predict(self, x):
-            return self.model.predict(x).T
+        def predict(self, xnew):
+            return self.model.predict(xnew).T
         
         if unknowncov:
-            def predictcov(self, x):
-                nx = len(x)
-                d = x.shape[1]
-                diff = np.zeros((nx, nx))
-                for i in range(nx):
-                    for j in range(nx):
-                        for k in range(d):
-                            diff[i, j] += np.abs(x[i, k] - x[j, k])
-                        
-                covmat = np.diag(np.repeat(sigmae_sq, nx)) + sigmab_sq*np.exp(-lambdap*diff)
-                
+            def predictcov(self, xnew):
+                nx, d = xnew.shape[0], xnew.shape[1]
+                abs_dist = find_abs_diff(nx, d, xnew)
+                covmat = gen_cov(sigmae_sq=sigmae_sq, 
+                                 sigmab_sq=sigmab_sq,
+                                 lambdap=lambdap,
+                                 nx=nx,
+                                 abs_dist=abs_dist)
                 return covmat
 
             
-    biasobj = biaspred(emubias)
+    biasobj = biaspred(model)
     return biasobj

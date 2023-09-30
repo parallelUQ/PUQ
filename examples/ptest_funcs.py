@@ -12,12 +12,9 @@ class sinfunc:
         self.dx          = 1
         self.x           = None
         self.real_data   = None
-        self.des = []
-        self.nrep        = 1
         self.sigma2      = 0.2**2
         self.nodata      = True        
         
-
     def function(self, x, theta):
         f = np.sin(10*x - 5*theta)
         return f
@@ -26,7 +23,6 @@ class sinfunc:
         function        = sim_specs['user']['function']
         H_o             = np.zeros(1, dtype=sim_specs['out'])
         H_o['f']        = function(H['thetas'][0][0], H['thetas'][0][1])
-        
         return H_o, persis_info
     
     def realdata(self, x, seed, isbias=False):
@@ -35,30 +31,17 @@ class sinfunc:
         self.obsvar = np.diag(np.repeat(self.sigma2, len(self.x)))
         
         np.random.seed(seed)
-        self.des = []
+        fevals = np.zeros(len(x))
         for xid, x in enumerate(self.x):
-            newd = {'x':x, 'feval':[], 'rep':self.nrep}
-            for r in range(self.nrep):
-                fv = self.genobsdata(x, self.true_theta, isbias) 
-                newd['feval'].append(fv)
-                newd['isreal'] = 'Yes'
-            self.des.append(newd)
-        
-        mean_feval       = [np.mean(d['feval']) for d in self.des]
-        self.real_data   = np.array([mean_feval], dtype='float64')
-    
-    def realvar(self, x):
-        obsvar = np.zeros(x.shape)
-        obsvar[x >= 0] = self.sigma2 
-        obsvar = obsvar.ravel()
-        return obsvar
+            fevals[xid] = self.genobsdata(x, isbias) 
 
-    def genobsdata(self, x, sigma2, isbias=False):
-        varval = self.realvar(x)
+        self.real_data   = np.array([fevals], dtype='float64')
+    
+    def genobsdata(self, x, isbias=False):
         if isbias:
-            return self.function(x[0], self.true_theta) + self.bias(x[0]) + np.random.normal(0, np.sqrt(varval), 1) 
+            return self.function(x[0], self.true_theta[0]) + self.bias(x[0]) + np.random.normal(0, np.sqrt(self.sigma2), 1) 
         else:
-            return self.function(x[0], self.true_theta) + np.random.normal(0, np.sqrt(varval), 1) 
+            return self.function(x[0], self.true_theta[0]) + np.random.normal(0, np.sqrt(self.sigma2), 1) 
 
     def bias(self, x):
         return 1 - (1/3)*x - (2/3)*(x**2)
@@ -73,10 +56,8 @@ class pritam:
         self.p           = 3
         self.x           = None 
         self.real_data   = None
-        self.des = []
         self.dx          = 2
-        self.nrep        = 1
-        self.sigma2      = 0.5**2 #2
+        self.sigma2      = 0.5**2
         self.nodata      = True  
         
     def function(self, x1, x2, theta1):
@@ -87,7 +68,6 @@ class pritam:
         function        = sim_specs['user']['function']
         H_o             = np.zeros(1, dtype=sim_specs['out'])
         H_o['f']        = function(H['thetas'][0][0], H['thetas'][0][1], H['thetas'][0][2])
-        
         return H_o, persis_info
     
     def realdata(self, x, seed, isbias=False):
@@ -96,34 +76,17 @@ class pritam:
         self.obsvar = np.diag(np.repeat(self.sigma2, len(self.x)))
         
         np.random.seed(seed)
-        self.des = []
+        fevals = np.zeros(len(x))
         for xid, x in enumerate(self.x):
-
-            newd = {'x':x, 'feval':[], 'rep':self.nrep}
-            for r in range(self.nrep):
-                fv              = self.genobsdata(x, None, isbias)
-                newd['feval'].append(fv)
-            self.des.append(newd)
+            fevals[xid] = self.genobsdata(x, isbias) 
         
-
-        mean_feval       = [np.mean(d['feval']) for d in self.des]
-        self.real_data   = np.array([mean_feval], dtype='float64')    
+        self.real_data   = np.array([fevals], dtype='float64')  
     
-    def realvar(self, x):
-        if x.ndim == 1:
-            obsvar = self.sigma2
-        else:
-            s = len(x)
-            obsvar = np.zeros(s)
-            obsvar[:] = self.sigma2
-        return obsvar
-    
-    def genobsdata(self, x, sigma2, isbias=False):
-        varval = self.realvar(x)
+    def genobsdata(self, x, isbias=False):
         if isbias:
-            return self.function(x[0], x[1], self.true_theta[0]) + self.bias(x[0], x[1]) + np.random.normal(0, np.sqrt(varval), 1) 
+            return self.function(x[0], x[1], self.true_theta[0]) + self.bias(x[0], x[1]) + np.random.normal(0, np.sqrt(self.sigma2), 1) 
         else:
-            return self.function(x[0], x[1], self.true_theta[0]) + np.random.normal(0, np.sqrt(varval), 1) 
+            return self.function(x[0], x[1], self.true_theta[0]) + np.random.normal(0, np.sqrt(self.sigma2), 1) 
 
     def bias(self, x1, x2):
         return -50*(np.exp(-0.2*x1 - 0.1*x2))

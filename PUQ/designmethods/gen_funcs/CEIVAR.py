@@ -31,7 +31,7 @@ def ceivar(n,
     
     xuniq = np.unique(x, axis=0)
     if synth_info.data_name == 'covid19':
-        construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t)
+        clist = construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t)
     else:
         clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
 
@@ -76,9 +76,9 @@ def ceivarbias(n,
     bias_mean = emubias.predict(x)
     if unknowncov:
         bias_var = emubias.predictcov(x)
-        print(bias_var)
+        print(np.round(bias_var, 2))
     else:
-        bias_var = obsvar
+        bias_var = 1*obsvar
 
 
     xuniq = np.unique(x, axis=0)
@@ -109,14 +109,17 @@ def construct_candlist(thetalimits, xuniq, prior_func, prior_func_t):
 
 def construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t):
 
+    # 1200 = 100 x 12
     n0 = 100
-    n_clist = n0*len(xuniq)
     t_unif = prior_func_t.rnd(n0, None)
     clist1 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
     
-    
-    xref_sample = np.random.choice(a=221, size=50)[:, None]/221
-    n_clist = n0*len(xref_sample)
+    # 2500 = 50 x 50
+    n0 = 50
+    xref_sample = np.random.choice(a=222, size=n0, replace=False)[:, None]/221
     t_unif = prior_func_t.rnd(n0, None)
-    clist1 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xref_sample])
+    clist2 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xref_sample])
+    clist = np.concatenate((clist1, clist2), axis=0)
+    
+    print(clist.shape)
     return clist

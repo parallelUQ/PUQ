@@ -2,13 +2,13 @@ import numpy as np
 from PUQ.design import designer
 from PUQ.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
-from plots_design import create_test_non, add_result, samplingdata, plot_des_pri
+from plots_design import create_test_non, add_result, samplingdata
 from ptest_funcs import pritam
 import matplotlib.pyplot as plt
 
 args = parse_arguments()
 
-seeds = 1
+
 ninit = 30
 nmax = 40
 result = []
@@ -34,12 +34,11 @@ for s in np.arange(args.seedmin, args.seedmax):
     xt_test, ftest, ptest, thetamesh, xmesh = create_test_non(cls_data)
     cls_data_y = pritam()
     cls_data_y.realdata(x=xmesh, seed=s)
-    ytest = cls_data_y.real_data
     
     test_data = {'theta': xt_test, 
                  'f': ftest,
                  'p': ptest,
-                 'y': ytest,
+                 'y': cls_data_y.real_data,
                  'th': thetamesh,    
                  'xmesh': xmesh,
                  'p_prior': 1} 
@@ -64,7 +63,6 @@ for s in np.arange(args.seedmin, args.seedmax):
     res = {'method': 'eivarx', 'repno': s, 'Prediction Error': al_ceivarx._info['TV'], 'Posterior Error': al_ceivarx._info['HD']}
     result.append(res)
 
-    # plot_des_pri(xt_eivarx, cls_data, ninit, nmax)
     # # # # # # # # # # # # # # # # # # # # # 
     al_ceivar = designer(data_cls=cls_data, 
                            method='SEQDES', 
@@ -86,9 +84,8 @@ for s in np.arange(args.seedmin, args.seedmax):
     res = {'method': 'eivar', 'repno': s, 'Prediction Error': al_ceivar._info['TV'], 'Posterior Error': al_ceivar._info['HD']}
     result.append(res)
 
-    # plot_des_pri(xt_eivar, cls_data, ninit, nmax)
     # LHS 
-    xt_LHS, f_LHS = samplingdata('LHS', nmax-ninit, cls_data, s, prior_xt, non=True)
+    xt_LHS = samplingdata('LHS', nmax-ninit, cls_data, s, prior_xt)
     al_LHS = designer(data_cls=cls_data, 
                            method='SEQDES', 
                            args={'mini_batch': 1, 
@@ -109,7 +106,7 @@ for s in np.arange(args.seedmin, args.seedmax):
     result.append(res)
     
     # rnd 
-    xt_RND, f_RND = samplingdata('Random', nmax-ninit, cls_data, s, prior_xt, non=True)
+    xt_RND = samplingdata('Random', nmax-ninit, cls_data, s, prior_xt)
     al_RND = designer(data_cls=cls_data, 
                            method='SEQDES', 
                            args={'mini_batch': 1, 
@@ -136,10 +133,11 @@ if show:
     meths = ['eivarx', 'eivar', 'lhs', 'rnd']
     for mid, m in enumerate(meths):   
         p = np.array([r['Prediction Error'][ninit:nmax] for r in result if r['method'] == m])
+        rep = p.shape[0]
         meanerror = np.mean(p, axis=0)
         sderror = np.std(p, axis=0)
         plt.plot(meanerror, label=m, c=cols[mid])
-        plt.fill_between(np.arange(0, nmax-ninit), meanerror-1.96*sderror/np.sqrt(seeds), meanerror+1.96*sderror/np.sqrt(seeds), color=cols[mid], alpha=0.1)
+        plt.fill_between(np.arange(0, nmax-ninit), meanerror-1.96*sderror/np.sqrt(rep), meanerror+1.96*sderror/np.sqrt(rep), color=cols[mid], alpha=0.1)
     plt.legend(bbox_to_anchor=(1.04, -0.1), ncol=len(meths))  
     plt.ylabel('Prediction Error')
     plt.yscale('log')

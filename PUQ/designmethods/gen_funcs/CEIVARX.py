@@ -30,9 +30,9 @@ def ceivarx(n,
 
     # Create a candidate list
     if synth_info.data_name == 'covid19':
-        clist = construct_candlist_covid(thetalimits, x_ref, prior_func, prior_func_t)
+        clist = construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t)
     else:
-        clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t )
+        clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
 
     nx_ref = x_ref.shape[0]
     dx = x_ref.shape[1]
@@ -136,8 +136,9 @@ def ceivarxbias(n,
     for i in range(nx_ref):
         xnew = np.concatenate((x, x_ref[i].reshape(1, dx)), axis=0)
         if unknowncov:
-            bias_var = emubias.predictcov(xnew) 
-            obsvar3D[i, :, :] = bias_var
+            obsvar3D[i, :, :] = emubias.predictcov(xnew) 
+            #if i == 1:
+            #    print(np.round(obsvar3D[i, :, :], 4))
         else:
             obsvar3D[i, :, :] = np.diag(np.repeat(synth_info.sigma2, n_x)) 
     Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, mesh_grid, f_field_rep, obsvar3D)
@@ -151,13 +152,21 @@ def ceivarxbias(n,
     xnew  = clist[maxid].reshape(1, dx + dt)
     return xnew 
 
-def construct_candlist_covid(thetalimits, xref, prior_func, prior_func_t ):
+def construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t ):
 
-    n0 = 50
-    xref_sample = np.random.choice(a=221, size=50)[:, None]/221
-    n_clist = n0*len(xref_sample)
+    # 1200 = 100 x 12
+    n0 = 100
     t_unif = prior_func_t.rnd(n0, None)
-    clist = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xref_sample])
+    clist1 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
+    
+    # 2500 = 50 x 50
+    n0 = 50
+    xref_sample = np.random.choice(a=222, size=n0, replace=False)[:, None]/221
+    t_unif = prior_func_t.rnd(n0, None)
+    clist2 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xref_sample])
+    clist = np.concatenate((clist1, clist2), axis=0)
+    
+    print(clist.shape)
     return clist
  
         

@@ -2,7 +2,7 @@ import numpy as np
 from PUQ.design import designer
 from PUQ.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
-from plots_design import create_test_non, gather_data_non, add_result, samplingdata, plot_des_pri
+from plots_design import create_test_non, add_result, samplingdata
 from ptest_funcs import pritam
 import matplotlib.pyplot as plt
 
@@ -39,10 +39,7 @@ for s in np.arange(args.seedmin, args.seedmax):
     cls_data_y = pritam()
     cls_data_y.realdata(x=xmesh, seed=s, isbias=bias)
     ytest = cls_data_y.real_data
-    
-    #plt.plot(cls_data.bias(xmesh[:, 0], xmesh[:, 1]))
-    #plt.show()
-    
+
     test_data = {'theta': xt_test, 
                  'f': ftest,
                  'p': ptest,
@@ -66,9 +63,7 @@ for s in np.arange(args.seedmin, args.seedmax):
     
     xt_eivarx = al_ceivarx._info['theta']
     f_eivarx = al_ceivarx._info['f']
-    
-    # plot_des_pri(xt_eivarx, cls_data)
-    
+
     save_output(al_ceivarx, cls_data.data_name, 'ceivarxbias', 2, 1, s)
     
     res = {'method': 'ceivarxbias', 'repno': s, 'Prediction Error': al_ceivarx._info['TV'], 'Posterior Error': al_ceivarx._info['HD']}
@@ -92,15 +87,13 @@ for s in np.arange(args.seedmin, args.seedmax):
     xt_eivar = al_ceivar._info['theta']
     f_eivar = al_ceivar._info['f']
     
-    # plot_des_pri(xt_eivar, cls_data, ninit, nmax)
-    
     save_output(al_ceivar, cls_data.data_name, 'ceivarbias', 2, 1, s)
 
     res = {'method': 'ceivarbias', 'repno': s, 'Prediction Error': al_ceivar._info['TV'], 'Posterior Error': al_ceivar._info['HD']}
     result.append(res)
 
     # LHS 
-    xt_LHS, f_LHS = samplingdata('LHS', nmax-ninit, cls_data, s, prior_xt, non=True)
+    xt_LHS = samplingdata('LHS', nmax-ninit, cls_data, s, prior_xt)
     al_LHS = designer(data_cls=cls_data, 
                            method='SEQDESBIAS', 
                            args={'mini_batch': 1, 
@@ -122,7 +115,7 @@ for s in np.arange(args.seedmin, args.seedmax):
     result.append(res)
     
     # rnd 
-    xt_RND, f_RND = samplingdata('Random', nmax-ninit, cls_data, s, prior_xt, non=True)
+    xt_RND = samplingdata('Random', nmax-ninit, cls_data, s, prior_xt)
     al_RND = designer(data_cls=cls_data, 
                            method='SEQDESBIAS', 
                            args={'mini_batch': 1, 

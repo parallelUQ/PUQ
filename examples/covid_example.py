@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from smt.sampling_methods import LHS
 import scipy.stats as sps
 from PUQ.design import designer
-from PUQ.designmethods.utils import save_output
+from PUQ.utils import save_output
     
 class covid19:
     def __init__(self):
@@ -16,7 +16,6 @@ class covid19:
                            (0.66 - self.truelims[1][0])/(self.truelims[1][1] - self.truelims[1][0]), 
                            (4 - self.truelims[2][0])/(self.truelims[2][1] - self.truelims[2][0]), 
                            (4 - self.truelims[3][0])/(self.truelims[3][1] - self.truelims[3][0])]
-        
         self.out         = [('f', float)]
         self.d           = 1
         self.p           = 5
@@ -42,15 +41,13 @@ class covid19:
         return H_o, persis_info
     
     def realdata(self, x, seed, isbias=False):
+
         self.x = x
         self.nodata = False
         self.obsvar = np.diag(np.repeat(self.sigma2, len(self.x)))
         lm = self.truelims
-        hosp_ad, daily_ad_benchmark = runfunction(None, [(2.9 - lm[0][0])/(lm[0][1] - lm[0][0]), 
-                                                         (0.66 - lm[1][0])/(lm[1][1] - lm[1][0]), 
-                                                         (4 - lm[2][0])/(lm[2][1] - lm[2][0]), 
-                                                         (4 - lm[3][0])/(lm[3][1] - lm[3][0])], lm, point=False)
-        
+        hosp_ad, daily_ad_benchmark = runfunction(None, self.true_theta, lm, point=False)
+
         self.des = []
         for xid, x in enumerate(self.x):
             newd = {'x':x, 'feval':[], 'rep':self.nrep}
@@ -62,17 +59,9 @@ class covid19:
         
         mean_feval       = [np.mean(d['feval']) for d in self.des]
         self.real_data   = np.array([mean_feval], dtype='float64')
-    
-    def realvar(self, x):
-        obsvar = np.zeros(x.shape)
-        obsvar[x >= 0] = self.sigma2 
-        obsvar = obsvar.ravel()
-        return obsvar
 
-    def genobsdata(self, x, sigma2, isbias=False):
-        varval = self.realvar(x)
-        return self.function(x[0], self.true_theta) + np.random.normal(0, np.sqrt(varval), 1) 
 
+args = parse_arguments()
 
 cls_data = covid19()
 #cls_data.realdata(np.array([75/221, 100/221, 125/221, 150/221, 175/221])[:, None], 1)
@@ -128,11 +117,14 @@ test_data = {'theta': xt_test,
 ninit = 50
 nmax = 51
 result = []
-seeds = 1
-for s in range(seeds):
+#args.seedmin = 0
+#args.seedmax = 1
+for s in np.arange(args.seedmin, args.seedmax):
+
+    s = int(s)
 
     al_ceivar = designer(data_cls=cls_data, 
-                           method='SEQCOMPDES', 
+                           method='SEQDES', 
                            args={'mini_batch': 1, 
                                  'n_init_thetas': ninit,
                                  'nworkers': 2, 
@@ -140,7 +132,8 @@ for s in range(seeds):
                                  'seed_n0': s,
                                  'prior': priors,
                                  'data_test': test_data,
-                                 'max_evals': nmax})
+                                 'max_evals': nmax,
+                                 'theta_torun': None})
     
     res = {'method': 'eivar', 'repno': s, 'Prediction Error': al_ceivar._info['TV'], 'Posterior Error': al_ceivar._info['HD']}
     result.append(res)
@@ -148,7 +141,7 @@ for s in range(seeds):
     save_output(al_ceivar, cls_data.data_name, 'ceivar', 2, 1, s)
 
     al_ceivarx = designer(data_cls=cls_data, 
-                           method='SEQCOMPDES', 
+                           method='SEQDES', 
                            args={'mini_batch': 1, 
                                  'n_init_thetas': ninit,
                                  'nworkers': 2, 
@@ -156,7 +149,8 @@ for s in range(seeds):
                                  'seed_n0': s,
                                  'prior': priors,
                                  'data_test': test_data,
-                                 'max_evals': nmax})
+                                 'max_evals': nmax,
+                                 'theta_torun': None})
     
     xt_eivarx = al_ceivarx._info['theta']
     f_eivarx = al_ceivarx._info['f']
@@ -171,16 +165,16 @@ for s in range(seeds):
     sampling = LHS(xlimits=cls_data.thetalimits, random_state=s)
     xt_LHS = sampling(nmax)
     al_LHS = designer(data_cls=cls_data, 
-                           method='SEQGIVEN', 
+                           method='SEQDES', 
                            args={'mini_batch': 1, 
                                  'n_init_thetas': ninit,
                                  'nworkers': 2, 
+                                 'AL': None,
                                  'seed_n0': s,
                                  'prior': priors,
                                  'data_test': test_data,
                                  'max_evals': nmax,
-                                 'theta_torun': xt_LHS,
-                                 'bias': False})
+                                 'theta_torun': xt_LHS})
     xt_LHS = al_LHS._info['theta']
     f_LHS = al_LHS._info['f']
     thetamle_LHS = al_LHS._info['thetamle'][-1]
@@ -193,16 +187,16 @@ for s in range(seeds):
     # rnd 
     xt_RND = prior_xt.rnd(nmax, seed=s) 
     al_RND = designer(data_cls=cls_data, 
-                           method='SEQGIVEN', 
+                           method='SEQDES', 
                            args={'mini_batch': 1, 
                                  'n_init_thetas': ninit,
                                  'nworkers': 2, 
+                                 'AL': None,
                                  'seed_n0': s,
                                  'prior': priors,
                                  'data_test': test_data,
                                  'max_evals': nmax,
-                                 'theta_torun': xt_RND,
-                                 'bias': False})
+                                 'theta_torun': xt_RND})
     xt_RND = al_RND._info['theta']
     f_RND = al_RND._info['f']
     thetamle_RND = al_RND._info['thetamle'][-1]

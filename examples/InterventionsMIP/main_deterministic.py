@@ -5,6 +5,7 @@ from utils import parse_arguments
 from InterventionsMIP import load_config_file, logger, change_paths
 
 def runfunction(x, param, truelims, point=True):
+
     # Parse arguments
     args = parse_arguments()
     args.f = "setup_data_Final_lsq.json"
@@ -87,9 +88,9 @@ def runfunction(x, param, truelims, point=True):
     else:
         policy_ub = None
 
-
+    param_trans = []
     for th_id, th in enumerate(param):
-        param[th_id] = truelims[th_id][0] + th*(truelims[th_id][1] - truelims[th_id][0])
+        param_trans.append(truelims[th_id][0] + th*(truelims[th_id][1] - truelims[th_id][0]))
         
     res = run_det(instance=instance,
             tiers=tiers,
@@ -107,7 +108,7 @@ def runfunction(x, param, truelims, point=True):
             after_tiers=eval(args.aftert),
             policy_field=args.field,
             policy_ub=policy_ub,
-            param=[(1/param[0]), (param[1]), (1/param[2]), (1/param[3])])
+            params=[(1/param_trans[0]), (param_trans[1]), (1/param_trans[2]), (1/param_trans[3])])
      
     real_hosp, hosp_benchmark, real_icu, icu_benchmark, hosp_ad, daily_ad_benchmark = res[0], res[1], res[2], res[3], res[4], res[5]
     

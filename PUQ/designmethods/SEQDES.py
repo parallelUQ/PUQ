@@ -117,7 +117,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         
         # Simulation info
         synth_info      = gen_specs['user']['synth_cls']
-        obsvar, data, theta_limits, dim, x, des = synth_info.obsvar, synth_info.real_data, synth_info.thetalimits, synth_info.d, synth_info.x, synth_info.des
+        obsvar, data, theta_limits, dim, x = synth_info.obsvar, synth_info.real_data, synth_info.thetalimits, synth_info.d, synth_info.x
 
         # Test data
         test_data = gen_specs['user']['test_data']
@@ -162,11 +162,11 @@ def gen_f(H, persis_info, gen_specs, libE_info):
             if update_model:
                 
                 emu = fit_emulator1d(x_emu, theta, fevals)
-                theta_mle = find_mle(emu, x, x_emu, true_fevals, obsvar, dx, dt, theta_limits)
+                theta_mle = find_mle(emu, x, x_emu, true_fevals, obsvar, dx, dt, theta_limits, False)
                 mlelist.append(theta_mle)
                 
-                if (len(theta) % 10 == 0):
-                    print('mle:', theta_mle)
+                #if (len(theta) % 10 == 0):
+                print('mle:', theta_mle)
                 
                 TV, HD = collect_data(emu, None, x_emu, theta_mle, dt, x_mesh, thetatest, nmesh, ytest, ptest, x, true_fevals, obsvar, synth_info)  
                 prev_pending   = pending.copy()

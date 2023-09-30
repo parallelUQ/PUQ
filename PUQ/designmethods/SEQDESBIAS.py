@@ -3,7 +3,7 @@ from PUQ.designmethods.gen_funcs.acquisition_funcs_support import multiple_pdfs
 from PUQ.designmethods.gen_funcs.CEIVAR import ceivarbias
 from PUQ.designmethods.gen_funcs.CEIVARX import ceivarxbias
 from PUQ.designmethods.SEQCALsupport import load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
-from PUQ.designmethods.utils import collect_data, fit_emulator1d, find_mle_bias, bias_predict
+from PUQ.designmethods.utils import collect_data, fit_emulator1d, find_mle, bias_predict
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
 from libensemble.alloc_funcs.start_only_persistent import only_persistent_gens as alloc_f
@@ -120,7 +120,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         
         # Simulation info
         synth_info      = gen_specs['user']['synth_cls']
-        obsvar, data, theta_limits, dim, x, des = synth_info.obsvar, synth_info.real_data, synth_info.thetalimits, synth_info.d, synth_info.x, synth_info.des
+        obsvar, data, theta_limits, dim, x = synth_info.obsvar, synth_info.real_data, synth_info.thetalimits, synth_info.d, synth_info.x
 
         # Test data
         test_data = gen_specs['user']['test_data']
@@ -164,9 +164,10 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
             if update_model:
                 emu = fit_emulator1d(x_emu, theta, fevals)
-                theta_mle = find_mle_bias(emu, x, x_emu, true_fevals, obsvar, dx, dt, theta_limits)
-                if (len(theta) % 10 == 0):
-                    print('mle:', theta_mle)
+                theta_mle = find_mle(emu, x, x_emu, true_fevals, obsvar, dx, dt, theta_limits, True)
+     
+                #if (len(theta) % 10 == 0):
+                print('mle:', theta_mle)
   
                 # Bias prediction 
                 bias_pred = bias_predict(emu, theta_mle, x_emu, x, true_fevals, unknowncov)

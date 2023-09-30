@@ -215,10 +215,11 @@ def run_det(instance,
             after_tiers=[0,1,2,3,4],
             policy_field="IYIH",
             policy_ub=None,
-            param=None):
+            params=None):
     
-    
-    instance.param = param
+
+    instance.param = params
+
     start_date = dt.datetime(2020,2,28)
     daily_admission_file_path = instance.path_to_data  / "austin_hosp_ad_lsq.csv"
     hosp_ad = read_hosp(daily_admission_file_path, start_date, "admits")

@@ -2,7 +2,7 @@ import numpy as np
 from PUQ.design import designer
 from PUQ.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
-from plots_design import plot_EIVAR, obsdata, create_test, add_result, samplingdata
+from plots_design import create_test, add_result, samplingdata
 from ptest_funcs import sinfunc
 import matplotlib.pyplot as plt
 
@@ -23,9 +23,6 @@ for s in np.arange(args.seedmin, args.seedmax):
     dt = len(cls_data.true_theta)
     cls_data.realdata(np.array([0.1, 0.1, 0.3, 0.3, 0.5, 0.5, 0.7, 0.7, 0.9, 0.9])[:, None], seed=s, isbias=bias)
 
-    # Observe
-    # obsdata(cls_data)
-        
     prior_xt     = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], b=cls_data.thetalimits[:, 1]) 
     prior_x      = prior_dist(dist='uniform')(a=np.array([cls_data.thetalimits[0][0]]), b=np.array([cls_data.thetalimits[0][1]])) 
     prior_t      = prior_dist(dist='uniform')(a=np.array([cls_data.thetalimits[1][0]]), b=np.array([cls_data.thetalimits[1][1]]))
@@ -64,8 +61,6 @@ for s in np.arange(args.seedmin, args.seedmax):
     f_eivarx = al_ceivarx._info['f']
     
     save_output(al_ceivarx, cls_data.data_name, 'ceivarx', 2, 1, s)
-    
-    # plot_EIVAR(xt_eivarx, cls_data, ninit, xlim1=0, xlim2=1)
 
     res = {'method': 'ceivarxbias', 'repno': s, 'Prediction Error': al_ceivarx._info['TV'], 'Posterior Error': al_ceivarx._info['HD']}
     result.append(res)
@@ -86,15 +81,13 @@ for s in np.arange(args.seedmin, args.seedmax):
     xt_eivar = al_ceivar._info['theta']
     f_eivar = al_ceivar._info['f']
 
-    # plot_EIVAR(xt_eivar, cls_data, ninit, xlim1=0, xlim2=1)
-
     save_output(al_ceivar, cls_data.data_name, 'ceivar', 2, 1, s)
     
     res = {'method': 'ceivarbias', 'repno': s, 'Prediction Error': al_ceivar._info['TV'], 'Posterior Error': al_ceivar._info['HD']}
     result.append(res)
     
     # LHS 
-    xt_LHS, f_LHS = samplingdata('LHS', nmax-ninit, cls_data, s, prior_xt)
+    xt_LHS = samplingdata('LHS', nmax-ninit, cls_data, s, prior_xt)
     al_LHS = designer(data_cls=cls_data, 
                            method='SEQDESBIAS', 
                            args={'mini_batch': 1, 
@@ -116,7 +109,7 @@ for s in np.arange(args.seedmin, args.seedmax):
     result.append(res)
     
     # rnd 
-    xt_RND, f_RND = samplingdata('Random', nmax-ninit, cls_data, s, prior_xt)
+    xt_RND = samplingdata('Random', nmax-ninit, cls_data, s, prior_xt)
     al_RND = designer(data_cls=cls_data, 
                            method='SEQDESBIAS', 
                            args={'mini_batch': 1, 
