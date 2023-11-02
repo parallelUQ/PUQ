@@ -4,7 +4,7 @@ from PUQ.prior import prior_dist
 from plots_design import create_test
 from ptest_funcs import sinfunc
 from PUQ.surrogate import emulator
-from Fig2support import ceivarxfig
+from Figure2support import ceivarxfig
 from PUQ.designmethods.utils import find_mle
 s = 1
 

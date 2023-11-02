@@ -21,7 +21,7 @@ if __name__ == "__main__":
         cls_data = sinfunc()
         dt = len(cls_data.true_theta)
         cls_data.realdata(x=np.array([0.1, 0.1, 0.3, 0.3, 0.5, 0.5, 0.7, 0.7, 0.9, 0.9])[:, None], seed=s)
-        #cls_data.realdata(x=np.array([0.1, 0.3, 0.5, 0.7,  0.9])[:, None], seed=s)   
+        
         prior_xt     = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], b=cls_data.thetalimits[:, 1]) 
         prior_x      = prior_dist(dist='uniform')(a=np.array([cls_data.thetalimits[0][0]]), b=np.array([cls_data.thetalimits[0][1]])) 
         prior_t      = prior_dist(dist='uniform')(a=np.array([cls_data.thetalimits[1][0]]), b=np.array([cls_data.thetalimits[1][1]]))

@@ -26,8 +26,9 @@ for i in range(nmesh+1):
         xt_cand = np.array([X[i, j], Y[i, j]]).reshape(1, 2)
         Z[i, j] = cls_data.function(X[i, j], Y[i, j], 0.5)
         B[i, j] = cls_data.bias(X[i, j], Y[i, j])
-plt.contourf(X, Y, Z, cmap='Purples', alpha=0.5)
-
+fig, ax = plt.subplots()
+CS = plt.contourf(X, Y, Z, cmap='Purples', alpha=1)
+fig.colorbar(CS)
 for xid1 in range(len(x)):
     for xid2 in range(len(y)):
         plt.scatter(x[xid1], x[xid2], marker='x', c='black', s=60, zorder=2)
@@ -42,8 +43,8 @@ plt.savefig("Figure4a.png", bbox_inches="tight")
 plt.show()
 
 # Bias
-plt.contourf(X, Y, B, cmap='Purples', alpha=0.5)
-
+CS = plt.contour(X, Y, B, cmap='Purples', alpha=1)
+plt.clabel(CS, inline=1, fontsize=14)
 for xid1 in range(len(x)):
     for xid2 in range(len(y)):
         plt.scatter(x[xid1], x[xid2], marker='x', c='black', s=60, zorder=2)
@@ -57,9 +58,9 @@ plt.yticks([0, 0.5, 1], [0, 0.5, 1], fontsize=15)
 plt.show()
 
 # Model + Bias
-
-plt.contourf(X, Y, Z+B, cmap='Purples', alpha=0.5)
-
+fig, ax = plt.subplots()
+CS = plt.contourf(X, Y, Z+B, cmap='Purples', alpha=1)
+fig.colorbar(CS)
 for xid1 in range(len(x)):
     for xid2 in range(len(y)):
         plt.scatter(x[xid1], x[xid2], marker='x', c='black', s=60, zorder=2)

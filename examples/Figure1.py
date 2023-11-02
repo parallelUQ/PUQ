@@ -52,7 +52,8 @@ if __name__ == "__main__":
                                  'prior': priors,
                                  'data_test': test_data,
                                  'theta_torun': None,
-                                 'max_evals': nmax})
+                                 'max_evals': nmax,
+                                 'is_thetamle': False})
     
     xt_eivarx = al_ceivarx._info['theta']
     f_eivarx = al_ceivarx._info['f']
@@ -68,7 +69,8 @@ if __name__ == "__main__":
                                  'prior': priors,
                                  'data_test': test_data,
                                  'theta_torun': None,
-                                 'max_evals': nmax})
+                                 'max_evals': nmax,
+                                 'is_thetamle': False})
     
     xt_eivar = al_ceivar._info['theta']
     f_eivar = al_ceivar._info['f']
@@ -87,7 +89,8 @@ if __name__ == "__main__":
                                  'data_test': test_data,
                                  'max_evals': nmax,
                                  'theta_torun': xt_LHS,
-                                 'bias': False})
+                                 'bias': False,
+                                 'is_thetamle': False})
     xt_LHS = al_LHS._info['theta']
     f_LHS = al_LHS._info['f']
     thetamle_LHS = al_LHS._info['thetamle'][-1]
@@ -139,7 +142,7 @@ if __name__ == "__main__":
                          pmeanhat + np.sqrt(pvarhat), 
                          color='blue', alpha=0.2)
         plt.plot(thetamesh.flatten(), ptest.flatten(), color='red', linewidth=2.5) 
-        plt.ylabel(r'$p(y|\theta)$', fontsize=20)
+        plt.ylabel(r'$\tilde{p}(\theta|y)$', fontsize=20)
         plt.xlabel(r'$\theta$', fontsize=20)
         plt.xticks(fontsize=15)
         plt.yticks(np.arange(0, 1.5, 0.3), fontsize=15)

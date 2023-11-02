@@ -5,7 +5,7 @@ from plots_design import create_test
 from ptest_funcs import sinfunc
 import matplotlib.pyplot as plt
 from PUQ.surrogate import emulator
-from Fig2support import ceivarfig
+from Figure2support import ceivarfig
 from PUQ.designmethods.utils import find_mle
 s = 1
 

@@ -42,7 +42,7 @@ def ceivar(n,
     xt_ref = np.array([np.concatenate([xc, th]) for th in thetamesh for xc in x])
     
     Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, xt_ref, obs, obsvar)
-    print(xt_ref)
+
     eivar_val = np.zeros(len(clist))
     for xt_id, xt_c in enumerate(clist):
         eivar_val[xt_id] = postphimat(emu._info, n_x, xt_ref, obs, obsvar, xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
