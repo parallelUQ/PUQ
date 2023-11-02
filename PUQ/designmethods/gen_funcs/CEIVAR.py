@@ -22,7 +22,11 @@ def ceivar(n,
           type_init=None,
           synth_info=None,
           theta_mle=None):
-    
+    '''
+    Smat3D    : ncand x nfield x nfield (3D) Emulator Covariance matrix
+    pred_mean : ncand x nfield (2D) Emulator Mean matrix
+    rVh_1_3d  : ncand x nfield x nacquired (3D) matrix
+    '''
 
     p = theta.shape[1]
     dt = thetamesh.shape[1]
@@ -38,6 +42,7 @@ def ceivar(n,
     xt_ref = np.array([np.concatenate([xc, th]) for th in thetamesh for xc in x])
     
     Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, xt_ref, obs, obsvar)
+    print(xt_ref)
     eivar_val = np.zeros(len(clist))
     for xt_id, xt_c in enumerate(clist):
         eivar_val[xt_id] = postphimat(emu._info, n_x, xt_ref, obs, obsvar, xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
@@ -82,7 +87,11 @@ def ceivarbias(n,
 
 
     xuniq = np.unique(x, axis=0)
-    clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
+    # Create a candidate list
+    if synth_info.data_name == 'covid19':
+        clist = construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t)
+    else:
+        clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
 
     thetatest = np.array([np.concatenate([xc, th]) for th in thetamesh for xc in x])
     
@@ -109,17 +118,19 @@ def construct_candlist(thetalimits, xuniq, prior_func, prior_func_t):
 
 def construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t):
 
-    # 1200 = 100 x 12
+    # 1000 = 100 x nx
     n0 = 100
+    nx = len(xuniq)
     t_unif = prior_func_t.rnd(n0, None)
     clist1 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
     
-    # 2500 = 50 x 50
-    n0 = 50
-    xref_sample = np.random.choice(a=222, size=n0, replace=False)[:, None]/221
+    # 1000 = 100 x nx
+    xref_sample = np.random.choice(a=189, size=nx, replace=False)[:, None]/188
     t_unif = prior_func_t.rnd(n0, None)
     clist2 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xref_sample])
     clist = np.concatenate((clist1, clist2), axis=0)
+    #print(clist.shape)
     
-    print(clist.shape)
+    #clist = prior_func.rnd(1000, None)
+    #print(clist.shape)
     return clist

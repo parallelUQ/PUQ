@@ -8,8 +8,8 @@ from itertools import product
 from SEIYAHRD_sim import simulate, hosp_based_policy, fix_policy, simulate_p
 from policies import build_multi_tier_policy_candidates, build_ACS_policy_candidates, MultiTierPolicy, MultiTierPolicy_ACS
 #from reporting.plotting import plot_stoch_simulations
-from InterventionsMIP import config, logger, output_path
-from utils import profile_log, print_profiling_log
+from COVID19 import config, logger, output_path
+
 
 
 def multi_tier_objective(instance, policy, sim_output, **kwargs):

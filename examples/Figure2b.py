@@ -3,15 +3,9 @@ from PUQ.design import designer
 from PUQ.prior import prior_dist
 from plots_design import create_test
 from ptest_funcs import sinfunc
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-from PUQ.surrogatemethods.PCGPexp import temp_postphimat, postphimat, postpred, postphimat2, postphimat3
-from PUQ.designmethods.SEQCALsupport import find_mle
 from PUQ.surrogate import emulator
-from PUQ.surrogatemethods.PCGPexp import  postpred
-from PUQ.designmethods.gen_funcs.CEIVAR import ceivarfig
-
+from Fig2support import ceivarxfig
+from PUQ.designmethods.utils import find_mle
 s = 1
 
 cls_data = sinfunc()
@@ -44,10 +38,10 @@ test_data = {'theta': xt_test,
 
 
 x_emu = np.arange(0, 1)[:, None ]
-
+sinit = 5
 ninit = 10
 nmax = 30
-xt  = prior_xt.rnd(ninit, s) 
+xt = prior_xt.rnd(ninit, sinit) 
 f = cls_data.function(xt[:, 0], xt[:, 1])
 
 for i in range(nmax-ninit):
@@ -56,9 +50,17 @@ for i in range(nmax-ninit):
                    f[None, :], 
                    method='PCGPexp')
     
-    theta_mle = find_mle(emu, cls_data.x, x_emu, cls_data.real_data, cls_data.obsvar, 1, 1, cls_data.thetalimits)
-    #print(theta_mle)
-    xnew = ceivarfig(1, 
+    theta_mle = find_mle(emu,
+                         cls_data.x, 
+                         x_emu, 
+                         cls_data.real_data, 
+                         cls_data.obsvar, 
+                         1, 
+                         1, 
+                         cls_data.thetalimits, 
+                         is_bias=False)
+
+    xnew = ceivarxfig(1, 
               cls_data.x, 
               cls_data.x,
               emu, 

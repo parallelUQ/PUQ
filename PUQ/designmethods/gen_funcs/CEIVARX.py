@@ -49,9 +49,9 @@ def ceivarx(n,
     y_ref = emu.predict(x=x_emu, theta=xt_ref).mean()
     # nx_ref x nf
     f_temp_rep = np.repeat(obs, nx_ref, axis=0)
+
     # nx_ref x (nf + 1)
     f_field_rep = np.concatenate((f_temp_rep, y_ref.T), axis=1)
-
 
     xs = [np.concatenate([x, xc.reshape(1, dx)], axis=0) for xc in x_ref]
     ts = [np.repeat(theta_mle.reshape(1, dt), nf + 1, axis=0)]
@@ -101,7 +101,11 @@ def ceivarxbias(n,
     x_emu = np.arange(0, 1)[:, None ]
     xuniq = np.unique(x, axis=0)
 
-    clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
+    # Create a candidate list
+    if synth_info.data_name == 'covid19':
+        clist = construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t)
+    else:
+        clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
 
     nx_ref = x_ref.shape[0]
     dx = x_ref.shape[1]
@@ -141,7 +145,9 @@ def ceivarxbias(n,
             #    print(np.round(obsvar3D[i, :, :], 4))
         else:
             obsvar3D[i, :, :] = np.diag(np.repeat(synth_info.sigma2, n_x)) 
+
     Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, mesh_grid, f_field_rep, obsvar3D)
+
     eivar_val = np.zeros(len(clist))
     for xt_id, x_c in enumerate(clist):
         xt_cand = x_c.reshape(1, dx + dt)
@@ -154,19 +160,20 @@ def ceivarxbias(n,
 
 def construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t ):
 
-    # 1200 = 100 x 12
+    # 1000 = 100 x nx
     n0 = 100
+    nx = len(xuniq)
     t_unif = prior_func_t.rnd(n0, None)
     clist1 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
     
-    # 2500 = 50 x 50
-    n0 = 50
-    xref_sample = np.random.choice(a=222, size=n0, replace=False)[:, None]/221
+    # 1000 = 100 x nx
+    xref_sample = np.random.choice(a=189, size=nx, replace=False)[:, None]/188
     t_unif = prior_func_t.rnd(n0, None)
     clist2 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xref_sample])
     clist = np.concatenate((clist1, clist2), axis=0)
-    
-    print(clist.shape)
+
+    #clist = prior_func.rnd(1000, None)
+    #print(clist.shape)
     return clist
  
         

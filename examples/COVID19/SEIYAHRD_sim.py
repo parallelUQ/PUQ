@@ -8,9 +8,9 @@ and a class to properly define a calendar (SimCalendar).
 '''
 import datetime as dt
 import numpy as np
-from utils import timeit, roundup
+from covid_utils import timeit, roundup
 from policies import MultiTierPolicy, MultiTierPolicy_ACS
-from InterventionsMIP import config
+from COVID19 import config
 import copy
 
 
@@ -307,7 +307,7 @@ def simulate_ICU(instance, policy, interventions, seed=-1, **kwargs):
     epi_rand.update_hosp_duration()
     epi_orig.update_hosp_duration()
     
-    print(instance.param)
+    #print(instance.param)
     
     # Compartments
     if config['det_history']:
@@ -372,7 +372,7 @@ def simulate_ICU(instance, policy, interventions, seed=-1, **kwargs):
         epi.omega_IA = instance.param[1]
         epi.gamma_IY = instance.param[2]
         epi.gamma_IA = instance.param[3]
-        
+
         if approx_method == 1:
             # directly dividing step_size
             rate_E = epi.sigma_E / step_size

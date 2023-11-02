@@ -20,6 +20,7 @@ def fit(fitinfo, data_cls, args):
     max_evals = args['max_evals']
     test_data = args['data_test']
     theta_torun = args['theta_torun']
+    is_thetamle = args['is_thetamle']
     
     out = data_cls.out
     sim_f = data_cls.sim
@@ -58,6 +59,7 @@ def fit(fitinfo, data_cls, args):
             'test_data': test_data,
             'prior': prior,
             'theta_torun': theta_torun,
+            'is_thetamle': is_thetamle,
         },
     }
 
@@ -110,7 +112,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         AL              = gen_specs['user']['AL']
         seed            = gen_specs['user']['seed_n0']
         theta_torun     = gen_specs['user']['theta_torun']
-        
+        is_thetamle     = gen_specs['user']['is_thetamle']
         # Prior functions
         prior_func_all  = gen_specs['user']['prior']
         prior_func, prior_func_x, prior_func_t = prior_func_all['prior'], prior_func_all['priorx'], prior_func_all['priort']
@@ -162,7 +164,12 @@ def gen_f(H, persis_info, gen_specs, libE_info):
             if update_model:
                 
                 emu = fit_emulator1d(x_emu, theta, fevals)
-                theta_mle = find_mle(emu, x, x_emu, true_fevals, obsvar, dx, dt, theta_limits, False)
+                if is_thetamle:
+                    theta_mle = np.array(synth_info.true_theta)[None, :] 
+                else:
+                    theta_mle = find_mle(emu, x, x_emu, true_fevals, obsvar, dx, dt, theta_limits, False)
+
+                print(theta_mle.shape)
                 mlelist.append(theta_mle)
                 
                 #if (len(theta) % 10 == 0):

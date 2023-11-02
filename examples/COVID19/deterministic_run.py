@@ -1,32 +1,16 @@
-import pickle
 import numpy as np
 import pandas as pd
-import multiprocessing as mp
 import datetime as dt
-from collections import defaultdict
 import multiprocessing as mp
-from utils import parse_arguments
-from InterventionsMIP import load_config_file, logger, change_paths
 from pathlib import Path
 from pipelinemultitier import read_hosp
 from interventions import create_intLevel, form_interventions
-from itertools import product
-from SEIYAHRD_sim import simulate, hosp_based_policy, fix_policy, simulate_p
-from policies import build_multi_tier_policy_candidates, build_ACS_policy_candidates, MultiTierPolicy, MultiTierPolicy_ACS
-from InterventionsMIP import config, logger, output_path
-from utils import profile_log, print_profiling_log
-from threshold_policy import policy_multi_iterator, run_multi_calendar, stoch_simulation_iterator
+from SEIYAHRD_sim import simulate_p
+from threshold_policy import policy_multi_iterator
 from objective_functions import multi_tier_objective
-from instances import load_instance, load_tiers, load_seeds
 from policies import MultiTierPolicy as MTP
-from itertools import product
-import warnings
-from scipy.optimize import least_squares
-from scipy.optimize._lsq.least_squares import IMPLEMENTED_LOSSES
-from scipy.optimize._lsq.common import EPS, make_strictly_feasible
-from scipy.optimize import minimize
-from scipy.optimize import LinearConstraint
-import math 
+from instances import load_seeds
+
 def deterministic_path(instance, 
                        tiers, 
                        obj_func, 
@@ -56,6 +40,7 @@ def deterministic_path(instance,
     intervention_levels = create_intLevel(sc_levels, uniqueCO, uniquePS)
     interventions_train = form_interventions(intervention_levels, instance.epi, instance.N)
     
+
     # Build an iterator of all the candidates to be simulated by simulate_p
     sim_configs = policy_multi_iterator(instance,
                                         tiers,
@@ -68,6 +53,8 @@ def deterministic_path(instance,
                                         after_tiers=after_tiers,
                                         policy_field=policy_field,
                                         policy_ub=policy_ub)
+    
+
     # Launch parallel simulation
     all_outputs = simulate_p(mp_pool, sim_configs)
     
@@ -118,7 +105,7 @@ def residual_error(x_beta, **kwargs):
     n_replicas_test = 1
     
     # Create the pool (Note: pool needs to be created only once to run on a cluster)
-    mp_pool = mp.Pool(n_proc) if n_proc > 1 else None
+    mp_pool = None
     
     # check if the "do-nothing" / 'Stage 1 option is in the tiers. If not, add it
     originInt = {
@@ -178,7 +165,7 @@ def residual_error(x_beta, **kwargs):
                                     policy_field='IYIH',
                                     policy_ub=policy_ub)
 
- 
+
     if instance.city == 'austin':
         hosp_benchmark = None
         real_hosp = [a_i - b_i for a_i, b_i in zip(instance.cal.real_hosp, real_icu)] 
@@ -197,27 +184,11 @@ def residual_error(x_beta, **kwargs):
         residual_error_IYIH = [element * w_iyih for element in residual_error_IYIH]
         residual_error_IH.extend(residual_error_IYIH)
         
-    elif instance.city == 'houston':
-        hosp_benchmark = None
-        real_hosp = [a_i - b_i for a_i, b_i in zip(instance.cal.real_hosp, real_icu)] 
-        hosp_benchmark = [sim_output['IH'][t].sum() for t in range(44, len(instance.cal.real_hosp))]
-        residual_error_IH = [a_i - b_i for a_i, b_i in zip(real_hosp[44:], hosp_benchmark)]
- 
-        icu_benchmark = [sim_output['ICU'][t].sum() for t in range(44, len(instance.cal.real_hosp))]
-        w_icu = 1.5
-        residual_error_ICU = [a_i - b_i for a_i, b_i in zip(real_icu[44:], icu_benchmark)]
-        residual_error_ICU = [element * w_icu for element in residual_error_ICU]
-        residual_error_IH.extend(residual_error_ICU)
-    
-    return residual_error_IH 
-    
-def least_squares_fit(initial_guess, kwargs):
-    # Function that runs the least squares fit
-    result = least_squares(residual_error, initial_guess, bounds = ([0, 0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1, 1]), method='trf', kwargs = kwargs)
-    return result 
 
+    return real_hosp, hosp_benchmark, real_icu, icu_benchmark, hosp_ad, daily_ad_benchmark
     
-def run_fit(instance,
+
+def run_det(instance,
             tiers,
             obj_func,
             n_replicas_train=100,
@@ -233,33 +204,23 @@ def run_fit(instance,
             after_tiers=[0,1,2,3,4],
             policy_field="IYIH",
             policy_ub=None,
-            method="lsq"):
+            params=None):
     
-    if instance.city == 'austin':
-        start_date = dt.datetime(2020,2,28)
-        daily_admission_file_path = instance.path_to_data  / "austin_hosp_ad_lsq.csv"
-        hosp_ad = read_hosp(daily_admission_file_path, start_date, "admits")
-        
-        daily_icu_file_path = instance.path_to_data  / "austin_real_icu_lsq.csv"
-        real_icu = read_hosp(daily_icu_file_path, start_date)  
 
-        #time blocks
-        change_dates = [dt.date(2020, 2, 15), dt.date(2020, 3, 24), dt.date(2020, 5, 21), dt.date(2020, 6, 26), dt.date(2020, 8, 20), dt.date(2020, 10, 8)] 
+    instance.param = params
 
-        #initial guess
-        x = np.array([0, 0.74, 0.8, 0.8, 0.8, 0.8, 0.8])        
-   
-    elif instance.city == 'houston':
-        hosp_ad = None
-        daily_icu_file_path = instance.path_to_data  / "houston_real_icu_lsq.csv"
-        start_date = dt.datetime(2020,2,19)
-        real_icu = read_hosp(daily_icu_file_path, start_date)   
-        
-        #time blocks
-        change_dates = [dt.date(2020, 2, 15), dt.date(2020, 3, 24), dt.date(2020, 5, 21), dt.date(2020, 6, 26), dt.date(2020, 8, 20), dt.date(2020, 10, 8)]
+    start_date = dt.datetime(2020,2,28)
+    daily_admission_file_path = instance.path_to_data  / "austin_hosp_ad_lsq.csv"
+    hosp_ad = read_hosp(daily_admission_file_path, start_date, "admits")
     
-        #initial guess
-        x = np.array([0, 0.74, 0.8, 0.8, 0.8, 0.8, 0.8])
+    daily_icu_file_path = instance.path_to_data  / "austin_real_icu_lsq.csv"
+    real_icu = read_hosp(daily_icu_file_path, start_date)  
+
+    #time blocks
+    change_dates = [dt.date(2020, 2, 15), dt.date(2020, 3, 24), dt.date(2020, 5, 21), dt.date(2020, 6, 26), dt.date(2020, 8, 20), dt.date(2020, 10, 8)] 
+
+    #initial guess
+    x = np.array([0.061322, 0.743577, 0.602637, 0.781558, 0.754433, 0.5621446466013162, 0.28623800283643225])        
 
     kwargs  = {'change_dates' : change_dates,
                'instance' : instance,
@@ -267,40 +228,7 @@ def run_fit(instance,
                'hosp_ad': hosp_ad,
                'real_icu': real_icu
                }
-    
-    ########## ########## ##########
-    #Run least squares
-    res = least_squares_fit(x, kwargs)
-    SSE = res.cost
-    ########## ########## ##########
-    
-    #Get variable value
-    opt_tr_reduction = res.x
-    contact_reduction = opt_tr_reduction[0:5]
-    cocoon = [0, opt_tr_reduction[1], opt_tr_reduction[1], opt_tr_reduction[3], opt_tr_reduction[4]]
-    betas = instance.epi.beta*(1 - (contact_reduction))
-    end_date = []
-    for idx in range(len(change_dates[1:])):
-        end_date.append(str(change_dates[1:][idx] - dt.timedelta(days=1)))
-    
-    print('beta_0:', instance.epi.beta)   
-    print('SSE:', SSE)   
-    table = pd.DataFrame({'start_date': change_dates[:-1], 'end_date': end_date, 'contact_reduction': contact_reduction, 'beta': betas, 'cocoon': cocoon})
-    print(table)
-    
-    print('alpha1=', opt_tr_reduction[5])
-    print('alpha2=', opt_tr_reduction[6])
+    real_hosp, hosp_benchmark, real_icu, icu_benchmark, hosp_ad, daily_ad_benchmark = residual_error(x, **kwargs)
 
-    tr_reduc = []
-    date_list = []
-    cocoon_reduc = []
-    for idx in range(len(change_dates[:-1])):
-        tr_reduc.extend([contact_reduction[idx]] * (change_dates[idx + 1] - change_dates[idx]).days)
-        date_list.extend([str(change_dates[idx] + dt.timedelta(days=x)) for x in range((change_dates[idx + 1] - change_dates[idx]).days)])
-        cocoon_reduc.extend([cocoon[idx]] * (change_dates[idx + 1] - change_dates[idx]).days)
-    
-    d = {'date': pd.to_datetime(date_list), 'transmission_reduction': tr_reduc, 'cocooning': cocoon_reduc}
-    df_transmission = pd.DataFrame(data=d)
-
-    return df_transmission
+    return [real_hosp, hosp_benchmark, real_icu, icu_benchmark, hosp_ad, daily_ad_benchmark]
  

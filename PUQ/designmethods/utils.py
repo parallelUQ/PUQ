@@ -36,6 +36,7 @@ def compute_diff(x,
     
     # Predict linear bias mean  
     bias = (obs - emumean).T
+    #is_bias = False
     if is_bias:
         model = LinearRegression().fit(x, bias)
         mu_bias = model.predict(x)
@@ -82,18 +83,38 @@ def find_mle(emu,
 
 def collect_data(emu, emubias, x_emu, theta_mle, dt, xmesh, xtmesh, nmesh, ytest, ptest, x, obs, obsvar, synth_info):
     
-    xtrue_test = np.concatenate((xmesh, np.repeat(theta_mle, nmesh).reshape(nmesh, dt)), axis=1)
+    #print(theta_mle)
+    dx = xmesh.shape[1]
+    xtrue_test = [np.concatenate([xc.reshape(1, dx), theta_mle], axis=1) for xc in xmesh]
+    xtrue_test = np.array([m for mesh in xtrue_test for m in mesh])
     predobj = emu.predict(x=x_emu, theta=xtrue_test)
+    #print(xtrue_test[0:189])
+    #print([int(np.rint(x*188)) for x in xtrue_test[0:189, 0]])
     fmeanhat, fvarhat = predobj.mean(), predobj.var()
 
     if emubias == None:
         pred_error = np.mean(np.abs(fmeanhat - ytest))
+        #import matplotlib.pyplot as plt
+        #plt.plot(fmeanhat.flatten(), color='b')
+        #plt.plot(ytest.flatten(), color='r')
+        #plt.show()
+        
+        #plt.scatter(np.arange(0, len(ytest.flatten())), ytest.flatten(), color='r')
+        #plt.scatter(np.arange(0, len(ytest.flatten())), fmeanhat.flatten(), color='b')
+        #plt.show()
+        
+        #print(xmesh[np.abs(fmeanhat - ytest).flatten() > 1, :])
+        
+        #print(pred_error)
         pmeanhat, pvarhat = postpred(emu._info, x, xtmesh, obs, obsvar)
         post_error = np.mean(np.abs(pmeanhat - ptest))
+        
+        #plt.plot(pmeanhat, color='b')
+        #plt.plot(ptest, color='r')
+        #plt.show()
     else:
         bmeanhat = emubias.predict(xmesh)
         pred_error = np.mean(np.abs(fmeanhat + bmeanhat - ytest))
-
         bmeanhat = emubias.predict(x)
         pmeanhat, pvarhat = postpredbias(emu._info, x, xtmesh, obs, obsvar, bmeanhat)
         post_error = np.mean(np.abs(pmeanhat - ptest))
@@ -138,6 +159,7 @@ def find_covparam(x, biasdiff):
     bnd = ()
     theta_init = []
     limits = [0.0001, 0.5]
+    #limits = [0.0001, 50]
     for i in range(0, 3):
         bnd += ((limits[0], limits[1]),)
         theta_init.append((limits[1])/2)
@@ -160,7 +182,12 @@ def bias_predict(emu,
                  unknowncov=False):
 
     nx = len(x)
-    xp = np.concatenate((x, np.repeat(theta_mle, nx).reshape(nx, len(theta_mle))), axis=1)
+    dx = x.shape[1]
+    #print(np.repeat(theta_mle, nx).reshape(nx, len(theta_mle)))
+    xp = [np.concatenate([xc.reshape(1, dx), theta_mle], axis=1) for xc in x]
+    xp = np.array([m for mesh in xp for m in mesh])
+    #print(xt_ref)
+    #xp = np.concatenate((x, np.repeat(theta_mle, nx).reshape(nx, len(theta_mle))), axis=1)
     
     # Predict computer model
     emupred = emu.predict(x=x_emu, theta=xp)
@@ -171,18 +198,17 @@ def bias_predict(emu,
     model = LinearRegression().fit(x, bias)
     mu_bias = model.predict(x)
     diff = bias - mu_bias
-
+    #print('here')
     if unknowncov:
         sigmae_sq, sigmab_sq, lambdap = find_covparam(x, diff.T)
 
-    
     class biaspred:
         def __init__(self, model):
             self.model = model
          
         def predict(self, xnew):
             return self.model.predict(xnew).T
-        
+
         if unknowncov:
             def predictcov(self, xnew):
                 nx, d = xnew.shape[0], xnew.shape[1]

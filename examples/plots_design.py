@@ -179,3 +179,40 @@ def samplingdata(typesampling, nmax, cls_data, seed, prior_xt):
         xt = prior_xt.rnd(nmax, seed=seed)
 
     return xt
+
+def observe_results(result, method, rep, ninit, nmax):
+    
+
+    clist = ['b', 'r', 'g', 'm']
+    mlist = ['P', 'p', '*', 'o']
+    linelist = ['-', '--', '-.', ':'] 
+    labelsb = [r'$\mathcal{A}^y$', r'$\mathcal{A}^p$', r'$\mathcal{A}^{lhs}$', r'$\mathcal{A}^{rnd}$']
+
+    fonts = 18
+    for metric in ['TV', 'HD']:
+        fig, axes = plt.subplots(1, 1, figsize=(6, 5)) 
+        plt.rcParams["figure.autolayout"] = True
+        for mid, m in enumerate(method):
+            if metric == 'TV':
+                p = np.array([r['Prediction Error'][ninit:nmax] for r in result if r['method'] == m])
+                meanerror = np.mean(p, axis=0)
+                sderror = np.std(p, axis=0)
+                axes.plot(np.arange(len(meanerror)), meanerror, label=labelsb[mid], color=clist[mid], linestyle=linelist[mid], linewidth=4)
+                plt.fill_between(np.arange(len(meanerror)), meanerror-1.96*sderror/rep, meanerror+1.96*sderror/rep, color=clist[mid], alpha=0.1)
+            elif metric == 'HD':
+                p = np.array([r['Posterior Error'][ninit:nmax] for r in result if r['method'] == m])
+                meanerror = np.mean(p, axis=0)
+                sderror = np.std(p, axis=0)
+                axes.plot(np.arange(len(meanerror)), meanerror, label=labelsb[mid], color=clist[mid], linestyle=linelist[mid], linewidth=4)
+                plt.fill_between(np.arange(len(meanerror)), meanerror-1.96*sderror/rep, meanerror+1.96*sderror/rep, color=clist[mid], alpha=0.1)  
+        axes.set_yscale('log')
+        axes.set_xlabel('# of simulation evals', fontsize=fonts) 
+    
+        if metric == 'TV':
+            axes.set_ylabel(r'${\rm MAD}^y$', fontsize=fonts) 
+        elif metric == 'HD':
+            axes.set_ylabel(r'${\rm MAD}^p$', fontsize=fonts) 
+        axes.tick_params(axis='both', which='major', labelsize=fonts-5)
+        
+        axes.legend(bbox_to_anchor=(1, -0.2), ncol=4, fontsize=fonts, handletextpad=0.1)
+        plt.show()

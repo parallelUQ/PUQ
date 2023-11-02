@@ -1,25 +1,47 @@
-if __name__ == '__main__':
-    import datetime as dt
-    import multiprocessing as mp
-    from utils import parse_arguments
-    from InterventionsMIP import load_config_file, logger, change_paths
+#import argparse
+import datetime as dt
+import multiprocessing as mp
+from COVID19 import load_config_file, logger, change_paths
+import numpy as np
+
+def runfunction(xdesign, param, truelims, point=True):
+
     # Parse arguments
-    args = parse_arguments()
+    from argparse import Namespace
+
+    #args = parse_arguments()
+    args = Namespace(
+    f = "setup_data_Final_lsq.json",
+    t = "tiers5_opt_Final.json",
+    train_reps = 1 ,
+    test_reps = 1 ,
+    f_config = "austin_test_IHT.json",
+    n_proc = 1 ,
+    gt = "[-1,0,5,20,50]",
+    tr= "transmission_Final_lsq.csv",
+    hos = 'austin_real_hosp_lsq.csv',
+    machine='local',
+    city='austin',
+    seed='seeds.p',
+    gd=None,
+    rl=1000,
+    pub=None,
+    fo='[]',
+    aftert='[0,1,2,3,4]',
+    field='IYIH')
+    
+
     # Load config file
     load_config_file(args.f_config)
+    
     # Adjust paths
     change_paths(args)
     
     from instances import load_instance, load_tiers, load_seeds
-    #from threshold_policy import policy_search, multi_tier_objective
-    from least_squares_fit import run_fit
-    #from policies import MultiTierPolicy as MTP
-    from policy_search_functions import policy_search, capacity_policy_search
-    from objective_functions import multi_tier_objective, multi_tier_objective_ACS
+    from deterministic_run import run_det
+    from objective_functions import multi_tier_objective
     from policies import MultiTierPolicy as MTP
-    from policies import MultiTierPolicy_ACS as MTP_ACS
-    
-   
+       
     # Parse city and get corresponding instance
     instance = load_instance(args.city, setup_file_name=args.f, transmission_file_name=args.tr, hospitalization_file_name=args.hos)
     train_seeds, test_seeds = load_seeds(args.city, args.seed)
@@ -76,28 +98,47 @@ if __name__ == '__main__':
     else:
         policy_ub = None
 
+    param_trans = []
+    for th_id, th in enumerate(param):
+        param_trans.append(truelims[th_id][0] + th*(truelims[th_id][1] - truelims[th_id][0]))
+        
+    res = run_det(instance=instance,
+            tiers=tiers,
+            obj_func=multi_tier_objective,
+            n_replicas_train=n_replicas_train,
+            n_replicas_test=n_replicas_test,
+            instance_name=instance_name,
+            policy_class=tiers.tier_type,
+            policy=selected_policy,
+            mp_pool=mp_pool,
+            crn_seeds=train_seeds,
+            unique_seeds_ori=test_seeds,
+            forcedOut_tiers=eval(args.fo),
+            redLimit=args.rl,
+            after_tiers=eval(args.aftert),
+            policy_field=args.field,
+            policy_ub=policy_ub,
+            params=[(1/param_trans[0]), (param_trans[1]), (1/param_trans[2]), (1/param_trans[3])])
+     
+    real_hosp, hosp_benchmark, real_icu, icu_benchmark, hosp_ad, daily_ad_benchmark = res[0], res[1], res[2], res[3], res[4], res[5]
     
-    transmisison = run_fit(instance=instance,
-                           tiers=tiers,
-                           obj_func=multi_tier_objective,
-                           n_replicas_train=n_replicas_train,
-                           n_replicas_test=n_replicas_test,
-                           instance_name=instance_name,
-                           policy_class=tiers.tier_type,
-                           policy=selected_policy,
-                           mp_pool=mp_pool,
-                           crn_seeds=train_seeds,
-                           unique_seeds_ori=test_seeds,
-                           forcedOut_tiers=eval(args.fo),
-                           redLimit=args.rl,
-                           after_tiers=eval(args.aftert),
-                           policy_field=args.field,
-                           policy_ub=policy_ub,
-                           method="lsq")
+    if point:
+        return daily_ad_benchmark[33 + int(np.rint(xdesign*188))] # daily_ad_benchmark[int(xdesign*221)]
+    else:
+        return hosp_ad[33:], daily_ad_benchmark[33:]
+    
+
+ 
+
 #import sys
 #sys.path.append("/Users/ozgesurer/Desktop/Github_Folders/COVID_Staged_Alert/")
 #sys.path.append("/Users/ozgesurer/Desktop/Github_Folders/COVID_Staged_Alert/InterventionsMIP")
 
 #runfile('/Users/ozgesurer/Desktop/Github_Folders/COVID_Staged_Alert/InterventionsMIP/main_least_squares.py', 'austin -f setup_data_Final_lsq.json -t tiers5_opt_Final.json -train_reps 1 -test_reps 1 -f_config austin_test_IHT.json -n_proc 1 -gt [-1,0,5,20,50] -tr transmission_Final_lsq.csv -hos austin_real_hosp_lsq.csv')
+#runfile('/Users/ozgesurer/Desktop/Github_Folders/COVID_Staged_Alert/InterventionsMIP/main_least_squares.py', 'houston -f setup_data_Final_lsq.json -t tiers5_opt_Final.json -train_reps 1 -test_reps 1 -f_config houston_test_IHT.json -n_proc 1 -gt [-1,0,5,20,50] -tr transmission_Final_lsq.csv -hos houston_real_hosp_lsq.csv')
+#import sys
+#sys.path.append("/Users/ozgesurer/Desktop/Github_Folders/COVID_Staged_Alert/")
+#sys.path.append("/Users/ozgesurer/Desktop/Github_Folders/COVID_Staged_Alert/InterventionsMIP")
 
+#runfile('/Users/ozgesurer/Desktop/Github_Folders/COVID_Staged_Alert/InterventionsMIP/main_least_squares.py', 'austin -f setup_data_Final_lsq.json -t tiers5_opt_Final.json -train_reps 1 -test_reps 1 -f_config austin_test_IHT.json -n_proc 1 -gt [-1,0,5,20,50] -tr transmission_Final_lsq.csv -hos austin_real_hosp_lsq.csv')
 #runfile('/Users/ozgesurer/Desktop/Github_Folders/COVID_Staged_Alert/InterventionsMIP/main_least_squares.py', 'houston -f setup_data_Final_lsq.json -t tiers5_opt_Final.json -train_reps 1 -test_reps 1 -f_config houston_test_IHT.json -n_proc 1 -gt [-1,0,5,20,50] -tr transmission_Final_lsq.csv -hos houston_real_hosp_lsq.csv')

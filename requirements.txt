@@ -1,0 +1,6 @@
+numpy
+scipy
+Cython==0.29.24
+wheel
+dill
+matplotlib

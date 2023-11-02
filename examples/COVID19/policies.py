@@ -3,7 +3,7 @@ This module includes different policies that are simulated
 '''
 import json
 import numpy as np
-from InterventionsMIP import config
+from COVID19 import config
 from itertools import product
 
 CONSTANT_TR = 'constant'

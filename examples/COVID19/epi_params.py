@@ -118,7 +118,11 @@ class EpiSetup:
                 if v[0] == "rnd_inverse" or v[0] == "rnd":
                     setattr(epi_params, k, ParamDistribution(*v))
                 else:
-                    setattr(epi_params, k, np.array(v))
+                   # print('here')
+                    #print(epi_params)
+                   # print(k)
+                   # print(v)
+                    setattr(epi_params, k, np.array(v, dtype=object))
             else:
                 setattr(epi_params, k, v)
         return epi_params

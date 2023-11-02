@@ -641,6 +641,7 @@ def postphimat(fitinfo, n_x, theta, obs, obsvar, theta_cand, covmat_ref, rVh_1_3
 
     # loop over principal components
     for k in range(0, len(infos)):
+
         if infos[k]['hypind'] == k:
             rsave_2[k] = __covmat(theta,
                                   theta_cand,
@@ -653,7 +654,7 @@ def postphimat(fitinfo, n_x, theta, obs, obsvar, theta_cand, covmat_ref, rVh_1_3
         # adjusted covariance matrix
         # n_tot_ref 
         r_2 = (1 - infos[k]['nug']) * np.squeeze(rsave_2[infos[k]['hypind']])
-        # n_t
+        # n_acquired
         r_4 = (1 - infos[k]['nug']) * np.squeeze(rsave_4[infos[k]['hypind']])
 
         try:
@@ -664,11 +665,13 @@ def postphimat(fitinfo, n_x, theta, obs, obsvar, theta_cand, covmat_ref, rVh_1_3
                 print((i, infos[i]['hypind']))
             raise ValueError('Something went wrong with fitted components')
 
-
+        
+        #print(np.round(r_2[0:50], 4))
         r_2_3D   = r_2.reshape(n_ref, n_x, 1)
+        #print(np.round(r_2_3D[0:5, 0:n_x, 0], 4))
         rVh_4_3D = rVh_4.reshape(1, n_t, 1)
         
-        # rVh_1_3D: n_ref x n_x x n_t
+        # rVh_1_3D: n_ref x n_x x n_acquired
 
         # n_ref x n_x x 1
         cov3D = np.matmul(rVh_1_3D, rVh_4_3D)
@@ -679,6 +682,8 @@ def postphimat(fitinfo, n_x, theta, obs, obsvar, theta_cand, covmat_ref, rVh_1_3
         predvars_cand[:, k] = infos[k]['sig2'] * np.abs(1 - np.sum(rVh_4 ** 2, 1))
         predvars_cand[:, k] += infos[k]['nug']
 
+    # rVh_4: used to compute candidate variance
+    
     
     # calculate candidate variance
     pctscale     = (fitinfo['pcti'].T * fitinfo['standardpcinfo']['scale']).T
@@ -690,7 +695,7 @@ def postphimat(fitinfo, n_x, theta, obs, obsvar, theta_cand, covmat_ref, rVh_1_3
     
     # (1 x 1)
     var_cand = ((fitinfo['standardpcinfo']['extravar'][:] + predvars_cand @ (pctscale[:, :] ** 2).T)).T
-    
+
     # (n_ref x n_x x n_x)
     Phi3D = (cov_cand_3D * cov_cand_3DT)/var_cand
     cov1  = 0.5*(covmat_ref + Phi3D)
@@ -770,7 +775,7 @@ def temp_postphimat(fitinfo, n_x, theta, obs, obsvar):
         cov_ref_3D = infos[k]['sig2'] * (r_3_3D - cov3D)
         predmean_ref[:, k] = r_1 @ infos[k]['pw']
 
-
+    #print(np.round(obsvar, 2))
     # calculate predictive mean and variance
     pctscale = (fitinfo['pcti'].T * fitinfo['standardpcinfo']['scale']).T
     Smat3D = cov_ref_3D*(pctscale[:, :] ** 2)
@@ -838,8 +843,8 @@ def postpred(fitinfo, x, theta, obs, obsvar):
         id_row = np.arange(0, n_tot_ref)
         id_col = np.arange(0, n_tot_ref).reshape(n_ref, n_x)
         id_col = np.repeat(id_col, repeats=n_x, axis=0)
-        #print(r_3)
-        #r_3 = np.array(r_3).reshape(1,1)
+
+
         r_3_3D = r_3[id_row[:, None], id_col].reshape(n_ref, n_x, n_x)
 
     
@@ -887,7 +892,6 @@ def postpredbias(fitinfo, x, theta, obs, obsvar, biasmean):
     n_tot_ref = theta.shape[0]
     n_ref     = int(n_tot_ref/n_x)
     n_t       = fitinfo['theta'].shape[0]
-    
     
     predinfo = {}
     infos = fitinfo['emulist']

@@ -1,16 +1,3 @@
-|
-
-.. image:: https://img.shields.io/badge/License-MIT-yellow.svg
-    :target: https://opensource.org/licenses/MIT
-    :alt: License
-
-.. image:: https://github.com/parallelUQ/PUQ/actions/workflows/puq-ci.yml/badge.svg?/branch=main
-    :target: https://github.com/parallelUQ/PUQ/actions
-
-.. image:: https://readthedocs.org/projects/puq/badge/?version=latest
-    :target: https://puq.readthedocs.io/en/latest/?badge=latest
-    :alt: Documentation Status
-
 ==================================================================================
 PUQ: Python package for parallel uncertainty quantification
 ==================================================================================
@@ -19,86 +6,91 @@ PUQ: Python package for parallel uncertainty quantification
 Dependencies
 ~~~~~~~~~~~~
 
-PUQ has been tested on Unix/Linux and MacOS systems.
+PUQ is a Python package for novel uncertainty quantification techniques, 
+specifically to be able to run in a parallel environment.
 
-PUQ's base has the following dependencies:
+This code requires Python (version 3.6 or later) and pip. 
 
- * Python_ 3.6+
- * NumPy_ -- for data structures and performant numerical linear algebra
- * SciPy_ -- for scientific calculations needed for specific modules
- * libEnsemble_ -- for parallel implementation
+Examples under ``examples/`` directory replicate figures 1--5.
 
+Set up 
+~~~~~~
+
+We recommend creating a Python virtual environment within the working directory of PUQ. 
+If a virtual environment is created, PUQ's required packages are installed and 
+isolated from those installed a priori. Creating a virtual environment will also prevent
+having conflicting packages on a user's machine. You may need to install the virtual 
+environment on your system (if a user's system does not have it), for example, 
+with 'apt install python3.9-venv'
+
+1)Extract the zipped file.
+
+2)From the command line, go to the directory of the source code.
+
+3)Use the following command to create a virtual environment::
+
+  python3 -m venv venv/  
+  source venv/bin/activate  
+ 
+We note that creating a virtual environment is not a required step. However, we tested this
+procedure to prevent any conflict, and the code runs smoothly.
 
 Installation
 ~~~~~~~~~~~~
 
-From the command line, use the following command to install PUQ::
+To install the PUQ package:
 
- pip install PUQ==0.1.0
+1)Go to the directory of the source code (if a user has not done so yet).
 
+2)Use the following command to install the required packages::
 
-Alternatively, the source code can be downloaded to the local folder, and the
-package can be installed from the .tar file.
+ pip install -r requirements.txt
 
-Testing
-~~~~~~~
+3)From the command line, use the following command to install PUQ::
 
-The test suite requires the pytest_ and pytest-cov_ packages to be installed
-and can be run from the ``tests/`` directory of the source distribution by running::
+ pip install -e .
 
-./run-tests.sh
+Once installed, a user should see ``build/`` directory created.
 
-If you have the source distribution, you can run the tests in the top-level
-directory containing the setup script with ::
+As an alternative to 'pip install -e .' in Step 3, the package can be installed from the .tar file as well::
 
- python setup.py test
+ python3 setup.py sdist bdist_wheel 
+ pip install ./dist/PUQ-0.1.0.tar.gz
+ 
 
-Further options are available for testing. To see a complete list of options, run::
+Instructions for running the illustrative examples
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
- ./run-tests.sh -h
+To replicate Figures~1--4, respectively:
 
-Coverage reports are produced under the relevant directory only if all tests are used.
+1)Go to the ``examples/`` directory.
 
-Documentation
-~~~~~~~~~~~~~
+2)Execute the followings from the command line::
 
-The documentation is stored in ``docs/`` and is compiled with the Sphinx Python
-documentation generator. It is written in the reStructuredText format. These
-files are hosted at `Read the Docs <http://PUQ.readthedocs.io>`_.
+ python3 Figure1.py
+ python3 Figure2a.py
+ python3 Figure2b.py
+ python3 Figure3.py
+ python3 Figure4.py
 
-To compile the documentation, first ensure that Sphinx is installed. Then, to
-generate documentation, run command ``make html`` from terminal within this directory as follows ::
+Running each script should not take more than 60 sec. See the figures (png files) saved under ``examples/`` directory.
 
- cd docs
- make html
+Instructions for running one of the prominent empirical results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The HTML files are then stored in ``docs/_build/html``
+Instructions are provided to replicate the first two panels in Figure~6.
 
+To replicate, execute the following from the command line::
 
-**Citation:**
+ python3 Figure5ab.py 
 
-- Please use the following to cite PUQ in a publication:
+Running this script takes about 3hrs on a personal Mac laptop. 
+Once completed, ``Figure5a.png`` and ``Figure5b.png`` are saved under ``examples/`` directory.
+  
+Final comments
+~~~~~~~~~~~~~~
 
-.. code-block:: bibtex
+Type ``deactivate`` from the command line to deactivate the virtual environment if created.
 
-   @techreport{PUQ2022,
-     author      = {Özge Sürer, Matthew Plumlee, Stefan M. Wild},
-     title       = {PUQ Users Manual},
-     institution = {},
-     number      = {Version 0.1.0},
-     year        = {2022},
-     url         = {https://github.com/parallelUQ/PUQ}
-   }
+Type ``pip uninstall PUQ`` from the command line to uninstall the package.
 
-Examples
-~~~~~~~~
-
-We provide examples in the ``examples/`` directory to illustrate the basic usage
-of PUQ.
-
-.. _NumPy: http://www.numpy.org
-.. _pytest-cov: https://pypi.org/project/pytest-cov/
-.. _pytest: https://pypi.org/project/pytest/
-.. _Python: http://www.python.org
-.. _SciPy: http://www.scipy.org
-.. _libEnsemble: https://libensemble.readthedocs.io/en/main/
