@@ -20,4 +20,4 @@ CaseStudy/
 .eggs/
 examples/develop-example/
 .coverage
-zzz_outputs/
+final_results/
