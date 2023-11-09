@@ -5,7 +5,6 @@ from PUQ.prior import prior_dist
 from plots_design import create_test, add_result, samplingdata, observe_results
 from ptest_funcs import sinfunc
 
-
 args = parse_arguments()
 
 ninit = 10
@@ -13,7 +12,7 @@ nmax = 100
 result = []
 
 args.seedmin = 0
-args.seedmax = 30
+args.seedmax = 1
 if __name__ == "__main__":
     for s in np.arange(args.seedmin, args.seedmax):
         print('Start replication=' + str(s))
@@ -31,13 +30,12 @@ if __name__ == "__main__":
         # # # Create a mesh for test set # # # 
         xt_test, ftest, ptest, thetamesh, xmesh = create_test(cls_data)
         nmesh = len(xmesh)
-        cls_data_y = sinfunc()
-        cls_data_y.realdata(x=xmesh, seed=s)
+        ytest = cls_data.function(xmesh, cls_data.true_theta).T
         
         test_data = {'theta': xt_test, 
                      'f': ftest,
                      'p': ptest,
-                     'y': cls_data_y.real_data,
+                     'y': ytest,
                      'th': thetamesh,    
                      'xmesh': xmesh,
                      'p_prior': 1} 

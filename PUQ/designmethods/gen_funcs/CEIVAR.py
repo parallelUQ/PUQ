@@ -81,7 +81,6 @@ def ceivarbias(n,
     bias_mean = emubias.predict(x)
     if unknowncov:
         bias_var = emubias.predictcov(x)
-        print(np.round(bias_var, 2))
     else:
         bias_var = 1*obsvar
 
@@ -97,7 +96,6 @@ def ceivarbias(n,
     
     Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, thetatest, obs, bias_var)
     eivar_val = np.zeros(len(clist))
-    
 
     for xt_id, xt_c in enumerate(clist):
         eivar_val[xt_id] = postphimat(emu._info, n_x, thetatest, obs-bias_mean, bias_var, xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
@@ -129,8 +127,5 @@ def construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t):
     t_unif = prior_func_t.rnd(n0, None)
     clist2 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xref_sample])
     clist = np.concatenate((clist1, clist2), axis=0)
-    #print(clist.shape)
-    
-    #clist = prior_func.rnd(1000, None)
-    #print(clist.shape)
+
     return clist

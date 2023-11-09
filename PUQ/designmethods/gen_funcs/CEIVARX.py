@@ -141,8 +141,6 @@ def ceivarxbias(n,
         xnew = np.concatenate((x, x_ref[i].reshape(1, dx)), axis=0)
         if unknowncov:
             obsvar3D[i, :, :] = emubias.predictcov(xnew) 
-            #if i == 1:
-            #    print(np.round(obsvar3D[i, :, :], 4))
         else:
             obsvar3D[i, :, :] = np.diag(np.repeat(synth_info.sigma2, n_x)) 
 
@@ -172,8 +170,6 @@ def construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t ):
     clist2 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xref_sample])
     clist = np.concatenate((clist1, clist2), axis=0)
 
-    #clist = prior_func.rnd(1000, None)
-    #print(clist.shape)
     return clist
  
         

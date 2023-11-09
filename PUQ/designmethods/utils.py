@@ -36,7 +36,7 @@ def compute_diff(x,
     
     # Predict linear bias mean  
     bias = (obs - emumean).T
-    #is_bias = False
+
     if is_bias:
         model = LinearRegression().fit(x, bias)
         mu_bias = model.predict(x)
@@ -82,36 +82,18 @@ def find_mle(emu,
 
 
 def collect_data(emu, emubias, x_emu, theta_mle, dt, xmesh, xtmesh, nmesh, ytest, ptest, x, obs, obsvar, synth_info):
-    
-    #print(theta_mle)
+
     dx = xmesh.shape[1]
     xtrue_test = [np.concatenate([xc.reshape(1, dx), theta_mle], axis=1) for xc in xmesh]
     xtrue_test = np.array([m for mesh in xtrue_test for m in mesh])
     predobj = emu.predict(x=x_emu, theta=xtrue_test)
-    #print(xtrue_test[0:189])
-    #print([int(np.rint(x*188)) for x in xtrue_test[0:189, 0]])
+
     fmeanhat, fvarhat = predobj.mean(), predobj.var()
 
     if emubias == None:
         pred_error = np.mean(np.abs(fmeanhat - ytest))
-        #import matplotlib.pyplot as plt
-        #plt.plot(fmeanhat.flatten(), color='b')
-        #plt.plot(ytest.flatten(), color='r')
-        #plt.show()
-        
-        #plt.scatter(np.arange(0, len(ytest.flatten())), ytest.flatten(), color='r')
-        #plt.scatter(np.arange(0, len(ytest.flatten())), fmeanhat.flatten(), color='b')
-        #plt.show()
-        
-        #print(xmesh[np.abs(fmeanhat - ytest).flatten() > 1, :])
-        
-        #print(pred_error)
         pmeanhat, pvarhat = postpred(emu._info, x, xtmesh, obs, obsvar)
         post_error = np.mean(np.abs(pmeanhat - ptest))
-        
-        #plt.plot(pmeanhat, color='b')
-        #plt.plot(ptest, color='r')
-        #plt.show()
     else:
         bmeanhat = emubias.predict(xmesh)
         pred_error = np.mean(np.abs(fmeanhat + bmeanhat - ytest))
@@ -129,6 +111,7 @@ def find_abs_diff(nx, d, x):
      #       for k in range(d):
      #           diff[i, j] += np.abs(x[i, k] - x[j, k])
     diff = np.sum(np.abs(x[:, None, :] - x[None, :, :]), axis=-1)
+
     return diff
 
 def gen_cov(sigmae_sq, sigmab_sq, lambdap, nx, abs_dist):
@@ -151,8 +134,8 @@ def obj_covmle(parameter, args):
     covmatinv = np.linalg.inv(covmat)
 
     # Negative likelihood
-    ll =  np.log(np.linalg.det(covmat)) + biasdiff@covmatinv@biasdiff.T
-    # print(ll)
+    ll = np.log(np.linalg.det(covmat)) + biasdiff@covmatinv@biasdiff.T
+
     return ll.flatten()
 
 def find_covparam(x, biasdiff):
@@ -183,12 +166,9 @@ def bias_predict(emu,
 
     nx = len(x)
     dx = x.shape[1]
-    #print(np.repeat(theta_mle, nx).reshape(nx, len(theta_mle)))
     xp = [np.concatenate([xc.reshape(1, dx), theta_mle], axis=1) for xc in x]
     xp = np.array([m for mesh in xp for m in mesh])
-    #print(xt_ref)
-    #xp = np.concatenate((x, np.repeat(theta_mle, nx).reshape(nx, len(theta_mle))), axis=1)
-    
+
     # Predict computer model
     emupred = emu.predict(x=x_emu, theta=xp)
     emumean = emupred.mean()
@@ -198,10 +178,10 @@ def bias_predict(emu,
     model = LinearRegression().fit(x, bias)
     mu_bias = model.predict(x)
     diff = bias - mu_bias
-    #print('here')
+
     if unknowncov:
         sigmae_sq, sigmab_sq, lambdap = find_covparam(x, diff.T)
-
+        
     class biaspred:
         def __init__(self, model):
             self.model = model

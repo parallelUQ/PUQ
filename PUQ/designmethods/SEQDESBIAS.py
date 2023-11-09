@@ -164,11 +164,11 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
             if update_model:
                 emu = fit_emulator1d(x_emu, theta, fevals)
-                #theta_mle = np.array([[0.5, 0.3333333333333334, 0.5, 0.5]]) #synth_info.true_theta
+
                 theta_mle = find_mle(emu, x, x_emu, true_fevals, obsvar, dx, dt, theta_limits, True)
                 
                 #if (len(theta) % 10 == 0):
-                print('mle:', theta_mle)
+                #print('mle:', theta_mle)
   
                 # Bias prediction 
                 bias_pred = bias_predict(emu, theta_mle, x_emu, x, true_fevals, unknowncov)

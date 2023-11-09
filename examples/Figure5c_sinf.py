@@ -5,15 +5,14 @@ from PUQ.prior import prior_dist
 from plots_design import create_test, add_result, samplingdata, observe_results
 from ptest_funcs import sinfunc
 
-
 args = parse_arguments()
     
 seeds = 1
 ninit = 10
-nmax = 50
+nmax = 100
 result = []
-args.seedmin = 0
-args.seedmax = 1
+args.seedmin = 1
+args.seedmax = 2
 
 if __name__ == "__main__":
     
@@ -35,10 +34,8 @@ if __name__ == "__main__":
         # # # Create a mesh for test set # # # 
         xt_test, ftest, ptest, thetamesh, xmesh = create_test(cls_data, isbias=bias)
         nmesh = len(xmesh)
-        cls_data_y = sinfunc()
-        cls_data_y.realdata(x=xmesh, seed=s, isbias=bias)
-        ytest = cls_data_y.real_data
-        
+        ytest = (cls_data.function(xmesh, cls_data.true_theta) + cls_data.bias(xmesh)).T 
+
         test_data = {'theta': xt_test, 
                      'f': ftest,
                      'p': ptest,
