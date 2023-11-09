@@ -27,27 +27,27 @@ for i in range(nmesh+1):
         Z[i, j] = cls_data.function(X[i, j], Y[i, j], 0.5)
         B[i, j] = cls_data.bias(X[i, j], Y[i, j])
 fig, ax = plt.subplots()
-CS = plt.contourf(X, Y, Z, cmap='Purples', alpha=1)
+CS = plt.contourf(X, Y, Z, cmap='Purples', alpha=0.75)
 fig.colorbar(CS)
 for xid1 in range(len(x)):
     for xid2 in range(len(y)):
-        plt.scatter(x[xid1], x[xid2], marker='x', c='black', s=60, zorder=2)
-
-plt.xlim(-0.02, 1.02)
-plt.ylim(-0.02, 1.02)
-plt.xlabel(r'$x_1$', fontsize=20)
-plt.ylabel(r'$x_2$', fontsize=20)
-plt.xticks([0, 0.5, 1], [0, 0.5, 1], fontsize=15)
-plt.yticks([0, 0.5, 1], [0, 0.5, 1], fontsize=15)
+        plt.scatter(x[xid1], x[xid2], marker='x', c='black', linewidth=3, s=100, zorder=2)
+ft = 16
+plt.xlim(-0.05, 1.05)
+plt.ylim(-0.05, 1.05)
+plt.xlabel(r'$x_1$', fontsize=ft)
+plt.ylabel(r'$x_2$', fontsize=ft)
+plt.xticks([0, 0.5, 1], [0, 0.5, 1], fontsize=ft-2)
+plt.yticks([0, 0.5, 1], [0, 0.5, 1], fontsize=ft-2)
 plt.savefig("Figure4a.png", bbox_inches="tight")
 plt.show()
 
 # Bias
-CS = plt.contour(X, Y, B, cmap='Purples', alpha=1)
+CS = plt.contour(X, Y, B, cmap='Purples', alpha=0.75)
 plt.clabel(CS, inline=1, fontsize=14)
 for xid1 in range(len(x)):
     for xid2 in range(len(y)):
-        plt.scatter(x[xid1], x[xid2], marker='x', c='black', s=60, zorder=2)
+        plt.scatter(x[xid1], x[xid2], marker='x', c='black', linewidth=3, s=100, zorder=2)
 
 plt.xlim(-0.02, 1.02)
 plt.ylim(-0.02, 1.02)
@@ -59,18 +59,18 @@ plt.show()
 
 # Model + Bias
 fig, ax = plt.subplots()
-CS = plt.contourf(X, Y, Z+B, cmap='Purples', alpha=1)
+CS = plt.contourf(X, Y, Z+B, cmap='Purples', alpha=0.75)
 fig.colorbar(CS)
 for xid1 in range(len(x)):
     for xid2 in range(len(y)):
-        plt.scatter(x[xid1], x[xid2], marker='x', c='black', s=60, zorder=2)
+        plt.scatter(x[xid1], x[xid2], marker='x', c='black', linewidth=3, s=100,  zorder=2)
 
-plt.xlim(-0.02, 1.02)
-plt.ylim(-0.02, 1.02)
-plt.xlabel(r'$x_1$', fontsize=20)
-plt.ylabel(r'$x_2$', fontsize=20)
-plt.xticks([0, 0.5, 1], [0, 0.5, 1], fontsize=15)
-plt.yticks([0, 0.5, 1], [0, 0.5, 1], fontsize=15)
+plt.xlim(-0.05, 1.05)
+plt.ylim(-0.05, 1.05)
+plt.xlabel(r'$x_1$', fontsize=ft)
+plt.ylabel(r'$x_2$', fontsize=ft)
+plt.xticks([0, 0.5, 1], [0, 0.5, 1], fontsize=ft-2)
+plt.yticks([0, 0.5, 1], [0, 0.5, 1], fontsize=ft-2)
 plt.savefig("Figure4b.png", bbox_inches="tight")
 plt.show()
 

@@ -1,8 +1,3 @@
-
-import sys
-sys.path.append("/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ/examples/COVID19")
-sys.path.append("/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ")
-
 from main_deterministic import runfunction
 import numpy as np
 from PUQ.prior import prior_dist
@@ -11,12 +6,12 @@ from smt.sampling_methods import LHS
 import scipy.stats as sps
 from PUQ.design import designer
 from PUQ.utils import save_output, parse_arguments
-from covid_obs import obs_covid19, obs_des
     
 class covid19:
     def __init__(self):
         self.data_name   = 'covid19'
         self.thetalimits = np.array([[0, 1], [0, 1], [0, 1], [0, 1], [0, 1]])
+        # 1/sigma, omega, 1/gamma_A, 1/gamma_Y
         self.truelims    = [[2.4, 3.4], [0.33, 0.99], [3.9, 4.1], [3.9, 4.1]]
         self.true_theta = [(2.9 - self.truelims[0][0])/(self.truelims[0][1] - self.truelims[0][0]), 
                            (0.66 - self.truelims[1][0])/(self.truelims[1][1] - self.truelims[1][0]), 
@@ -29,7 +24,7 @@ class covid19:
         self.dx          = 1
         self.x           = None
         self.real_data   = None
-        self.sigma2      = 10
+        self.sigma2      = 25
         self.nodata      = True        
         
 
@@ -218,4 +213,8 @@ if __name__ == "__main__":
         
     method = ['eivarx', 'eivar', 'lhs', 'rnd']
     observe_results(result, method, args.seedmax-args.seedmin, ninit, nmax)
+    
+# import sys
+# sys.path.append("/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ/examples/COVID19")
+# sys.path.append("/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ")
     

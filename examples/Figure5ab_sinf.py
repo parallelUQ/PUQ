@@ -13,10 +13,10 @@ nmax = 100
 result = []
 
 args.seedmin = 0
-args.seedmax = 1
+args.seedmax = 30
 if __name__ == "__main__":
     for s in np.arange(args.seedmin, args.seedmax):
-    
+        print('Start replication=' + str(s))
         s = int(s)
         cls_data = sinfunc()
         dt = len(cls_data.true_theta)
@@ -131,6 +131,8 @@ if __name__ == "__main__":
         
         res = {'method': 'rnd', 'repno': s, 'Prediction Error': al_RND._info['TV'], 'Posterior Error': al_RND._info['HD']}
         result.append(res)
+        
+        print('End replication=' + str(s))
     
     
     method = ['eivarx', 'eivar', 'lhs', 'rnd']

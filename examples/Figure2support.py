@@ -84,22 +84,24 @@ def ceivarxfig(n,
         for j in range(nmesh):
             xt_cand = np.array([X[i, j], Y[i, j]]).reshape(1, dx + dt)
             Z[i, j] = postphimat(emu._info, n_x, mesh_grid, f_field_rep, obsvar3D, xt_cand, Smat3D, rVh_1_3d, pred_mean) 
-    plt.contourf(X, Y, Z, cmap='Purples', alpha=0.5)
-    plt.hlines(synth_info.true_theta, 0, 1, linestyles='dotted', colors='green')
+    plt.contourf(X, Y, Z, cmap='Purples', alpha=1)
+    plt.hlines(synth_info.true_theta, 0, 1, linestyles='dotted', linewidth=3, colors='orange')
     for xitem in x:
-        plt.vlines(xitem, 0, 1, linestyles='dotted', colors='orange', zorder=1)
+        plt.vlines(xitem, 0, 1, linestyles='dotted', colors='orange', linewidth=3, zorder=1)
     ids = np.where(Z==Z.max())
     xnew = np.array([X[ids[0].flatten(), ids[1].flatten()], Y[ids[0].flatten(), ids[1].flatten()]]).reshape(1, dx + dt)
-    plt.scatter(xnew[0,0], xnew[0,1], marker='x', c='black', s=60, zorder=2)
+    plt.scatter(xnew[0,0], xnew[0,1], marker='x', c='cyan', s=200, zorder=2, linewidth=3)
     plt.scatter(theta[0:10, 0], theta[0:10, 1], marker='*', c='blue', s=50)
-    plt.scatter(theta[10:, 0], theta[10:, 1], marker='+', c='red', s=50)
-
-    plt.xlabel(r'$x$', fontsize=20)
-    plt.ylabel(r'$\theta$', fontsize=20)
-    plt.xticks(fontsize=15)
-    plt.yticks(fontsize=15)
+    plt.scatter(theta[10:, 0], theta[10:, 1], marker='+', c='red', s=200, linewidth=3)
+    plt.text(0.8, 0.05, r'$n_t=$'+ str(theta.shape[0]), fontsize=15)
+    plt.xlabel(r'$x$', fontsize=16)
+    plt.ylabel(r'$\theta$', fontsize=16)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+        
+    if ((theta.shape[0] == 18) or (theta.shape[0] == 21)):
+        plt.savefig("Figure2b_" + str(theta.shape[0]) + ".png", bbox_inches="tight")
     plt.show()
-    
 
     return xnew 
 
@@ -146,25 +148,23 @@ def ceivarfig(n,
             Z[i, j] = postphimat(emu._info, n_x, xt_ref, obs, obsvar, xt_cand, Smat3D, rVh_1_3d, pred_mean)
     
     plt.contourf(X, Y, Z, cmap='Purples', alpha=1)
-    plt.hlines(synth_info.true_theta, 0, 1, linestyles='dotted', colors='green')
+    plt.hlines(synth_info.true_theta, 0, 1, linestyles='dotted', linewidth=3, colors='orange')
     for xitem in x:
-        plt.vlines(xitem, 0, 1, linestyles='dotted', colors='orange', zorder=1)
+        plt.vlines(xitem, 0, 1, linestyles='dotted', colors='orange', linewidth=3, zorder=1)
     ids = np.where(Z==Z.max())
     xnew = np.array([X[ids[0].flatten(), ids[1].flatten()], Y[ids[0].flatten(), ids[1].flatten()]]).reshape(1, dx + dt)
-    plt.scatter(xnew[0,0], xnew[0,1], marker='x', c='black', s=60, zorder=2)
+    plt.scatter(xnew[0,0], xnew[0,1], marker='x', c='cyan', s=200, zorder=2, linewidth=3)
     plt.scatter(theta[0:10, 0], theta[0:10, 1], marker='*', c='blue', s=50)
-    plt.scatter(theta[10:, 0], theta[10:, 1], marker='+', c='red', s=50)
-
-    plt.xlabel(r'$x$', fontsize=20)
-    plt.ylabel(r'$\theta$', fontsize=20)
-    plt.xticks(fontsize=15)
-    plt.yticks(fontsize=15)
+    plt.scatter(theta[10:, 0], theta[10:, 1], marker='+', c='red', s=200, linewidth=3)
+    plt.text(0.8, 0.05, r'$n_t=$'+ str(theta.shape[0]), fontsize=15)
+    plt.xlabel(r'$x$', fontsize=16)
+    plt.ylabel(r'$\theta$', fontsize=16)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    
+    if ((theta.shape[0] == 11) or (theta.shape[0] == 16)):
+        plt.savefig("Figure2a_" + str(theta.shape[0]) + ".png", bbox_inches="tight")
     plt.show()
-    #eivar_val = np.zeros(len(clist))
-    #for xt_id, xt_c in enumerate(clist):
-    #    eivar_val[xt_id] = postphimat(emu._info, n_x, xt_ref, obs, obsvar, xt_c.reshape(1, p), Smat3D, rVh_1_3d, pred_mean)
-
-    #th_cand = clist[np.argmax(eivar_val), :].reshape(1, p)
 
     return xnew 
 

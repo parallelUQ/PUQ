@@ -4,7 +4,7 @@ from PUQ.utils import parse_arguments
 from PUQ.prior import prior_dist
 from plots_design import create_test, samplingdata
 from PUQ.surrogate import emulator
-from PUQ.surrogatemethods.PCGPexp import  postpred
+from PUQ.surrogatemethods.PCGPexp import postpred
 from ptest_funcs import sinfunc
 import matplotlib.pyplot as plt
 
@@ -96,9 +96,9 @@ if __name__ == "__main__":
     thetamle_LHS = al_LHS._info['thetamle'][-1]
     
     dataset = []
-    dataset.append({'mle':thetamle_eivarx, 'f':f_eivarx, 'xt':xt_eivarx, 'method':'eivarx'})
-    dataset.append({'mle':thetamle_eivar, 'f':f_eivar, 'xt':xt_eivar, 'method':'eivar'})
-    dataset.append({'mle':thetamle_LHS, 'f':f_LHS, 'xt':xt_LHS, 'method':'lhs'})
+    dataset.append({'mle':thetamle_eivarx, 'f':f_eivarx, 'xt':xt_eivarx, 'method':'Ay'})
+    dataset.append({'mle':thetamle_eivar, 'f':f_eivar, 'xt':xt_eivar, 'method':'Ap'})
+    dataset.append({'mle':thetamle_LHS, 'f':f_LHS, 'xt':xt_LHS, 'method':'Alhs'})
     
     xt_true = [np.concatenate([xc.reshape(1, 1), cls_data.true_theta.reshape(1, 1)], axis=1) for xc in xmesh]
     xt_true = np.array([m for mesh in xt_true for m in mesh])
@@ -150,13 +150,13 @@ if __name__ == "__main__":
         plt.show()
     
         # Design
-        plt.scatter(xt[0:ninit, 0], xt[0:ninit, 1], marker='*', color='blue', s=50)
-        plt.scatter(xt[:, 0][ninit:], xt[:, 1][ninit:], marker='+', color='red', s=50)
-        plt.axhline(y = cls_data.true_theta, color = 'green')
-        plt.scatter(cls_data.x, np.repeat(cls_data.true_theta, len(cls_data.x)), marker='x', color='black', s=50)
-        plt.xlabel(r'$x$', fontsize=20)
-        plt.ylabel(r'$\theta$', fontsize=20)
-        plt.xticks(fontsize=15)
-        plt.yticks(fontsize=15)
-        plt.savefig("Figure1c_" + point['method'] + ".png", bbox_inches="tight")
-        plt.show()
+        # plt.scatter(xt[0:ninit, 0], xt[0:ninit, 1], marker='*', color='blue', s=50)
+        # plt.scatter(xt[:, 0][ninit:], xt[:, 1][ninit:], marker='+', color='red', s=50)
+        # plt.axhline(y = cls_data.true_theta, color = 'green')
+        # plt.scatter(cls_data.x, np.repeat(cls_data.true_theta, len(cls_data.x)), marker='x', color='black', s=50)
+        # plt.xlabel(r'$x$', fontsize=20)
+        # plt.ylabel(r'$\theta$', fontsize=20)
+        # plt.xticks(fontsize=15)
+        # plt.yticks(fontsize=15)
+        # plt.savefig("Figure1c_" + point['method'] + ".png", bbox_inches="tight")
+        # plt.show()

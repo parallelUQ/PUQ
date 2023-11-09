@@ -33,17 +33,16 @@ test_data = {'theta': xt_test,
              'xmesh': xmesh,
              'p_prior': 1} 
 # # # # # # # # # # # # # # # # # # # # # 
-
-
-
-
 x_emu = np.arange(0, 1)[:, None ]
 sinit = 5
 ninit = 10
 nmax = 30
+
+# Create initial data
 xt = prior_xt.rnd(ninit, sinit) 
 f = cls_data.function(xt[:, 0], xt[:, 1])
 
+# Acquire new points
 for i in range(nmax-ninit):
     emu = emulator(x_emu, 
                    xt, 

@@ -34,17 +34,16 @@ test_data = {'theta': xt_test,
              'xmesh': xmesh,
              'p_prior': 1} 
 # # # # # # # # # # # # # # # # # # # # # 
-
-
-
-
 x_emu = np.arange(0, 1)[:, None ]
 sinit = 5
 ninit = 10
 nmax = 30
-xt  = prior_xt.rnd(ninit, sinit) 
+
+# Create initial data
+xt = prior_xt.rnd(ninit, sinit) 
 f = cls_data.function(xt[:, 0], xt[:, 1])
 
+# Acquire new points
 for i in range(nmax-ninit):
     emu = emulator(x_emu, 
                    xt, 
@@ -52,7 +51,7 @@ for i in range(nmax-ninit):
                    method='PCGPexp')
     
     theta_mle = find_mle(emu, cls_data.x, x_emu, cls_data.real_data, cls_data.obsvar, 1, 1, cls_data.thetalimits, is_bias=False)
-    #print(theta_mle)
+
     xnew = ceivarfig(1, 
               cls_data.x, 
               cls_data.x,
