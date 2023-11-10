@@ -9,11 +9,11 @@ args = parse_arguments()
 
 
 ninit = 30
-nmax = 60
+nmax = 180
 result = []
 
-args.seedmin = 0
-args.seedmax = 1
+#args.seedmin = 0
+#args.seedmax = 1
 
 if __name__ == "__main__":
     for s in np.arange(args.seedmin, args.seedmax):
@@ -34,13 +34,12 @@ if __name__ == "__main__":
         priors = {'prior': prior_xt, 'priorx': prior_x, 'priort': prior_t}
     
         xt_test, ftest, ptest, thetamesh, xmesh = create_test_non(cls_data)
-        cls_data_y = pritam()
-        cls_data_y.realdata(x=xmesh, seed=s)
+        ytest = cls_data.function(xmesh[:, 0], xmesh[:, 1], cls_data.true_theta).reshape(1, len(xmesh))
         
         test_data = {'theta': xt_test, 
                      'f': ftest,
                      'p': ptest,
-                     'y': cls_data_y.real_data,
+                     'y': ytest,
                      'th': thetamesh,    
                      'xmesh': xmesh,
                      'p_prior': 1} 

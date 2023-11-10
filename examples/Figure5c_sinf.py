@@ -7,7 +7,7 @@ from ptest_funcs import sinfunc
 
 args = parse_arguments()
     
-seeds = 1
+
 ninit = 10
 nmax = 100
 result = []

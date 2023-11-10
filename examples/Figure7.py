@@ -61,8 +61,7 @@ def plot_des_pri(path, out, ex_name, w, b, repid, method, n0, nf):
     plt.yticks([0, 0.5, 1], [0, 0.5, 1], fontsize=ft-2)
     plt.savefig("Figure7_" + method + ".png", bbox_inches="tight")
     plt.show()
-
-
+    
 def FIG7(method, path, n0, nf, repid, batch, worker, outs):
     
     for mid, m in enumerate(method):

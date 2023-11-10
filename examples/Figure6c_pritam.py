@@ -7,12 +7,12 @@ from ptest_funcs import pritam
 
 args = parse_arguments()
 
-seeds = 1
+
 ninit = 30
-nmax = 40
+nmax = 180
 result = []
-args.seedmin = 0
-args.seedmax = 1
+#args.seedmin = 0
+#args.seedmax = 1
 for s in np.arange(args.seedmin, args.seedmax):
 
     s = int(s)
@@ -26,8 +26,6 @@ for s in np.arange(args.seedmin, args.seedmax):
     cls_data = pritam()
     cls_data.realdata(xr, seed=s, isbias=bias)
 
-    biastrue = cls_data.bias(cls_data.x[:, 0], cls_data.x[:, 1])
-        
     prior_xt     = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], b=cls_data.thetalimits[:, 1]) 
     prior_x      = prior_dist(dist='uniform')(a=cls_data.thetalimits[0:2, 0], b=cls_data.thetalimits[0:2, 1]) 
     prior_t      = prior_dist(dist='uniform')(a=np.array([cls_data.thetalimits[2][0]]), b=np.array([cls_data.thetalimits[2][1]]))
@@ -35,10 +33,12 @@ for s in np.arange(args.seedmin, args.seedmax):
     priors = {'prior': prior_xt, 'priorx': prior_x, 'priort': prior_t}
 
     xt_test, ftest, ptest, thetamesh, xmesh = create_test_non(cls_data, is_bias=bias)
-    cls_data_y = pritam()
-    cls_data_y.realdata(x=xmesh, seed=s, isbias=bias)
-    ytest = cls_data_y.real_data
-
+    ytest = cls_data.function(xmesh[:, 0], xmesh[:, 1], cls_data.true_theta).reshape(1, len(xmesh)) + cls_data.bias(xmesh[:, 0], xmesh[:, 1]).reshape(1, len(xmesh))
+    
+    #plt.plot(cls_data.function(cls_data.x[:, 0], cls_data.x[:, 1], cls_data.true_theta) + cls_data.bias(cls_data.x[:, 0], cls_data.x[:, 1]))
+    #plt.plot(cls_data.real_data.flatten())
+    #plt.show()
+    
     test_data = {'theta': xt_test, 
                  'f': ftest,
                  'p': ptest,
