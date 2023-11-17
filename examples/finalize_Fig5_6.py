@@ -15,7 +15,7 @@ def plotresult(path, out, ex_name, w, b, rep, method, n0, nf):
 
         TV       = design_saved._info['TV']
         HD       = design_saved._info['HD']
-
+        
         TVlist.append(TV[n0:nf])
         HDlist.append(HD[n0:nf])
 
@@ -33,13 +33,14 @@ mlist = ['P', 'p', '*', 'o', 's', 'h']
 linelist = ['-', '--', '-.', ':', '-.', ':'] 
 
 # choose either 'pritam' or 'sinfunc'
-ex = 'sinfunc'
-is_bias = False
+ex = 'pritam'
+is_bias = True
 if ex == 'pritam':
     n0, nf = 30, 180
     if is_bias:
         outs = 'pritam_bias'
         method = ['ceivarxbias', 'ceivarbias', 'lhs', 'rnd']
+
     else:
         outs = 'pritam'     
         method = ['ceivarx', 'ceivar', 'lhs', 'rnd']
@@ -61,13 +62,14 @@ batch = 1
 worker = 2
 rep = 30
 fonts = 18
-path = '/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ/examples/final_results/newPUQ/examples/' 
-#path = '/Users/ozgesurer/Desktop/des_examples/newPUQ/examples/'
+#path = '/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ/examples/final_results/newPUQ/examples/' 
+path = '/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ/examples/final_results/denoise/' 
 
 for metric in ['TV', 'HD']:
     fig, axes = plt.subplots(1, 1, figsize=(6, 5)) 
     plt.rcParams["figure.autolayout"] = True
     for mid, m in enumerate(method):
+        print(m)
         avgPOST, sdPOST, avgPRED, sdPRED = plotresult(path, outs, ex, worker, batch, rep, m, n0=n0, nf=nf)
         if metric == 'TV':
             axes.plot(np.arange(len(avgPRED)), avgPRED, label=labelsb[mid], color=clist[mid], linestyle=linelist[mid], linewidth=4)
@@ -85,5 +87,5 @@ for metric in ['TV', 'HD']:
         axes.set_ylabel(r'${\rm MAD}^p$', fontsize=fonts) 
     axes.tick_params(axis='both', which='major', labelsize=fonts-5)
     
-    axes.legend(bbox_to_anchor=(1, -0.2), ncol=4, fontsize=fonts, handletextpad=0.1)
+    axes.legend(bbox_to_anchor=(1.1, -0.2), ncol=4, fontsize=fonts, handletextpad=0.1)
     plt.show()

@@ -11,8 +11,8 @@ ninit = 10
 nmax = 100
 result = []
 
-#args.seedmin = 0
-#args.seedmax = 1
+args.seedmin = 0
+args.seedmax = 1
 if __name__ == "__main__":
     for s in np.arange(args.seedmin, args.seedmax):
         print('Start replication=' + str(s))

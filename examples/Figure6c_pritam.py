@@ -9,10 +9,10 @@ args = parse_arguments()
 
 
 ninit = 30
-nmax = 180
+nmax = 80
 result = []
-#args.seedmin = 0
-#args.seedmax = 1
+args.seedmin = 0
+args.seedmax = 1
 for s in np.arange(args.seedmin, args.seedmax):
 
     s = int(s)
@@ -92,7 +92,7 @@ for s in np.arange(args.seedmin, args.seedmax):
     result.append(res)
 
     # LHS 
-    xt_LHS = samplingdata('LHS', nmax-ninit, cls_data, s, prior_xt)
+    xt_LHS = samplingdata('LHS', 180-ninit, cls_data, s, prior_xt)
     al_LHS = designer(data_cls=cls_data, 
                            method='SEQDESBIAS', 
                            args={'mini_batch': 1, 
@@ -114,7 +114,7 @@ for s in np.arange(args.seedmin, args.seedmax):
     result.append(res)
     
     # rnd 
-    xt_RND = samplingdata('Random', nmax-ninit, cls_data, s, prior_xt)
+    xt_RND = samplingdata('Random', 180-ninit, cls_data, s, prior_xt)
     al_RND = designer(data_cls=cls_data, 
                            method='SEQDESBIAS', 
                            args={'mini_batch': 1, 
@@ -135,5 +135,5 @@ for s in np.arange(args.seedmin, args.seedmax):
     res = {'method': 'rnd', 'repno': s, 'Prediction Error': al_RND._info['TV'], 'Posterior Error': al_RND._info['HD']}
     result.append(res)
     
-method = ['ceivarbias', 'ceivarxbias', 'lhs', 'rnd']
+method = ['ceivarxbias', 'ceivarbias', 'lhs', 'rnd']
 observe_results(result, method, args.seedmax-args.seedmin, ninit, nmax)

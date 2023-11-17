@@ -12,8 +12,8 @@ ninit = 30
 nmax = 180
 result = []
 
-#args.seedmin = 0
-#args.seedmax = 1
+args.seedmin = 0
+args.seedmax = 1
 
 if __name__ == "__main__":
     for s in np.arange(args.seedmin, args.seedmax):
@@ -45,17 +45,17 @@ if __name__ == "__main__":
                      'p_prior': 1} 
     
         al_ceivarx = designer(data_cls=cls_data, 
-                               method='SEQDES', 
-                               args={'mini_batch': 1, 
-                                     'n_init_thetas': ninit,
-                                     'nworkers': 2, 
-                                     'AL': 'ceivarx',
-                                     'seed_n0': s,
-                                     'prior': priors,
-                                     'data_test': test_data,
-                                     'max_evals': nmax,
-                                     'theta_torun': None,
-                                     'is_thetamle': False})
+                                method='SEQDES', 
+                                args={'mini_batch': 1, 
+                                      'n_init_thetas': ninit,
+                                      'nworkers': 2, 
+                                      'AL': 'ceivarx',
+                                      'seed_n0': s,
+                                      'prior': priors,
+                                      'data_test': test_data,
+                                      'max_evals': nmax,
+                                      'theta_torun': None,
+                                      'is_thetamle': False})
         
         xt_eivarx = al_ceivarx._info['theta']
         f_eivarx = al_ceivarx._info['f']
@@ -67,17 +67,17 @@ if __name__ == "__main__":
     
         # # # # # # # # # # # # # # # # # # # # # 
         al_ceivar = designer(data_cls=cls_data, 
-                               method='SEQDES', 
-                               args={'mini_batch': 1, 
-                                     'n_init_thetas': ninit,
-                                     'nworkers': 2, 
-                                     'AL': 'ceivar',
-                                     'seed_n0': s,
-                                     'prior': priors,
-                                     'data_test': test_data,
-                                     'max_evals': nmax,
-                                     'theta_torun': None,
-                                     'is_thetamle': False})
+                                method='SEQDES', 
+                                args={'mini_batch': 1, 
+                                      'n_init_thetas': ninit,
+                                      'nworkers': 2, 
+                                      'AL': 'ceivar',
+                                      'seed_n0': s,
+                                      'prior': priors,
+                                      'data_test': test_data,
+                                      'max_evals': nmax,
+                                      'theta_torun': None,
+                                      'is_thetamle': False})
         
         xt_eivar = al_ceivar._info['theta']
         f_eivar = al_ceivar._info['f']
@@ -132,6 +132,5 @@ if __name__ == "__main__":
         result.append(res)
         
     method = ['eivarx', 'eivar', 'lhs', 'rnd']
-    #method = ['lhs']
     observe_results(result, method, args.seedmax-args.seedmin, ninit, nmax)
    

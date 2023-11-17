@@ -97,6 +97,13 @@ def collect_data(emu, emubias, x_emu, theta_mle, dt, xmesh, xtmesh, nmesh, ytest
     else:
         bmeanhat = emubias.predict(xmesh)
         pred_error = np.mean(np.abs(fmeanhat + bmeanhat - ytest))
+        
+        #print('here')
+        #import matplotlib.pyplot as plt        
+        #plt.plot((fmeanhat + bmeanhat).flatten())
+        #plt.plot(ytest.flatten())
+        #plt.show()
+
         bmeanhat = emubias.predict(x)
         pmeanhat, pvarhat = postpredbias(emu._info, x, xtmesh, obs, obsvar, bmeanhat)
         post_error = np.mean(np.abs(pmeanhat - ptest))

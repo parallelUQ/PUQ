@@ -76,5 +76,6 @@ method = ['ceivarx', 'ceivar']
 batch = 1
 worker = 2
 repid = 1
-path = '/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ/examples/final_results/newPUQ/examples/' 
+#path = '/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ/examples/final_results/newPUQ/examples/' 
+path = '/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ/examples/final_results/denoise/' 
 FIG7(method, path, n0, nf, repid, batch, worker, outs)

@@ -214,5 +214,5 @@ def observe_results(result, method, rep, ninit, nmax):
             axes.set_ylabel(r'${\rm MAD}^p$', fontsize=fonts) 
         axes.tick_params(axis='both', which='major', labelsize=fonts-5)
         
-        axes.legend(bbox_to_anchor=(1, -0.2), ncol=4, fontsize=fonts, handletextpad=0.1)
+        axes.legend(bbox_to_anchor=(1.1, -0.2), ncol=4, fontsize=fonts, handletextpad=0.1)
         plt.show()
