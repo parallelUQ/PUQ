@@ -160,6 +160,61 @@ def create_test_non(cls_data, is_bias=False):
     
     return xt_test, ftest, ptest, thetamesh, xmesh
 
+def create_test_12x(cls_data, is_bias=False):
+    n_t = 2500
+    n_x = cls_data.x.shape[0]
+
+    sampling = LHS(xlimits=cls_data.thetalimits[6:12, :], random_state=0)
+    thetamesh = sampling(n_t)
+    #thetamesh[9999,:] = cls_data.true_theta
+    xt_test = np.array([np.concatenate([xc, th]) for th in thetamesh for xc in cls_data.x])
+    ftest = np.zeros((n_t, n_x))
+    for j in range(n_t):
+        for i in range(n_x):
+            ftest[j, i] = cls_data.function(cls_data.x[i, 0], cls_data.x[i, 1], cls_data.x[i, 2], 
+                                            cls_data.x[i, 3], cls_data.x[i, 4], cls_data.x[i, 5], 
+                                            thetamesh[j, 0], thetamesh[j, 1], thetamesh[j, 2],
+                                            thetamesh[j, 3], thetamesh[j, 4], thetamesh[j, 5])
+
+    ptest = np.zeros(n_t)
+    for j in range(n_t):
+        rnd = sps.multivariate_normal(mean=ftest[j, :], cov=cls_data.obsvar)
+        ptest[j] = rnd.pdf(cls_data.real_data)
+
+    
+    sampling = LHS(xlimits=cls_data.thetalimits[0:6, :], random_state=0)
+    xmesh = sampling(2500)
+    
+    return xt_test, ftest, ptest, thetamesh, xmesh
+
+
+def create_test_wing(cls_data, is_bias=False):
+    n_t = 2500
+    n_x = cls_data.x.shape[0]
+
+    sampling = LHS(xlimits=cls_data.thetalimits[6:10, :], random_state=0)
+    thetamesh = sampling(n_t)
+
+    xt_test = np.array([np.concatenate([xc, th]) for th in thetamesh for xc in cls_data.x])
+    ftest = np.zeros((n_t, n_x))
+    for j in range(n_t):
+        for i in range(n_x):
+            ftest[j, i] = cls_data.function(cls_data.x[i, 0], cls_data.x[i, 1], cls_data.x[i, 2], 
+                                            cls_data.x[i, 3], cls_data.x[i, 4], cls_data.x[i, 5],
+                                            thetamesh[j, 0], thetamesh[j, 1], thetamesh[j, 2],
+                                            thetamesh[j, 3])
+
+    ptest = np.zeros(n_t)
+    for j in range(n_t):
+        rnd = sps.multivariate_normal(mean=ftest[j, :], cov=cls_data.obsvar)
+        ptest[j] = rnd.pdf(cls_data.real_data)
+
+    
+    sampling = LHS(xlimits=cls_data.thetalimits[0:6, :], random_state=0)
+    xmesh = sampling(2500)
+    
+    return xt_test, ftest, ptest, thetamesh, xmesh
+
 
 def add_result(method_name, phat, ptest, yhat, ytest, s):
     rep = {}

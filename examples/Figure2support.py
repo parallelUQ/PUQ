@@ -94,12 +94,12 @@ def ceivarxfig(n,
     plt.scatter(theta[0:10, 0], theta[0:10, 1], marker='*', c='blue', s=50)
     plt.scatter(theta[10:, 0], theta[10:, 1], marker='+', c='red', s=200, linewidth=3)
     plt.text(0.8, 0.05, r'$n_t=$'+ str(theta.shape[0]), fontsize=15)
-    plt.xlabel(r'$x$', fontsize=16)
-    plt.ylabel(r'$\theta$', fontsize=16)
-    plt.xticks(fontsize=14)
-    plt.yticks(fontsize=14)
+    plt.xlabel(r'$x$', fontsize=20)
+    plt.ylabel(r'$\theta$', fontsize=20)
+    plt.xticks(fontsize=15)
+    plt.yticks(fontsize=15)
         
-    if ((theta.shape[0] == 18) or (theta.shape[0] == 21)):
+    if ((theta.shape[0] == 18) or (theta.shape[0] == 21) or (theta.shape[0] == 29)):
         plt.savefig("Figure2b_" + str(theta.shape[0]) + ".png", bbox_inches="tight")
     plt.show()
 
@@ -157,12 +157,12 @@ def ceivarfig(n,
     plt.scatter(theta[0:10, 0], theta[0:10, 1], marker='*', c='blue', s=50)
     plt.scatter(theta[10:, 0], theta[10:, 1], marker='+', c='red', s=200, linewidth=3)
     plt.text(0.8, 0.05, r'$n_t=$'+ str(theta.shape[0]), fontsize=15)
-    plt.xlabel(r'$x$', fontsize=16)
-    plt.ylabel(r'$\theta$', fontsize=16)
-    plt.xticks(fontsize=14)
-    plt.yticks(fontsize=14)
+    plt.xlabel(r'$x$', fontsize=20)
+    plt.ylabel(r'$\theta$', fontsize=20)
+    plt.xticks(fontsize=15)
+    plt.yticks(fontsize=15)
     
-    if ((theta.shape[0] == 11) or (theta.shape[0] == 16)):
+    if ((theta.shape[0] == 11) or (theta.shape[0] == 16) or (theta.shape[0] == 29)):
         plt.savefig("Figure2a_" + str(theta.shape[0]) + ".png", bbox_inches="tight")
     plt.show()
 
