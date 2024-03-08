@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 import seaborn as sns
-from find_best_fit import find_bestfit_param
+from Table2support import find_bestfit_param
 
 def plotresult(path, out, ex_name, w, b, rep, method):
     design_saved = read_output(path + out + '/', ex_name, method, w, b, rep)
