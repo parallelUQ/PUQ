@@ -31,15 +31,16 @@ def ceivarx(n,
     # Create a candidate list
     if synth_info.data_name == 'covid19':
         clist = construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t)
+    elif synth_info.data_name == 'highdim':
+        clist = construct_candlist_high(thetalimits, xuniq, prior_func, prior_func_t)
     else:
         clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
 
-    nx_ref = x_ref.shape[0]
     dx = x_ref.shape[1]
+    nx_ref = x_ref.shape[0]
     nt_ref = theta_ref.shape[0]
     dt = theta_ref.shape[1]
     nf = x.shape[0]
-
     # Get estimate for real data at theta_mle for reference x
     # nx_ref x (d_x + d_t)
     xt_ref = [np.concatenate([xc.reshape(1, dx), theta_mle], axis=1) for xc in x_ref]
@@ -172,16 +173,22 @@ def construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t ):
 
     return clist
  
-        
-def construct_candlist(thetalimits, xuniq, prior_func, prior_func_t ):
 
-    # Create a candidate list
+def construct_candlist(thetalimits, xuniq, prior_func, prior_func_t):
     n0 = 100
-    n_clist  = n0*len(xuniq)
+    n_clist = n0*len(xuniq)
     t_unif = prior_func_t.rnd(n0, None)
     clist1 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
     clist2 = prior_func.rnd(n_clist, None)
     clist = np.concatenate((clist1, clist2), axis=0)
-
-    return clist
-        
+    return clist    
+    
+def construct_candlist_high(thetalimits, xuniq, prior_func, prior_func_t):
+    d_x = xuniq.shape[1]
+    sampling = LHS(xlimits=thetalimits[d_x:, :])
+    t_unif = sampling(500)
+    clist1 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
+    sampling = LHS(xlimits=thetalimits)
+    clist2 = sampling(1000)
+    clist = np.concatenate((clist1, clist2), axis=0)
+    return clist 

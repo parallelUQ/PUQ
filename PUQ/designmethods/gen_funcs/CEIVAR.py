@@ -36,11 +36,12 @@ def ceivar(n,
     xuniq = np.unique(x, axis=0)
     if synth_info.data_name == 'covid19':
         clist = construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t)
+    elif synth_info.data_name == 'highdim':
+        clist = construct_candlist_high(thetalimits, xuniq, prior_func, prior_func_t)
     else:
         clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
 
     xt_ref = np.array([np.concatenate([xc, th]) for th in thetamesh for xc in x])
-    
     Smat3D, rVh_1_3d, pred_mean = temp_postphimat(emu._info, n_x, xt_ref, obs, obsvar)
 
     eivar_val = np.zeros(len(clist))
@@ -111,8 +112,17 @@ def construct_candlist(thetalimits, xuniq, prior_func, prior_func_t):
     clist1 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
     clist2 = prior_func.rnd(n_clist, None)
     clist = np.concatenate((clist1, clist2), axis=0)
-
-    return clist
+    return clist    
+    
+def construct_candlist_high(thetalimits, xuniq, prior_func, prior_func_t):
+    d_x = xuniq.shape[1]
+    sampling = LHS(xlimits=thetalimits[d_x:, :])
+    t_unif = sampling(500)
+    clist1 = np.array([np.concatenate([xc, th]) for th in t_unif for xc in xuniq])
+    sampling = LHS(xlimits=thetalimits)
+    clist2 = sampling(1000)
+    clist = np.concatenate((clist1, clist2), axis=0)
+    return clist 
 
 def construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t):
 
