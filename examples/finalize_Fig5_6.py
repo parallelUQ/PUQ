@@ -63,7 +63,8 @@ worker = 2
 rep = 30
 fonts = 18
 #path = '/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ/examples/final_results/newPUQ/examples/' 
-path = '/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ/examples/final_results/denoise/' 
+#path = '/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ/examples/final_results/denoise/' 
+path = '/Users/ozgesurer/Desktop/JQT_experiments/'
 
 for metric in ['TV', 'HD']:
     fig, axes = plt.subplots(1, 1, figsize=(6, 5)) 
