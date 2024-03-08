@@ -39,6 +39,11 @@ def parse_arguments():
                         default='eivar',
                         type=str,
                         help='Acquisition function.') 
+    parser.add_argument("-n0",
+                        metavar='N2',
+                        default=10,
+                        type=int,
+                        help='Initial sample size.') 
     args = parser.parse_args()
     return args
 
