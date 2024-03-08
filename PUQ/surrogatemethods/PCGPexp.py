@@ -983,3 +983,69 @@ def postpredbias(fitinfo, x, theta, obs, obsvar, biasmean):
     postvar = (1/((2**d)*(np.sqrt(np.pi)**d)*np.sqrt(det1)))*p1 - postmean**2
 
     return postmean, postvar
+
+
+
+def imspe_acq(fitinfo, theta, theta_cand):
+
+
+    infos = fitinfo['emulist']
+    predvars_cand = np.zeros((theta_cand.shape[0], len(infos)))
+
+    # n_ref x n_t
+    rsave_1 = np.array(np.ones(len(infos)), dtype=object)
+    # n_ref x n_cand
+    rsave_2 = np.array(np.ones(len(infos)), dtype=object)
+    # n_cand x n_t
+    rsave_4 = np.array(np.ones(len(infos)), dtype=object)
+
+    # loop over principal components
+    for k in range(0, len(infos)):
+
+        if infos[k]['hypind'] == k:
+            rsave_1[k] = __covmat(theta,
+                                  fitinfo['theta'],
+                                  infos[k]['hypcov'])
+            
+            rsave_2[k] = __covmat(theta,
+                                  theta_cand,
+                                  infos[k]['hypcov'])
+
+            rsave_4[k] = __covmat(theta_cand,
+                                  fitinfo['theta'],
+                                  infos[k]['hypcov'])
+
+        # nref x ntrain
+        r_1 = (1 - infos[k]['nug']) * np.squeeze(rsave_1[infos[k]['hypind']])
+        # nref
+        r_2 = (1 - infos[k]['nug']) * np.squeeze(rsave_2[infos[k]['hypind']])
+        # ntrain
+        r_4 = (1 - infos[k]['nug']) * np.squeeze(rsave_4[infos[k]['hypind']])
+
+        try:
+            # nref x 1
+            r_2 = r_2[:, None]
+            # 1 x ntrain
+            rVh_4 = r_4.reshape(1, len(fitinfo['theta'])) @ infos[k]['Vh']
+            # nref x ntrain
+            rVh_1 = r_1 @ infos[k]['Vh']
+
+        except Exception:
+            for i in range(0, len(infos)):
+                print((i, infos[i]['hypind']))
+            raise ValueError('Something went wrong with fitted components')
+
+        # nref x 1
+        cov3D = rVh_1 @ rVh_4.T
+        cov3D = infos[k]['sig2'] * (r_2 - cov3D)
+        predvars_cand[:, k] = infos[k]['sig2'] * np.abs(1 - np.sum(rVh_4 ** 2, 1))
+        predvars_cand[:, k] += infos[k]['nug']
+        
+
+    # calculate candidate variance
+    pctscale = (fitinfo['pcti'].T * fitinfo['standardpcinfo']['scale']).T
+    cov3D  = cov3D*(pctscale[:, :] ** 2)
+    var_cand = ((fitinfo['standardpcinfo']['extravar'][:] + predvars_cand @ (pctscale[:, :] ** 2).T)).T
+
+    Phi3D = (cov3D * cov3D)/var_cand
+    return np.sum(Phi3D)

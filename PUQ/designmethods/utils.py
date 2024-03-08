@@ -28,8 +28,12 @@ def compute_diff(x,
     # obs : 1 x n_x
     # emumean : 1 x n_x
     # bias : n_x x 1
-    xp = np.concatenate((x, np.repeat(parameter, nx).reshape(nx, len(parameter))), axis=1)
-    
+    dt = len(parameter)
+    dx = x.shape[1]
+    xp = [np.concatenate([xc.reshape(1, dx), parameter.reshape(1, dt)], axis=1) for xc in x]
+    xp = np.array([m for mesh in xp for m in mesh])
+    # xp = np.concatenate((x, np.repeat(parameter, nx).reshape(nx, len(parameter))), axis=1)
+
     # Predict computer model
     emupred = emu.predict(x=x_emu, theta=xp)
     emumean = emupred.mean()
@@ -97,13 +101,6 @@ def collect_data(emu, emubias, x_emu, theta_mle, dt, xmesh, xtmesh, nmesh, ytest
     else:
         bmeanhat = emubias.predict(xmesh)
         pred_error = np.mean(np.abs(fmeanhat + bmeanhat - ytest))
-        
-        #print('here')
-        #import matplotlib.pyplot as plt        
-        #plt.plot((fmeanhat + bmeanhat).flatten())
-        #plt.plot(ytest.flatten())
-        #plt.show()
-
         bmeanhat = emubias.predict(x)
         pmeanhat, pvarhat = postpredbias(emu._info, x, xtmesh, obs, obsvar, bmeanhat)
         post_error = np.mean(np.abs(pmeanhat - ptest))
