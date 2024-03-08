@@ -97,14 +97,16 @@ def FIG10(path, outs, ex, worker, batch, rep, method, n0, nf):
     plt.ylabel('COVID-19 Hospital Admissions', fontsize=ft)
     plt.xticks(fontsize=ft-2)
     plt.yticks(fontsize=ft-2)
-    plt.savefig("Figure10_" + method + ".png", bbox_inches="tight")
+    plt.savefig("Figure12_" + method + ".png", bbox_inches="tight")
     plt.show()
 
 batch = 1
 worker = 2
 rep = 3
 n0, nf = 50, 200
-path = r'/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ/examples/final_results/newPUQcovid25/' 
+#path = r'/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ/examples/final_results/newPUQcovid25/' 
+#path = r'/Users/ozgesurer/Desktop/covid19_bebop25/covidtrial/' 
+path = '/Users/ozgesurer/Desktop/JQT_experiments/covid19_bebop25/all/'
 outs = 'covid19'
 ex = 'covid19'
     

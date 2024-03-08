@@ -1,152 +1,130 @@
+
 from PUQ.utils import parse_arguments, save_output, read_output
+import matplotlib.pyplot as plt 
+import matplotlib
 import numpy as np
-import datetime
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-from main_deterministic import runfunction
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 import pandas as pd
-import seaborn as sns
 
-class covid19:
-    def __init__(self):
-        self.data_name   = 'covid19'
-        self.thetalimits = np.array([[0, 1], [0, 1], [0, 1], [0, 1], [0, 1]])
-        self.truelims    = [[2.4, 3.4], [0.33, 0.99], [3.9, 4.1], [3.9, 4.1]]
-        self.true_theta = [(2.9 - self.truelims[0][0])/(self.truelims[0][1] - self.truelims[0][0]), 
-                           (0.66 - self.truelims[1][0])/(self.truelims[1][1] - self.truelims[1][0]), 
-                           (4 - self.truelims[2][0])/(self.truelims[2][1] - self.truelims[2][0]), 
-                           (4 - self.truelims[3][0])/(self.truelims[3][1] - self.truelims[3][0])]
+def interval_score(theta, thetamle, tid):
+    alpha = 0.1
+    u = np.quantile(theta, 1-alpha/2)
+    l = np.quantile(theta, alpha/2)
+
+    is_l = 1 if thetamle < l else 0
+    is_u = 1 if thetamle > u else 0
+    
+
+    if tid > 0:
+        total_is = (u - l) + (2/alpha) * (l-thetamle) * (is_l) + (2/alpha) * (thetamle-u) * (is_u)
+    else:
+        total_is = (u - l)
+
+    return total_is
+
+def plotresult(path, out, ex_name, w, b, r0, rf, method, n0, nf):
+
+    
+    HDlist = []
+    TVlist = []
+    timelist = []
+    for i in range(r0, rf):
+        design_saved = read_output(path + out + '/', ex_name, method, w, b, i)
+
+        TV       = design_saved._info['TV']
+        HD       = design_saved._info['HD']
+
+        TVlist.append(TV[n0:nf])
+        HDlist.append(HD[n0:nf])
         
-        self.out         = [('f', float)]
-        self.d           = 1
-        self.p           = 5
-        self.dx          = 1
-        self.x           = None
-        self.real_data   = None
-        self.sigma2      = 25
-        self.nodata      = True        
+        theta = design_saved._info['theta']
+
+    avgTV = np.mean(np.array(TVlist), 0)
+    sdTV = np.std(np.array(TVlist), 0)
+    avgHD = np.mean(np.array(HDlist), 0)
+    sdHD = np.std(np.array(HDlist), 0)
+
+    return avgHD, sdHD, avgTV, sdTV, theta
+
+
+def FIG9(path, batch, worker, r0, rf, outs, ex, n0, nf):
+    fonts = 15
+    clist = ['b', 'dodgerblue', 'r', 'g', 'm', 'y', 'c', 'pink', 'purple']
+    mlist = ['P', 'p', '*', 'o', 's', 'h']
+    linelist = ['-', '-', '--', '-.', ':', '-.', ':'] 
+    labelsb = [r'$\mathcal{A}^y$', r'$\breve{\mathcal{A}}^y$', r'$\mathcal{A}^p$', r'$\mathcal{A}^{lhs}$', r'$\mathcal{A}^{rnd}$']
+    method = ['ceivarx', 'ceivarxn', 'ceivar', 'lhs', 'rnd']
+
+    for metric in ['TV', 'HD']:
+        fig, axes = plt.subplots(1, 1, figsize=(7, 5)) 
+
+        if metric == 'HD':
+            axins = inset_axes(axes, 2.3, 1.5 , loc=1, bbox_to_anchor=(0.5, 0.6), bbox_transform=axes.transAxes)
+            
+        for mid, m in enumerate(method):
+            avgPOST, sdPOST, avgPRED, sdPRED, _ = plotresult(path, outs, ex, worker, batch, r0, rf, m, n0=n0, nf=nf)
+            if metric == 'TV':
+                axes.plot(np.arange(len(avgPRED)), avgPRED, label=labelsb[mid], color=clist[mid], linestyle=linelist[mid], linewidth=4)
+                #plt.fill_between(np.arange(len(avgPRED)), avgPRED-1.96*sdPRED/rep, avgPRED+1.96*sdPRED/rep, color=clist[mid], alpha=0.1)
+            elif metric == 'HD':
+                axes.plot(np.arange(len(avgPOST)), avgPOST, label=labelsb[mid], color=clist[mid], linestyle=linelist[mid], linewidth=4)
+                #plt.fill_between(np.arange(len(avgPOST)), avgPOST-1.96*sdPOST/rep, avgPOST+1.96*sdPOST/rep, color=clist[mid], alpha=0.1)  
+                if m == 'lhs' or m == 'rnd':
+                    axins.plot(np.arange(50, len(avgPOST)), avgPOST[50:], color=clist[mid], linestyle=linelist[mid], linewidth=2)
+    
+        if metric == 'HD':
+            mark_inset(axes, axins, loc1=1, loc2=3, fc="none", ec="0.5")
+            
+        axes.set_xlabel('# of simulation evaluations', fontsize=fonts) 
+        axes.set_yscale('log')
+        if metric == 'TV':
+            axes.set_ylabel(r'${\rm MAD}^y$', fontsize=fonts) 
+        elif metric == 'HD':
+            axes.set_ylabel(r'${\rm MAD}^p$', fontsize=fonts) 
+        axes.tick_params(axis='both', which='major', labelsize=fonts-2)
+        axes.legend(bbox_to_anchor=(1, -0.2), ncol=5, fontsize=fonts, handletextpad=0.1)
+        if metric == 'TV':
+            plt.savefig("Figure11_pred.png", bbox_inches="tight")
+        elif metric == 'HD':
+            plt.savefig("Figure11_post.png", bbox_inches="tight")
+        plt.show()
+      
+def plot_IS(path, batch, worker, r0, rf, outs, ex, n0, nf):
+
+    batch = 1
+    worker = 2
+    fonts = 18
+    thetamle = 0.5
+    n0 = 50
+    nf = 200
+    
+    method = ['ceivarx', 'ceivarxn', 'ceivar', 'lhs', 'rnd']
+    result = []
+    for mid, m in enumerate(method):
+        for r in range(r0, rf):
+            avgPOST, sdPOST, avgPRED, sdPRED, theta = plotresult(path, outs, ex, worker, batch, r, r+1, m, n0=n0, nf=nf)
+ 
+            for th in range(0, 5):
+                isval = interval_score(theta[n0:, th], thetamle, th)
+                result.append({'method': m, 'score': isval, 'rep': r, 'th': th})
         
-
-    def function(self, x, theta1, theta2, theta3, theta4):
-        hosp_ad = runfunction(x, [theta1, theta2, theta3, theta4], self.truelims, point=True)
-        return hosp_ad
-    
-    def sim(self, H, persis_info, sim_specs, libE_info):
-        function = sim_specs['user']['function']
-        H_o = np.zeros(1, dtype=sim_specs['out'])
-        H_o['f'] = function(H['thetas'][0][0], H['thetas'][0][1], H['thetas'][0][2], H['thetas'][0][3], H['thetas'][0][4])
-        return H_o, persis_info
-    
-    def realdata(self, x, seed, isbias=False):
+    result = pd.DataFrame(result)
+    print(np.round(result.groupby(["method", "th"]).mean(), 2))
         
-        np.random.seed(seed)
-        self.x = x
-        self.nodata = False
-        self.obsvar = np.diag(np.repeat(self.sigma2, len(self.x)))
-        lm = self.truelims
-        hosp_ad, daily_ad_benchmark = runfunction(None, self.true_theta, lm, point=False)
-
-        fevals = np.zeros(len(x))
-        for xid, x in enumerate(self.x):
-            fevals[xid] = np.array([daily_ad_benchmark[int(np.rint(x*188))]]) + np.random.normal(loc=0.0, scale=np.sqrt(self.sigma2), size=1) 
-        self.real_data  = np.array([fevals], dtype='float64')
-        
-def plotresult(path, out, ex_name, w, b, rep, method, n0, nf):
-
-    design_saved = read_output(path + out + '/', ex_name, method, w, b, rep)
-    theta = design_saved._info['theta']
-    f = design_saved._info['f']
-    return theta, f
-
-clist = ['b', 'r', 'g', 'm', 'y', 'c', 'pink', 'purple']
-mlist = ['P', 'p', '*', 'o', 's', 'h']
-linelist = ['-', '--', '-.', ':', '-.', ':'] 
-labelsb = [r'$\mathcal{A}^y$', r'$\mathcal{A}^p$', r'$\mathcal{A}^{lhs}$', r'$\mathcal{A}^{rnd}$']
-cls_data = covid19()
-des_index = np.arange(0, 189, 15)[:, None]
-cls_data.realdata(des_index/188, seed=1)
-
-
-
-
-
-def FIG11(path, outs, ex, worker, batch, rep, method, n0, nf):
-    theta, f = plotresult(path, outs, ex, worker, batch, rep, method, n0=n0, nf=nf)
-
-    theta[:, 1] = cls_data.truelims[0][0] + theta[:, 1]*(cls_data.truelims[0][1] - cls_data.truelims[0][0])
-    theta[:, 2] = cls_data.truelims[1][0] + theta[:, 2]*(cls_data.truelims[1][1] - cls_data.truelims[1][0])
-    theta[:, 3] = cls_data.truelims[2][0] + theta[:, 3]*(cls_data.truelims[2][1] - cls_data.truelims[2][0])
-    theta[:, 4] = cls_data.truelims[3][0] + theta[:, 4]*(cls_data.truelims[3][1] - cls_data.truelims[3][0])
-    
-    pdtheta = pd.DataFrame(theta[:, 1:5])
-    pdtheta['color'] = np.concatenate((np.repeat('red', 50), np.repeat('gray', 150)))
-    
-    g = sns.pairplot(pdtheta, 
-                     kind='scatter',
-                     diag_kind='hist',
-                     corner=True,
-                     hue="color",
-                     palette=['blue', 'gray'],
-                     markers=["*", "X"])
-    ft = 20
-    from matplotlib.ticker import MaxNLocator
-    from matplotlib.ticker import FormatStrFormatter
-    g.axes[0, 0].axvline(x=cls_data.truelims[0][0] + cls_data.true_theta[0]*(cls_data.truelims[0][1] - cls_data.truelims[0][0]), color='red', linestyle='--', lw=2)
-    g.axes[1, 1].axvline(x=cls_data.truelims[1][0] + cls_data.true_theta[1]*(cls_data.truelims[1][1] - cls_data.truelims[1][0]), color='red', linestyle='--', lw=2)
-    g.axes[2, 2].axvline(x=cls_data.truelims[2][0] + cls_data.true_theta[2]*(cls_data.truelims[2][1] - cls_data.truelims[2][0]), color='red', linestyle='--', lw=2)
-    g.axes[3, 3].axvline(x=cls_data.truelims[3][0] + cls_data.true_theta[3]*(cls_data.truelims[3][1] - cls_data.truelims[3][0]), color='red', linestyle='--', lw=2)
-    g.axes[0, 0].set_ylabel(r'$1/\sigma_I$', fontsize=ft)
-    g.axes[1, 0].set_ylabel(r'$\omega_A$', fontsize=ft)
-    g.axes[2, 0].set_ylabel(r'$1/\gamma_Y$', fontsize=ft)
-    g.axes[3, 0].set_ylabel(r'$1/\gamma_A$', fontsize=ft)
-
-    g.axes[3, 0].set_xlabel(r'$1/\sigma_I$', fontsize=ft)
-    g.axes[3, 1].set_xlabel(r'$\omega_A$', fontsize=ft)
-    g.axes[3, 2].set_xlabel(r'$1/\gamma_Y$', fontsize=ft)
-    g.axes[3, 3].set_xlabel(r'$1/\gamma_A$', fontsize=ft)
-
-    g.axes[3, 0].tick_params(axis='both', which='major', labelsize=ft-2)
-    g.axes[1, 0].tick_params(axis='both', which='major', labelsize=ft-2)
-    g.axes[2, 0].tick_params(axis='both', which='major', labelsize=ft-2)
-   
-    g.axes[3, 1].tick_params(axis='both', which='major', labelsize=ft-2)
-    g.axes[3, 2].tick_params(axis='both', which='major', labelsize=ft-2)
-    g.axes[3, 3].tick_params(axis='both', which='major', labelsize=ft-2)
-    
-    g.axes[1, 0].yaxis.set_major_locator(MaxNLocator(3))
-    g.axes[2, 0].yaxis.set_major_locator(MaxNLocator(3))
-    g.axes[3, 0].yaxis.set_major_locator(MaxNLocator(3))
-    g.axes[3, 0].xaxis.set_major_locator(MaxNLocator(3))
-    g.axes[3, 1].xaxis.set_major_locator(MaxNLocator(3))
-    g.axes[3, 2].xaxis.set_major_locator(MaxNLocator(3))
-    g.axes[3, 3].xaxis.set_major_locator(MaxNLocator(3))
-    
-    
-    g.axes[3, 0].xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    g.axes[3, 1].xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    g.axes[3, 2].xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    g.axes[3, 3].xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    
-    g.axes[1, 0].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    g.axes[2, 0].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    g.axes[3, 0].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    
-    g._legend.remove()
-    plt.savefig("Figure11_" + method + ".png", bbox_inches="tight")
-    plt.show()
-
 batch = 1
 worker = 2
-rep = 3
-fonts = 18
+r0 = 0
+rf = 30
 n0, nf = 50, 200
-path = r'/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ/examples/final_results/newPUQcovid25/' 
+#path = '/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ/examples/final_results/newPUQcovid25/' 
+#path = '/Users/ozgesurer/Desktop/covid19_bebop25/covidss/' 
+# = '/Users/ozgesurer/Desktop/JQT_experiments/true_deneme/covid19_bebop25/all/' 
+#path = '/Users/ozgesurer/Desktop/JQT_experiments/covid19_bebop25/all/' 
+path = '/Users/ozgesurer/Desktop/JQT_experiments/covid19_bebop25_unk/all/' 
 outs = 'covid19'
 ex = 'covid19'
 
-method = 'ceivar' #['ceivarx', 'ceivar', 'lhs', 'rnd']
-FIG11(path, outs, ex, worker, batch, rep, method, n0, nf)
+FIG9(path, batch, worker, r0, rf, outs, ex, n0, nf)
 
-method = 'ceivarx' #['ceivarx', 'ceivar', 'lhs', 'rnd']
-FIG11(path, outs, ex, worker, batch, rep, method, n0, nf)
+plot_IS(path, batch, worker, r0, rf, outs, ex, n0, nf)
