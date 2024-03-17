@@ -53,7 +53,7 @@ def FIG9(path, batch, worker, r0, rf, outs, ex, n0, nf):
     clist = ['b', 'dodgerblue', 'r', 'g', 'm', 'y', 'c', 'pink', 'purple']
     mlist = ['P', 'p', '*', 'o', 's', 'h']
     linelist = ['-', '-', '--', '-.', ':', '-.', ':'] 
-    labelsb = [r'$\mathcal{A}^y$', r'$\breve{\mathcal{A}}^y$', r'$\mathcal{A}^p$', r'$\mathcal{A}^{lhs}$', r'$\mathcal{A}^{rnd}$']
+    labelsb = [r'$\mathcal{A}^y$', r'$\hat{\mathcal{A}}^y$', r'$\mathcal{A}^p$', r'$\mathcal{A}^{lhs}$', r'$\mathcal{A}^{rnd}$']
     method = ['ceivarx', 'ceivarxn', 'ceivar', 'lhs', 'rnd']
 
     for metric in ['TV', 'HD']:
@@ -66,7 +66,8 @@ def FIG9(path, batch, worker, r0, rf, outs, ex, n0, nf):
             avgPOST, sdPOST, avgPRED, sdPRED, _ = plotresult(path, outs, ex, worker, batch, r0, rf, m, n0=n0, nf=nf)
             if metric == 'TV':
                 axes.plot(np.arange(len(avgPRED)), avgPRED, label=labelsb[mid], color=clist[mid], linestyle=linelist[mid], linewidth=4)
-                #plt.fill_between(np.arange(len(avgPRED)), avgPRED-1.96*sdPRED/rep, avgPRED+1.96*sdPRED/rep, color=clist[mid], alpha=0.1)
+                #print(sdPRED)
+                #plt.fill_between(np.arange(len(avgPRED)), avgPRED-1.96*sdPRED/(rf-r0), avgPRED+1.96*sdPRED/(rf-r0), color=clist[mid], alpha=1)
             elif metric == 'HD':
                 axes.plot(np.arange(len(avgPOST)), avgPOST, label=labelsb[mid], color=clist[mid], linestyle=linelist[mid], linewidth=4)
                 #plt.fill_between(np.arange(len(avgPOST)), avgPOST-1.96*sdPOST/rep, avgPOST+1.96*sdPOST/rep, color=clist[mid], alpha=0.1)  
@@ -120,11 +121,12 @@ n0, nf = 50, 200
 #path = '/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ/examples/final_results/newPUQcovid25/' 
 #path = '/Users/ozgesurer/Desktop/covid19_bebop25/covidss/' 
 # = '/Users/ozgesurer/Desktop/JQT_experiments/true_deneme/covid19_bebop25/all/' 
-#path = '/Users/ozgesurer/Desktop/JQT_experiments/covid19_bebop25/all/' 
+#path = '/Users/ozgesurer/Desktop/JQT_experiments/covid19_bebop68/all/' 
 path = '/Users/ozgesurer/Desktop/JQT_experiments/covid19_bebop25_unk/all/' 
+
 outs = 'covid19'
 ex = 'covid19'
 
 FIG9(path, batch, worker, r0, rf, outs, ex, n0, nf)
 
-plot_IS(path, batch, worker, r0, rf, outs, ex, n0, nf)
+#plot_IS(path, batch, worker, r0, rf, outs, ex, n0, nf)

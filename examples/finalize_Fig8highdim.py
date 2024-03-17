@@ -15,7 +15,7 @@ def interval_score(theta, thetamle, xid, tid):
 
     is_l = 1 if thetamle < l else 0
     is_u = 1 if thetamle > u else 0
-    
+
     if xid == 0:
         if tid > 1:
             total_is = (u - l) + (2/alpha) * (l-thetamle) * (is_l) + (2/alpha) * (thetamle-u) * (is_u)
@@ -50,7 +50,7 @@ def plotresult(path, ex_name, w, b, r0, rf, method, n0, nf):
         
         theta = design_saved._info['theta']
         f = design_saved._info['f']
-
+        
     avgTV = np.mean(np.array(TVlist), 0)
     sdTV = np.std(np.array(TVlist), 0)
     avgHD = np.mean(np.array(HDlist), 0)
@@ -83,7 +83,7 @@ def plot_aggregated(example_name='sinfunc', is_bias=False, r0=0, rf=30,
             n0 = 30
             nf = 180
         
-        for metid, metric in enumerate(['HD']):
+        for metid, metric in enumerate(['HD', 'TV']):
             #for mid, m in enumerate(method):
             for mid, (name, linestyle) in enumerate(linestyles.items()):
 
@@ -133,7 +133,6 @@ def plot_IS(example_name='sinfunc', is_bias=False, r0=0, rf=30,
         for mid, m in enumerate(method):
             for r in range(r0, rf):
                 avgPOST, sdPOST, avgPRED, sdPRED, theta = plotresult(path+ex, example_name, worker, batch, r, r+1, m, n0=n0, nf=nf)
-     
                 for th in range(0, 12):
                     isval = interval_score(theta[n0:, th], thetamle, exid, th)
                     result.append({'method': m, 'score': isval, 'rep': r, 'th': th})
@@ -156,7 +155,7 @@ method = ['ceivarx', 'ceivar', 'lhs', 'maxvar', 'imspe']
 path = '/Users/ozgesurer/Desktop/JQT_experiments/highdim_ex/'
 plot_aggregated(example_name='highdim', 
                 is_bias=False, 
-                r0=1, rf=8, 
+                r0=1, rf=11, 
                 clist=clist, 
                 mlist=mlist, 
                 linelist=linestyles, 
@@ -164,12 +163,12 @@ plot_aggregated(example_name='highdim',
                 path=path, 
                 method=method)
 
-# plot_IS(example_name='highdim', 
-#         is_bias=False, 
-#         r0=1, rf=8, 
-#         clist=clist, 
-#         mlist=mlist, 
-#         linelist=linestyles, 
-#         labelsb=labelsb, 
-#         path=path, 
-#         method=method)
+plot_IS(example_name='highdim', 
+        is_bias=False, 
+        r0=1, rf=11, 
+        clist=clist, 
+        mlist=mlist, 
+        linelist=linestyles, 
+        labelsb=labelsb, 
+        path=path, 
+        method=method)
