@@ -33,8 +33,8 @@ mlist = ['P', 'p', '*', 'o', 's', 'h']
 linelist = ['-', '--', '-.', ':', '-.', ':'] 
 
 # choose either 'pritam' or 'sinfunc'
-ex = 'pritam'
-is_bias = True
+ex = 'sinfunc'
+is_bias = False
 if ex == 'pritam':
     n0, nf = 30, 180
     if is_bias:
@@ -60,7 +60,7 @@ batch = 1
 worker = 2
 rep = 30
 fonts = 18
-metric = 'pred'
+metric = 'post'
 
 path = '/Users/ozgesurer/Desktop/JQT_experiments/'
 best_post, best_field = 0, 0

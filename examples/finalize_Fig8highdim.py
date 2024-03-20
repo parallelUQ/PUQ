@@ -50,7 +50,7 @@ def plotresult(path, ex_name, w, b, r0, rf, method, n0, nf):
         
         theta = design_saved._info['theta']
         f = design_saved._info['f']
-        
+    
     avgTV = np.mean(np.array(TVlist), 0)
     sdTV = np.std(np.array(TVlist), 0)
     avgHD = np.mean(np.array(HDlist), 0)

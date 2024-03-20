@@ -34,7 +34,7 @@ linelist = ['-', '--', '-.', ':', '-.', ':']
 
 # choose either 'pritam' or 'sinfunc'
 ex = 'pritam'
-is_bias = True
+is_bias = False
 if ex == 'pritam':
     n0, nf = 30, 180
     if is_bias:

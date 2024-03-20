@@ -33,6 +33,13 @@ def ceivar(n,
     dx = x.shape[1]
     n_x = x.shape[0]
     
+    # REMOVE THESE LINES
+    # sampling = LHS(xlimits=thetalimits[dx:, :])
+    # thetamesh = sampling(synth_info.meshsize)
+    # print('mesh size')
+    # print(thetamesh.shape)
+
+    
     xuniq = np.unique(x, axis=0)
     if synth_info.data_name == 'covid19':
         clist = construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t)

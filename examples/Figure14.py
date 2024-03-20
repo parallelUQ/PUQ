@@ -33,7 +33,7 @@ mlist = ['P', 'p', '*', 'o', 's', 'h']
 linelist = ['-', '--', '-.', ':', '-.', ':'] 
 
 # choose either 'pritam' or 'sinfunc'
-ex = 'sinfunc'
+ex = 'pritam'
 is_bias = False
 if ex == 'pritam':
     path = '/Users/ozgesurer/Desktop/JQT_Experiments/n0_pritam/' 
@@ -67,7 +67,7 @@ batch = 1
 worker = 2
 rep = 2
 fonts = 18
-m = 'ceivarx'
+m = 'ceivar'
 
 for metric in ['TV', 'HD']:
     fig, axes = plt.subplots(1, 1, figsize=(6, 5)) 

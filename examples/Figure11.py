@@ -129,4 +129,4 @@ ex = 'covid19'
 
 FIG9(path, batch, worker, r0, rf, outs, ex, n0, nf)
 
-#plot_IS(path, batch, worker, r0, rf, outs, ex, n0, nf)
+plot_IS(path, batch, worker, r0, rf, outs, ex, n0, nf)
