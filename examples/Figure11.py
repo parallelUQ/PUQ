@@ -39,7 +39,11 @@ def plotresult(path, out, ex_name, w, b, r0, rf, method, n0, nf):
         HDlist.append(HD[n0:nf])
         
         theta = design_saved._info['theta']
-
+        
+        #import seaborn, pandas
+        #seaborn.pairplot(pandas.DataFrame(theta))
+        #plt.show()
+    
     avgTV = np.mean(np.array(TVlist), 0)
     sdTV = np.std(np.array(TVlist), 0)
     avgHD = np.mean(np.array(HDlist), 0)
@@ -49,18 +53,24 @@ def plotresult(path, out, ex_name, w, b, r0, rf, method, n0, nf):
 
 
 def FIG9(path, batch, worker, r0, rf, outs, ex, n0, nf):
-    fonts = 15
+    fonts = 18
     clist = ['b', 'dodgerblue', 'r', 'g', 'm', 'y', 'c', 'pink', 'purple']
     mlist = ['P', 'p', '*', 'o', 's', 'h']
     linelist = ['-', '-', '--', '-.', ':', '-.', ':'] 
     labelsb = [r'$\mathcal{A}^y$', r'$\hat{\mathcal{A}}^y$', r'$\mathcal{A}^p$', r'$\mathcal{A}^{lhs}$', r'$\mathcal{A}^{rnd}$']
     method = ['ceivarx', 'ceivarxn', 'ceivar', 'lhs', 'rnd']
 
+    labelsb = [r'$\mathcal{A}^y$', r'$\hat{\mathcal{A}}^y$', r'$\mathcal{A}^p$', r'$\mathcal{A}^{lhs}$', r'$\mathcal{A}^{rnd}$', r'$\mathcal{A}^{imspe}$', r'$\mathcal{A}^{var}$']
+    method = ['ceivarx', 'ceivarxn', 'ceivar', 'lhs', 'rnd', 'imspe', 'maxvar']
+    
+    labelsb = [r'$\mathcal{A}^y$', r'$\hat{\mathcal{A}}^y$', r'$\mathcal{A}^p$', r'$\mathcal{A}^{lhs}$', r'$\mathcal{A}^{var}$', r'$\mathcal{A}^{imspe}$']
+    method = ['ceivarx', 'ceivarxn', 'ceivar', 'lhs', 'maxvar', 'imspe']
+
     for metric in ['TV', 'HD']:
-        fig, axes = plt.subplots(1, 1, figsize=(7, 5)) 
+        fig, axes = plt.subplots(1, 1, figsize=(10, 7)) 
 
         if metric == 'HD':
-            axins = inset_axes(axes, 2.3, 1.5 , loc=1, bbox_to_anchor=(0.5, 0.6), bbox_transform=axes.transAxes)
+            axins = inset_axes(axes, 2.7, 1.9 , loc=1, bbox_to_anchor=(0.5, 0.6), bbox_transform=axes.transAxes)
             
         for mid, m in enumerate(method):
             avgPOST, sdPOST, avgPRED, sdPRED, _ = plotresult(path, outs, ex, worker, batch, r0, rf, m, n0=n0, nf=nf)
@@ -71,7 +81,7 @@ def FIG9(path, batch, worker, r0, rf, outs, ex, n0, nf):
             elif metric == 'HD':
                 axes.plot(np.arange(len(avgPOST)), avgPOST, label=labelsb[mid], color=clist[mid], linestyle=linelist[mid], linewidth=4)
                 #plt.fill_between(np.arange(len(avgPOST)), avgPOST-1.96*sdPOST/rep, avgPOST+1.96*sdPOST/rep, color=clist[mid], alpha=0.1)  
-                if m == 'lhs' or m == 'rnd':
+                if m == 'lhs' or m == 'rnd' or m == 'imspe' or m == 'maxvar':
                     axins.plot(np.arange(50, len(avgPOST)), avgPOST[50:], color=clist[mid], linestyle=linelist[mid], linewidth=2)
     
         if metric == 'HD':
@@ -84,7 +94,7 @@ def FIG9(path, batch, worker, r0, rf, outs, ex, n0, nf):
         elif metric == 'HD':
             axes.set_ylabel(r'${\rm MAD}^p$', fontsize=fonts) 
         axes.tick_params(axis='both', which='major', labelsize=fonts-2)
-        axes.legend(bbox_to_anchor=(1, -0.2), ncol=5, fontsize=fonts, handletextpad=0.1)
+        axes.legend(bbox_to_anchor=(1, -0.2), ncol=6, fontsize=fonts, handletextpad=0.1)
         if metric == 'TV':
             plt.savefig("Figure11_pred.png", bbox_inches="tight")
         elif metric == 'HD':
@@ -101,6 +111,7 @@ def plot_IS(path, batch, worker, r0, rf, outs, ex, n0, nf):
     nf = 200
     
     method = ['ceivarx', 'ceivarxn', 'ceivar', 'lhs', 'rnd']
+    method = ['ceivarx', 'ceivarxn', 'ceivar', 'lhs', 'imspe', 'maxvar']
     result = []
     for mid, m in enumerate(method):
         for r in range(r0, rf):
@@ -123,10 +134,10 @@ n0, nf = 50, 200
 # = '/Users/ozgesurer/Desktop/JQT_experiments/true_deneme/covid19_bebop25/all/' 
 #path = '/Users/ozgesurer/Desktop/JQT_experiments/covid19_bebop68/all/' 
 path = '/Users/ozgesurer/Desktop/JQT_experiments/covid19_bebop25_unk/all/' 
-
+path = '/Users/ozgesurer/Desktop/JQT_experiments/covid19_bebop25_response/' 
 outs = 'covid19'
 ex = 'covid19'
 
 FIG9(path, batch, worker, r0, rf, outs, ex, n0, nf)
 
-plot_IS(path, batch, worker, r0, rf, outs, ex, n0, nf)
+# plot_IS(path, batch, worker, r0, rf, outs, ex, n0, nf)
