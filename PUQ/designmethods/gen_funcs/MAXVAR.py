@@ -34,10 +34,10 @@ def maxvar(n,
     n_x = x.shape[0]
     
     xuniq = np.unique(x, axis=0)
-    if synth_info.data_name == 'covid19':
-        clist = construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t)
-    else:
-        clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
+    # if synth_info.data_name == 'covid19':
+    #     clist = construct_candlist_covid(thetalimits, xuniq, prior_func, prior_func_t)
+    # else:
+    clist = construct_candlist(thetalimits, xuniq, prior_func, prior_func_t)
 
     emupred = emu.predict(x=np.arange(0, 1)[:, None], theta=clist)
     emuvar = emupred.var()

@@ -96,16 +96,20 @@ if __name__ == "__main__":
     thetamle_LHS = al_LHS._info['thetamle'][-1]
     
     dataset = []
-    dataset.append({'mle':thetamle_eivarx, 'f':f_eivarx, 'xt':xt_eivarx, 'method':'Ay'})
-    dataset.append({'mle':thetamle_eivar, 'f':f_eivar, 'xt':xt_eivar, 'method':'Ap'})
+
     dataset.append({'mle':thetamle_LHS, 'f':f_LHS, 'xt':xt_LHS, 'method':'Alhs'})
+    dataset.append({'mle':thetamle_eivar, 'f':f_eivar, 'xt':xt_eivar, 'method':'Ap'})
+    dataset.append({'mle':thetamle_eivarx, 'f':f_eivarx, 'xt':xt_eivarx, 'method':'Ay'})
     
     xt_true = [np.concatenate([xc.reshape(1, 1), cls_data.true_theta.reshape(1, 1)], axis=1) for xc in xmesh]
     xt_true = np.array([m for mesh in xt_true for m in mesh])
     true_model = cls_data.function(xt_true[:, 0], xt_true[:, 1])
     
     x_emu = np.arange(0, 1)[:, None ]
-    for point in dataset:
+    
+
+    fig, axs = plt.subplots(2, 3, figsize=(15, 7))
+    for pid, point in enumerate(dataset):
         theta_mle = point['mle']
         f = point['f']
         xt = point['xt']
@@ -123,40 +127,30 @@ if __name__ == "__main__":
         predmean = emupred.mean().flatten()
         predsd = np.sqrt(emupred.var().flatten())
         
-        plt.plot(xmesh.flatten(), predmean, color='blue', linestyle='dashed', linewidth=2.5) 
-        plt.fill_between(xmesh.flatten(), predmean - predsd, predmean + predsd, color='blue', alpha=0.1)
-        plt.plot(xmesh.flatten(), true_model.flatten(), color='red', linewidth=2.5) 
-        plt.scatter(cls_data.x.flatten(), cls_data.real_data, color='black')
-        plt.xlabel(r'$x$', fontsize=20)
-        plt.ylabel(r'$\eta(x, \hat{\theta})$', fontsize=20)
-        plt.xticks(fontsize=15)
-        plt.yticks(fontsize=15)
-        plt.savefig("Figure1a_" + point['method'] + ".png", bbox_inches="tight")
-        plt.show()
-        
-        # Posterior
+        # optional for presentation 
+        ft = 16
+        axs[0, pid].plot(xmesh.flatten(), predmean, color='blue', linestyle='dashed', linewidth=3) 
+        axs[0, pid].fill_between(xmesh.flatten(), predmean - predsd, predmean + predsd, color='blue', alpha=0.1)
+        axs[0, pid].plot(xmesh.flatten(), true_model.flatten(), color='red', linewidth=3) 
+        axs[0, pid].scatter(cls_data.x.flatten(), cls_data.real_data, color='black', s=50)
+        axs[0, pid].set_xlabel(r'$x$', fontsize=ft)
+        axs[0, pid].set_ylabel(r'$\eta(x, \theta=\pi/5)$', fontsize=ft)
+        axs[0, pid].tick_params(labelsize=ft)
+
+        # Posterior        
         pmeanhat, pvarhat = postpred(emu._info, cls_data.x, xt_test, cls_data.real_data, cls_data.obsvar)
-        plt.plot(thetamesh.flatten(), pmeanhat, color='blue', linestyle='dashed', linewidth=2.5) 
-        plt.fill_between(thetamesh.flatten(), 
-                         pmeanhat - np.sqrt(pvarhat),  
-                         pmeanhat + np.sqrt(pvarhat), 
+        axs[1, pid].plot(thetamesh.flatten(), pmeanhat, color='blue', linestyle='dashed', linewidth=3) 
+        pl = pmeanhat + np.sqrt(pvarhat)
+        mn = pmeanhat - np.sqrt(pvarhat)
+        axs[1, pid].fill_between(thetamesh.flatten(), 
+                         mn,  
+                         pl, 
                          color='blue', alpha=0.2)
-        plt.plot(thetamesh.flatten(), ptest.flatten(), color='red', linewidth=2.5) 
-        plt.ylabel(r'$\tilde{p}(\theta|y)$', fontsize=20)
-        plt.xlabel(r'$\theta$', fontsize=20)
-        plt.xticks(fontsize=15)
-        plt.yticks(np.arange(0, 1.5, 0.3), fontsize=15)
-        plt.savefig("Figure1b_" + point['method'] + ".png", bbox_inches="tight")
-        plt.show()
-    
-        # Design
-        # plt.scatter(xt[0:ninit, 0], xt[0:ninit, 1], marker='*', color='blue', s=50)
-        # plt.scatter(xt[:, 0][ninit:], xt[:, 1][ninit:], marker='+', color='red', s=50)
-        # plt.axhline(y = cls_data.true_theta, color = 'green')
-        # plt.scatter(cls_data.x, np.repeat(cls_data.true_theta, len(cls_data.x)), marker='x', color='black', s=50)
-        # plt.xlabel(r'$x$', fontsize=20)
-        # plt.ylabel(r'$\theta$', fontsize=20)
-        # plt.xticks(fontsize=15)
-        # plt.yticks(fontsize=15)
-        # plt.savefig("Figure1c_" + point['method'] + ".png", bbox_inches="tight")
-        # plt.show()
+        axs[1, pid].plot(thetamesh.flatten(), ptest.flatten(), color='red', linewidth=3) 
+        axs[1, pid].set_ylabel(r'$\tilde{p}(\theta|y)$', fontsize=ft)
+        axs[1, pid].set_xlabel(r'$\theta$', fontsize=ft)
+        axs[1, pid].tick_params(labelsize=ft)
+
+
+plt.savefig('Figure1.jpg', format='jpeg', bbox_inches="tight", dpi=1000)
+plt.show()

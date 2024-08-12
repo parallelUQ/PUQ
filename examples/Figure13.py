@@ -71,70 +71,90 @@ cls_data.realdata(des_index/188, seed=1)
 
 
 
-def FIG11(path, outs, ex, worker, batch, rep, method, n0, nf):
-    theta, f = plotresult(path, outs, ex, worker, batch, rep, method, n0=n0, nf=nf)
+def FIG11(path, outs, ex, worker, batch, rep, methods, n0, nf):
+    
+    for method in methods:
+        theta, f = plotresult(path, outs, ex, worker, batch, rep, method, n0=n0, nf=nf)
+        
+        theta[:, 1] = cls_data.truelims[0][0] + theta[:, 1]*(cls_data.truelims[0][1] - cls_data.truelims[0][0])
+        theta[:, 2] = cls_data.truelims[1][0] + theta[:, 2]*(cls_data.truelims[1][1] - cls_data.truelims[1][0])
+        theta[:, 3] = cls_data.truelims[2][0] + theta[:, 3]*(cls_data.truelims[2][1] - cls_data.truelims[2][0])
+        theta[:, 4] = cls_data.truelims[3][0] + theta[:, 4]*(cls_data.truelims[3][1] - cls_data.truelims[3][0])
+        
+        pdtheta = pd.DataFrame(theta[:, 1:5])
+        pdtheta['color'] = np.concatenate((np.repeat('red', 50), np.repeat('gray', 150)))
+        
+        g = sns.pairplot(pdtheta, 
+                         kind='scatter',
+                         diag_kind='hist',
+                         corner=True,
+                         hue="color",
+                         palette=['blue', 'gray'],
+                         markers=["*", "X"])
+        ft = 20
+        from matplotlib.ticker import MaxNLocator
+        from matplotlib.ticker import FormatStrFormatter
+        g.axes[0, 0].axvline(x=cls_data.truelims[0][0] + cls_data.true_theta[0]*(cls_data.truelims[0][1] - cls_data.truelims[0][0]), color='red', linestyle='--', lw=2)
+        g.axes[1, 1].axvline(x=cls_data.truelims[1][0] + cls_data.true_theta[1]*(cls_data.truelims[1][1] - cls_data.truelims[1][0]), color='red', linestyle='--', lw=2)
+        g.axes[2, 2].axvline(x=cls_data.truelims[2][0] + cls_data.true_theta[2]*(cls_data.truelims[2][1] - cls_data.truelims[2][0]), color='red', linestyle='--', lw=2)
+        g.axes[3, 3].axvline(x=cls_data.truelims[3][0] + cls_data.true_theta[3]*(cls_data.truelims[3][1] - cls_data.truelims[3][0]), color='red', linestyle='--', lw=2)
+        g.axes[0, 0].set_ylabel(r'$1/\sigma_I$', fontsize=ft)
+        g.axes[1, 0].set_ylabel(r'$\omega_A$', fontsize=ft)
+        g.axes[2, 0].set_ylabel(r'$1/\gamma_Y$', fontsize=ft)
+        g.axes[3, 0].set_ylabel(r'$1/\gamma_A$', fontsize=ft)
+    
+        g.axes[3, 0].set_xlabel(r'$1/\sigma_I$', fontsize=ft)
+        g.axes[3, 1].set_xlabel(r'$\omega_A$', fontsize=ft)
+        g.axes[3, 2].set_xlabel(r'$1/\gamma_Y$', fontsize=ft)
+        g.axes[3, 3].set_xlabel(r'$1/\gamma_A$', fontsize=ft)
+    
+        g.axes[3, 0].tick_params(axis='both', which='major', labelsize=ft-2)
+        g.axes[1, 0].tick_params(axis='both', which='major', labelsize=ft-2)
+        g.axes[2, 0].tick_params(axis='both', which='major', labelsize=ft-2)
+       
+        g.axes[3, 1].tick_params(axis='both', which='major', labelsize=ft-2)
+        g.axes[3, 2].tick_params(axis='both', which='major', labelsize=ft-2)
+        g.axes[3, 3].tick_params(axis='both', which='major', labelsize=ft-2)
+        
+        g.axes[1, 0].yaxis.set_major_locator(MaxNLocator(3))
+        g.axes[2, 0].yaxis.set_major_locator(MaxNLocator(3))
+        g.axes[3, 0].yaxis.set_major_locator(MaxNLocator(3))
+        g.axes[3, 0].xaxis.set_major_locator(MaxNLocator(3))
+        g.axes[3, 1].xaxis.set_major_locator(MaxNLocator(3))
+        g.axes[3, 2].xaxis.set_major_locator(MaxNLocator(3))
+        g.axes[3, 3].xaxis.set_major_locator(MaxNLocator(3))
+        
+        
+        g.axes[3, 0].xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+        g.axes[3, 1].xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+        g.axes[3, 2].xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+        g.axes[3, 3].xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+        
+        g.axes[1, 0].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+        g.axes[2, 0].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+        g.axes[3, 0].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+        
+        g._legend.remove()
+        g.savefig('pairplot' + method + '.png')
 
-    theta[:, 1] = cls_data.truelims[0][0] + theta[:, 1]*(cls_data.truelims[0][1] - cls_data.truelims[0][0])
-    theta[:, 2] = cls_data.truelims[1][0] + theta[:, 2]*(cls_data.truelims[1][1] - cls_data.truelims[1][0])
-    theta[:, 3] = cls_data.truelims[2][0] + theta[:, 3]*(cls_data.truelims[2][1] - cls_data.truelims[2][0])
-    theta[:, 4] = cls_data.truelims[3][0] + theta[:, 4]*(cls_data.truelims[3][1] - cls_data.truelims[3][0])
-    
-    pdtheta = pd.DataFrame(theta[:, 1:5])
-    pdtheta['color'] = np.concatenate((np.repeat('red', 50), np.repeat('gray', 150)))
-    
-    g = sns.pairplot(pdtheta, 
-                     kind='scatter',
-                     diag_kind='hist',
-                     corner=True,
-                     hue="color",
-                     palette=['blue', 'gray'],
-                     markers=["*", "X"])
-    ft = 20
-    from matplotlib.ticker import MaxNLocator
-    from matplotlib.ticker import FormatStrFormatter
-    g.axes[0, 0].axvline(x=cls_data.truelims[0][0] + cls_data.true_theta[0]*(cls_data.truelims[0][1] - cls_data.truelims[0][0]), color='red', linestyle='--', lw=2)
-    g.axes[1, 1].axvline(x=cls_data.truelims[1][0] + cls_data.true_theta[1]*(cls_data.truelims[1][1] - cls_data.truelims[1][0]), color='red', linestyle='--', lw=2)
-    g.axes[2, 2].axvline(x=cls_data.truelims[2][0] + cls_data.true_theta[2]*(cls_data.truelims[2][1] - cls_data.truelims[2][0]), color='red', linestyle='--', lw=2)
-    g.axes[3, 3].axvline(x=cls_data.truelims[3][0] + cls_data.true_theta[3]*(cls_data.truelims[3][1] - cls_data.truelims[3][0]), color='red', linestyle='--', lw=2)
-    g.axes[0, 0].set_ylabel(r'$1/\sigma_I$', fontsize=ft)
-    g.axes[1, 0].set_ylabel(r'$\omega_A$', fontsize=ft)
-    g.axes[2, 0].set_ylabel(r'$1/\gamma_Y$', fontsize=ft)
-    g.axes[3, 0].set_ylabel(r'$1/\gamma_A$', fontsize=ft)
+    # Load the images back and display them side by side
+    img1 = plt.imread('pairplotceivar.png')
+    img2 = plt.imread('pairplotceivarx.png')
 
-    g.axes[3, 0].set_xlabel(r'$1/\sigma_I$', fontsize=ft)
-    g.axes[3, 1].set_xlabel(r'$\omega_A$', fontsize=ft)
-    g.axes[3, 2].set_xlabel(r'$1/\gamma_Y$', fontsize=ft)
-    g.axes[3, 3].set_xlabel(r'$1/\gamma_A$', fontsize=ft)
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+    axes[0].imshow(img1)
+    axes[0].axis('off')
 
-    g.axes[3, 0].tick_params(axis='both', which='major', labelsize=ft-2)
-    g.axes[1, 0].tick_params(axis='both', which='major', labelsize=ft-2)
-    g.axes[2, 0].tick_params(axis='both', which='major', labelsize=ft-2)
-   
-    g.axes[3, 1].tick_params(axis='both', which='major', labelsize=ft-2)
-    g.axes[3, 2].tick_params(axis='both', which='major', labelsize=ft-2)
-    g.axes[3, 3].tick_params(axis='both', which='major', labelsize=ft-2)
-    
-    g.axes[1, 0].yaxis.set_major_locator(MaxNLocator(3))
-    g.axes[2, 0].yaxis.set_major_locator(MaxNLocator(3))
-    g.axes[3, 0].yaxis.set_major_locator(MaxNLocator(3))
-    g.axes[3, 0].xaxis.set_major_locator(MaxNLocator(3))
-    g.axes[3, 1].xaxis.set_major_locator(MaxNLocator(3))
-    g.axes[3, 2].xaxis.set_major_locator(MaxNLocator(3))
-    g.axes[3, 3].xaxis.set_major_locator(MaxNLocator(3))
-    
-    
-    g.axes[3, 0].xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    g.axes[3, 1].xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    g.axes[3, 2].xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    g.axes[3, 3].xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    
-    g.axes[1, 0].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    g.axes[2, 0].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    g.axes[3, 0].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    
-    g._legend.remove()
-    plt.savefig("Figure13_" + method + ".png", bbox_inches="tight")
+    axes[1].imshow(img2)
+    axes[1].axis('off')
+
+    plt.savefig('Figure12.jpg', format='jpeg', bbox_inches="tight", dpi=1000)
     plt.show()
+
+
+        # g._legend.remove()
+        # plt.savefig("Figure13_" + method + ".png", bbox_inches="tight")
+        # plt.show()
 
 batch = 1
 worker = 2
@@ -148,8 +168,6 @@ path = '/Users/ozgesurer/Desktop/JQT_experiments/covid19_bebop25/all/'
 outs = 'covid19'
 ex = 'covid19'
 
-method = 'ceivar' #['ceivarx', 'ceivar', 'lhs', 'rnd']
-FIG11(path, outs, ex, worker, batch, rep, method, n0, nf)
+methods = ['ceivar', 'ceivarx'] #['ceivarx', 'ceivar', 'lhs', 'rnd']
+FIG11(path, outs, ex, worker, batch, rep, methods, n0, nf)
 
-method = 'ceivarx' #['ceivarx', 'ceivar', 'lhs', 'rnd']
-FIG11(path, outs, ex, worker, batch, rep, method, n0, nf)

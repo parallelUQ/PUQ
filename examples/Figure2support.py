@@ -23,17 +23,18 @@ def ceivarxfig(n,
           posttest=None,
           type_init=None,
           synth_info=None,
-          theta_mle=None):
+          theta_mle=None,
+          axis=None):
     
-
+    
+    ft = 16
+    
     p = theta.shape[1]
     dt = thetamesh.shape[1]
     dx = x.shape[1]
     type_init = 'CMB'
     x_emu      = np.arange(0, 1)[:, None ]
     xuniq = np.unique(x, axis=0)
-
-
 
     nx_ref = x_mesh.shape[0]
     dx = x_mesh.shape[1]
@@ -84,24 +85,46 @@ def ceivarxfig(n,
         for j in range(nmesh):
             xt_cand = np.array([X[i, j], Y[i, j]]).reshape(1, dx + dt)
             Z[i, j] = postphimat(emu._info, n_x, mesh_grid, f_field_rep, obsvar3D, xt_cand, Smat3D, rVh_1_3d, pred_mean) 
-    plt.contourf(X, Y, Z, cmap='Purples', alpha=1)
-    plt.hlines(synth_info.true_theta, 0, 1, linestyles='dotted', linewidth=3, colors='orange')
-    for xitem in x:
-        plt.vlines(xitem, 0, 1, linestyles='dotted', colors='orange', linewidth=3, zorder=1)
+
     ids = np.where(Z==Z.max())
     xnew = np.array([X[ids[0].flatten(), ids[1].flatten()], Y[ids[0].flatten(), ids[1].flatten()]]).reshape(1, dx + dt)
-    plt.scatter(xnew[0,0], xnew[0,1], marker='x', c='cyan', s=200, zorder=2, linewidth=3)
-    plt.scatter(theta[0:10, 0], theta[0:10, 1], marker='*', c='blue', s=50)
-    plt.scatter(theta[10:, 0], theta[10:, 1], marker='+', c='red', s=200, linewidth=3)
-    plt.text(0.8, 0.05, r'$n_t=$'+ str(theta.shape[0]), fontsize=15)
-    plt.xlabel(r'$x$', fontsize=20)
-    plt.ylabel(r'$\theta$', fontsize=20)
-    plt.xticks(fontsize=15)
-    plt.yticks(fontsize=15)
-        
-    if ((theta.shape[0] == 18) or (theta.shape[0] == 21) or (theta.shape[0] == 29)):
-        plt.savefig("Figure2b_" + str(theta.shape[0]) + ".png", bbox_inches="tight")
-    plt.show()
+    
+    if theta.shape[0] == 18:
+        axis[1, 0].contourf(X, Y, Z, cmap='Purples', alpha=1)
+        axis[1, 0].hlines(synth_info.true_theta, 0, 1, linestyles='dotted', linewidth=3, colors='orange')
+        for xitem in x:
+            axis[1, 0].vlines(xitem, 0, 1, linestyles='dotted', colors='orange', linewidth=3, zorder=1)
+        axis[1, 0].scatter(xnew[0,0], xnew[0,1], marker='x', c='cyan', s=200, zorder=2, linewidth=3)
+        axis[1, 0].scatter(theta[0:10, 0], theta[0:10, 1], marker='*', c='blue', s=50)
+        axis[1, 0].scatter(theta[10:, 0], theta[10:, 1], marker='+', c='red', s=200, linewidth=3)
+        axis[1, 0].text(0.8, 0.05, r'$n_t=$'+ str(theta.shape[0]), fontsize=ft)
+        axis[1, 0].set_xlabel(r'$x$', fontsize=ft)
+        axis[1, 0].set_ylabel(r'$\theta$', fontsize=ft)
+        axis[1, 0].tick_params(labelsize=ft)
+    elif theta.shape[0] == 21:
+        axis[1, 1].contourf(X, Y, Z, cmap='Purples', alpha=1)
+        axis[1, 1].hlines(synth_info.true_theta, 0, 1, linestyles='dotted', linewidth=3, colors='orange')
+        for xitem in x:
+            axis[1, 1].vlines(xitem, 0, 1, linestyles='dotted', colors='orange', linewidth=3, zorder=1)
+        axis[1, 1].scatter(xnew[0,0], xnew[0,1], marker='x', c='cyan', s=200, zorder=2, linewidth=3)
+        axis[1, 1].scatter(theta[0:10, 0], theta[0:10, 1], marker='*', c='blue', s=50)
+        axis[1, 1].scatter(theta[10:, 0], theta[10:, 1], marker='+', c='red', s=200, linewidth=3)
+        axis[1, 1].text(0.8, 0.05, r'$n_t=$'+ str(theta.shape[0]), fontsize=ft)
+        axis[1, 1].set_xlabel(r'$x$', fontsize=ft)
+        axis[1, 1].set_ylabel(r'$\theta$', fontsize=ft)
+        axis[1, 1].tick_params(labelsize=ft)
+    elif theta.shape[0] == 29:
+        axis[1, 2].contourf(X, Y, Z, cmap='Purples', alpha=1)
+        axis[1, 2].hlines(synth_info.true_theta, 0, 1, linestyles='dotted', linewidth=3, colors='orange')
+        for xitem in x:
+            axis[1, 2].vlines(xitem, 0, 1, linestyles='dotted', colors='orange', linewidth=3, zorder=1)
+        axis[1, 2].scatter(xnew[0,0], xnew[0,1], marker='x', c='cyan', s=200, zorder=2, linewidth=3)
+        axis[1, 2].scatter(theta[0:10, 0], theta[0:10, 1], marker='*', c='blue', s=50)
+        axis[1, 2].scatter(theta[10:, 0], theta[10:, 1], marker='+', c='red', s=200, linewidth=3)
+        axis[1, 2].text(0.8, 0.05, r'$n_t=$'+ str(theta.shape[0]), fontsize=ft)
+        axis[1, 2].set_xlabel(r'$x$', fontsize=ft)
+        axis[1, 2].set_ylabel(r'$\theta$', fontsize=ft)
+        axis[1, 2].tick_params(labelsize=ft)
 
     return xnew 
 
@@ -122,9 +145,12 @@ def ceivarfig(n,
           posttest=None,
           type_init=None,
           synth_info=None,
-          theta_mle=None):
+          theta_mle=None,
+          axis=None):
     
 
+    ft = 16
+    
     p = theta.shape[1]
     dt = thetamesh.shape[1]
     dx = x.shape[1]
@@ -147,24 +173,49 @@ def ceivarfig(n,
             xt_cand = np.array([X[i, j], Y[i, j]]).reshape(1, dx + dt)
             Z[i, j] = postphimat(emu._info, n_x, xt_ref, obs, obsvar, xt_cand, Smat3D, rVh_1_3d, pred_mean)
     
-    plt.contourf(X, Y, Z, cmap='Purples', alpha=1)
-    plt.hlines(synth_info.true_theta, 0, 1, linestyles='dotted', linewidth=3, colors='orange')
-    for xitem in x:
-        plt.vlines(xitem, 0, 1, linestyles='dotted', colors='orange', linewidth=3, zorder=1)
+
     ids = np.where(Z==Z.max())
     xnew = np.array([X[ids[0].flatten(), ids[1].flatten()], Y[ids[0].flatten(), ids[1].flatten()]]).reshape(1, dx + dt)
-    plt.scatter(xnew[0,0], xnew[0,1], marker='x', c='cyan', s=200, zorder=2, linewidth=3)
-    plt.scatter(theta[0:10, 0], theta[0:10, 1], marker='*', c='blue', s=50)
-    plt.scatter(theta[10:, 0], theta[10:, 1], marker='+', c='red', s=200, linewidth=3)
-    plt.text(0.8, 0.05, r'$n_t=$'+ str(theta.shape[0]), fontsize=15)
-    plt.xlabel(r'$x$', fontsize=20)
-    plt.ylabel(r'$\theta$', fontsize=20)
-    plt.xticks(fontsize=15)
-    plt.yticks(fontsize=15)
-    
-    if ((theta.shape[0] == 11) or (theta.shape[0] == 16) or (theta.shape[0] == 29)):
-        plt.savefig("Figure2a_" + str(theta.shape[0]) + ".png", bbox_inches="tight")
-    plt.show()
+    if (theta.shape[0] == 11):
+        axis[0, 0].contourf(X, Y, Z, cmap='Purples', alpha=1)
+        axis[0, 0].hlines(synth_info.true_theta, 0, 1, linestyles='dotted', linewidth=3, colors='orange')
+        for xitem in x:
+            axis[0, 0].vlines(xitem, 0, 1, linestyles='dotted', colors='orange', linewidth=3, zorder=1)
+
+        axis[0, 0].scatter(xnew[0,0], xnew[0,1], marker='x', c='cyan', s=200, zorder=2, linewidth=3)
+        axis[0, 0].scatter(theta[0:10, 0], theta[0:10, 1], marker='*', c='blue', s=50)
+        axis[0, 0].scatter(theta[10:, 0], theta[10:, 1], marker='+', c='red', s=200, linewidth=3)
+        axis[0, 0].text(0.8, 0.05, r'$n_t=$'+ str(theta.shape[0]), fontsize=ft)
+        axis[0, 0].set_xlabel(r'$x$', fontsize=ft)
+        axis[0, 0].set_ylabel(r'$\theta$', fontsize=ft)
+        axis[0, 0].tick_params(labelsize=ft)
+    elif (theta.shape[0] == 16):
+        axis[0, 1].contourf(X, Y, Z, cmap='Purples', alpha=1)
+        axis[0, 1].hlines(synth_info.true_theta, 0, 1, linestyles='dotted', linewidth=3, colors='orange')
+        for xitem in x:
+            axis[0, 1].vlines(xitem, 0, 1, linestyles='dotted', colors='orange', linewidth=3, zorder=1)
+
+        axis[0, 1].scatter(xnew[0,0], xnew[0,1], marker='x', c='cyan', s=200, zorder=2, linewidth=3)
+        axis[0, 1].scatter(theta[0:10, 0], theta[0:10, 1], marker='*', c='blue', s=50)
+        axis[0, 1].scatter(theta[10:, 0], theta[10:, 1], marker='+', c='red', s=200, linewidth=3)
+        axis[0, 1].text(0.8, 0.05, r'$n_t=$'+ str(theta.shape[0]), fontsize=ft)
+        axis[0, 1].set_xlabel(r'$x$', fontsize=ft)
+        axis[0, 1].set_ylabel(r'$\theta$', fontsize=ft)
+        axis[0, 1].tick_params(labelsize=ft)
+    elif (theta.shape[0] == 29): 
+        axis[0, 2].contourf(X, Y, Z, cmap='Purples', alpha=1)
+        axis[0, 2].hlines(synth_info.true_theta, 0, 1, linestyles='dotted', linewidth=3, colors='orange')
+        for xitem in x:
+            axis[0, 2].vlines(xitem, 0, 1, linestyles='dotted', colors='orange', linewidth=3, zorder=1)
+
+        axis[0, 2].scatter(xnew[0,0], xnew[0,1], marker='x', c='cyan', s=200, zorder=2, linewidth=3)
+        axis[0, 2].scatter(theta[0:10, 0], theta[0:10, 1], marker='*', c='blue', s=50)
+        axis[0, 2].scatter(theta[10:, 0], theta[10:, 1], marker='+', c='red', s=200, linewidth=3)
+        axis[0, 2].text(0.8, 0.05, r'$n_t=$'+ str(theta.shape[0]), fontsize=ft)
+        axis[0, 2].set_xlabel(r'$x$', fontsize=ft)
+        axis[0, 2].set_ylabel(r'$\theta$', fontsize=ft)
+        axis[0, 2].tick_params(labelsize=ft)
+
 
     return xnew 
 

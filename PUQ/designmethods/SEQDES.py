@@ -173,8 +173,8 @@ def gen_f(H, persis_info, gen_specs, libE_info):
 
                 mlelist.append(theta_mle)
                 
-                #if (len(theta) % 10 == 0):
-                # print('mle:', theta_mle)
+                if (len(theta) % 10 == 0):
+                    print('mle:', theta_mle)
                 
                 TV, HD = collect_data(emu, None, x_emu, theta_mle, dt, x_mesh, thetatest, nmesh, ytest, ptest, x, true_fevals, obsvar, synth_info)  
                 prev_pending   = pending.copy()

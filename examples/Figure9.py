@@ -85,27 +85,22 @@ thetamesh = sampling(n_t)
 colors = np.repeat('blue', 189)
 index = np.arange(0, 189, 15)
 
+fig, axs = plt.subplots(1, 2, figsize=(14, 4.5))
 # Generate some random date-time data
 ft = 15
 numdays = 222
 base = datetime.datetime(2020, 2, 28, 23, 30) 
 date_list = [base + datetime.timedelta(days=x) for x in range(0, numdays) if x >= 33]
-# Set the locator
 locator = mdates.MonthLocator()  # every month
-# Specify the format - %b gives us Jan, Feb...
 fmt = mdates.DateFormatter('%b')
-plt.scatter(date_list, true_obs, c=colors, label='Observed data')
-plt.plot(date_list, true_func, c='red', label='Simulation output')
-X = plt.gca().xaxis
-X.set_major_locator(locator)
+axs[0].scatter(date_list, true_obs, c=colors, label='Observed data')
+axs[0].plot(date_list, true_func, c='red', label='Simulation output')
+axs[0].xaxis.set_major_locator(locator)
 # Specify formatter
-X.set_major_formatter(fmt)
-plt.ylabel('COVID-19 Hospital Admissions', fontsize=ft)
-plt.xticks(fontsize=ft-2)
-plt.yticks(fontsize=ft-2)
-plt.legend(fontsize=ft-2, ncol=1)
-plt.savefig("Figure9a.png", bbox_inches="tight")
-plt.show()
+axs[0].xaxis.set_major_formatter(fmt)
+axs[0].set_ylabel('COVID-19 Hospital Admissions', fontsize=ft)
+axs[0].tick_params(labelsize=ft-2)
+axs[0].legend(fontsize=ft-2, ncol=1)
 
 
 fall = []
@@ -117,15 +112,13 @@ date_list = [base + datetime.timedelta(days=x) for x in range(0, 222) if x >= 33
 locator = mdates.MonthLocator()  
 fmt = mdates.DateFormatter('%b')
 for fa in fall:
-    plt.plot(date_list, fa, color='gray', zorder=1)
-plt.plot(date_list, ytest.flatten(), color='red', zorder=2)  
-X = plt.gca().xaxis
-X.set_major_locator(locator)
+    axs[1].plot(date_list, fa, color='gray', zorder=1)
+axs[1].plot(date_list, ytest.flatten(), color='red', zorder=2)  
+axs[1].xaxis.set_major_locator(locator)
 # Specify formatter
-X.set_major_formatter(fmt)
-plt.xticks(fontsize=ft-2)
-plt.yticks(fontsize=ft-2)
-plt.savefig("Figure9b.png", bbox_inches="tight")
+axs[1].xaxis.set_major_formatter(fmt)
+axs[1].tick_params(labelsize=ft-2)
+plt.savefig('Figure9.jpg', format='jpeg', bbox_inches="tight", dpi=1000)
 plt.show()
 
 

@@ -53,7 +53,7 @@ def plotresult(path, out, ex_name, w, b, r0, rf, method, n0, nf):
 
 
 def FIG9(path, batch, worker, r0, rf, outs, ex, n0, nf):
-    fonts = 18
+    fonts = 16
     clist = ['b', 'dodgerblue', 'r', 'g', 'm', 'y', 'c', 'pink', 'purple']
     mlist = ['P', 'p', '*', 'o', 's', 'h']
     linelist = ['-', '-', '--', '-.', ':', '-.', ':'] 
@@ -66,40 +66,36 @@ def FIG9(path, batch, worker, r0, rf, outs, ex, n0, nf):
     labelsb = [r'$\mathcal{A}^y$', r'$\hat{\mathcal{A}}^y$', r'$\mathcal{A}^p$', r'$\mathcal{A}^{lhs}$', r'$\mathcal{A}^{var}$', r'$\mathcal{A}^{imspe}$']
     method = ['ceivarx', 'ceivarxn', 'ceivar', 'lhs', 'maxvar', 'imspe']
 
-    for metric in ['TV', 'HD']:
-        fig, axes = plt.subplots(1, 1, figsize=(10, 7)) 
+    #fig, axes = plt.subplots(1, 2, figsize=(20, 7)) 
+    fig, axes = plt.subplots(1, 2, figsize=(15, 6))
+    for metid, metric in enumerate(['HD', 'TV']):
 
         if metric == 'HD':
-            axins = inset_axes(axes, 2.7, 1.9 , loc=1, bbox_to_anchor=(0.5, 0.6), bbox_transform=axes.transAxes)
+            axins = inset_axes(axes[metid], 2.7, 1.9 , loc=1, bbox_to_anchor=(0.5, 0.6), bbox_transform=axes[metid].transAxes)
             
         for mid, m in enumerate(method):
             avgPOST, sdPOST, avgPRED, sdPRED, _ = plotresult(path, outs, ex, worker, batch, r0, rf, m, n0=n0, nf=nf)
             if metric == 'TV':
-                axes.plot(np.arange(len(avgPRED)), avgPRED, label=labelsb[mid], color=clist[mid], linestyle=linelist[mid], linewidth=4)
-                #print(sdPRED)
-                #plt.fill_between(np.arange(len(avgPRED)), avgPRED-1.96*sdPRED/(rf-r0), avgPRED+1.96*sdPRED/(rf-r0), color=clist[mid], alpha=1)
+                axes[metid].plot(np.arange(len(avgPRED)), avgPRED, label=labelsb[mid], color=clist[mid], linestyle=linelist[mid], linewidth=4)
             elif metric == 'HD':
-                axes.plot(np.arange(len(avgPOST)), avgPOST, label=labelsb[mid], color=clist[mid], linestyle=linelist[mid], linewidth=4)
-                #plt.fill_between(np.arange(len(avgPOST)), avgPOST-1.96*sdPOST/rep, avgPOST+1.96*sdPOST/rep, color=clist[mid], alpha=0.1)  
+                axes[metid].plot(np.arange(len(avgPOST)), avgPOST, label=labelsb[mid], color=clist[mid], linestyle=linelist[mid], linewidth=4)
                 if m == 'lhs' or m == 'rnd' or m == 'imspe' or m == 'maxvar':
                     axins.plot(np.arange(50, len(avgPOST)), avgPOST[50:], color=clist[mid], linestyle=linelist[mid], linewidth=2)
     
         if metric == 'HD':
-            mark_inset(axes, axins, loc1=1, loc2=3, fc="none", ec="0.5")
+            mark_inset(axes[metid], axins, loc1=1, loc2=3, fc="none", ec="0.5")
             
-        axes.set_xlabel('# of simulation evaluations', fontsize=fonts) 
-        axes.set_yscale('log')
+        axes[metid].set_xlabel('# of simulation evaluations', fontsize=fonts) 
+        axes[metid].set_yscale('log')
         if metric == 'TV':
-            axes.set_ylabel(r'${\rm MAD}^y$', fontsize=fonts) 
+            axes[metid].set_ylabel(r'${\rm MAD}^y$', fontsize=fonts) 
         elif metric == 'HD':
-            axes.set_ylabel(r'${\rm MAD}^p$', fontsize=fonts) 
-        axes.tick_params(axis='both', which='major', labelsize=fonts-2)
-        axes.legend(bbox_to_anchor=(1, -0.2), ncol=6, fontsize=fonts, handletextpad=0.1)
-        if metric == 'TV':
-            plt.savefig("Figure11_pred.png", bbox_inches="tight")
-        elif metric == 'HD':
-            plt.savefig("Figure11_post.png", bbox_inches="tight")
-        plt.show()
+            axes[metid].set_ylabel(r'${\rm MAD}^p$', fontsize=fonts) 
+        axes[metid].tick_params(axis='both', which='major', labelsize=fonts-2)
+        axes[metid].legend(bbox_to_anchor=(0.9, -0.2), ncol=3, fontsize=fonts, handletextpad=0.1)
+    plt.savefig('Figure11.jpg', format='jpeg', bbox_inches="tight", dpi=1000)
+    plt.show()
+
       
 def plot_IS(path, batch, worker, r0, rf, outs, ex, n0, nf):
 

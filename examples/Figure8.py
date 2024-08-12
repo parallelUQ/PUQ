@@ -109,6 +109,7 @@ def plot_aggregated(example_name='sinfunc', is_bias=False, r0=0, rf=30,
             
     handles, labels = axes[metid, exid].get_legend_handles_labels()
     fig.legend(handles, labels, bbox_to_anchor=(0.74, 0.0), ncol=5, fontsize=fonts, handletextpad=0.1)
+    plt.savefig('Figure8.jpg', format='jpeg', bbox_inches="tight", dpi=1000)
     plt.show()
 
 
@@ -163,12 +164,12 @@ plot_aggregated(example_name='highdim',
                 path=path, 
                 method=method)
 
-plot_IS(example_name='highdim', 
-        is_bias=False, 
-        r0=1, rf=11, 
-        clist=clist, 
-        mlist=mlist, 
-        linelist=linestyles, 
-        labelsb=labelsb, 
-        path=path, 
-        method=method)
+# plot_IS(example_name='highdim', 
+#         is_bias=False, 
+#         r0=1, rf=11, 
+#         clist=clist, 
+#         mlist=mlist, 
+#         linelist=linestyles, 
+#         labelsb=labelsb, 
+#         path=path, 
+#         method=method)
