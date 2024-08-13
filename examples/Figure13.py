@@ -164,7 +164,8 @@ fonts = 18
 n0, nf = 50, 200
 #path = r'/Users/ozgesurer/Desktop/GithubRepos/parallelUQ/PUQ/examples/final_results/newPUQcovid25/' 
 #path = r'/Users/ozgesurer/Desktop/covid19_bebop25/covidtrial/' 
-path = '/Users/ozgesurer/Desktop/JQT_experiments/covid19_bebop25/all/'
+#path = '/Users/ozgesurer/Desktop/JQT_experiments/covid19_bebop25/all/'
+path = '/Users/ozgesurer/Desktop/JQT_experiments/covid19_bebop25_response/'
 outs = 'covid19'
 ex = 'covid19'
 
