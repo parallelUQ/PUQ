@@ -2,9 +2,9 @@ name: CI Technometrics
 
 on:
   push:
-    branches: [ "techno_paper"]
+    branches: [ "techno_paper", "main"]
   pull_request:
-    branches: [ "techno_paper"]
+    branches: [ "techno_paper", "main"]
 
 jobs:
   run-full-tests:
