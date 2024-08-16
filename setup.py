@@ -23,6 +23,7 @@ setup(
         "libensemble==0.9.1",
         "torch",
         "scikit-learn",
+        "smt",
     ],
     ext_modules=[
         Extension(
