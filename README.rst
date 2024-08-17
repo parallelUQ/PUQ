@@ -62,10 +62,6 @@ To install the PUQ package:
 
 Once installed, a user should see ``build/`` directory created.
 
-As an alternative to 'pip install -e .' in Step 3, the package can be installed from the .tar file as well::
-
- python3 setup.py sdist bdist_wheel 
- pip install ./dist/PUQ-0.1.0.tar.gz
  
 Testing
 ~~~~~~~
@@ -75,16 +71,6 @@ and can be run from the ``tests/`` directory of the source distribution by runni
 
 ./run-tests.sh
 
-If you have the source distribution, you can run the tests in the top-level
-directory containing the setup script with ::
-
- python setup.py test
-
-Further options are available for testing. To see a complete list of options, run::
-
- ./run-tests.sh -h
-
-Coverage reports are produced under the relevant directory only if all tests are used.
 
 Documentation
 ~~~~~~~~~~~~~
@@ -108,7 +94,7 @@ The HTML files are then stored in ``docs/_build/html``
 
 .. code-block:: bibtex
 
-   @techreport{PUQ2022,
+   @techreport{PUQ2024,
      author      = {Özge Sürer, Matthew Plumlee, Stefan M. Wild},
      title       = {PUQ Users Manual},
      institution = {},
@@ -120,11 +106,11 @@ The HTML files are then stored in ``docs/_build/html``
 Examples
 ~~~~~~~~
 
-We provide examples in the ``examples/`` directory to illustrate the basic usage
-of PUQ.
+We provide examples in the ``examples/`` directory to illustrate the basic usage of PUQ. 
+These examples replicate the results presented in the paper titled 'Sequential Bayesian 
+Experimental Design for Calibration of Expensive Simulation Models' by Sürer, Plumlee, and Wild (2024).
 
-Instructions for running the illustrative examples
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Instructions for running the illustrative examples**
 
 To replicate Figures~1--3, respectively:
 
@@ -138,8 +124,7 @@ To replicate Figures~1--3, respectively:
 
 Running each script should not take more than 60 sec. See the figures (png files) saved under ``examples/`` directory.
 
-Instructions for running the prominent empirical results
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Instructions for running the prominent empirical results**
 
 Instructions are provided to replicate each panel in Figure~6.
 
