@@ -80,4 +80,4 @@ affirmation of the following:
       this project or the open source license(s) involved.
 
 
-.. _LICENSE: https://github.com/PUQ/PUQ/blob/main/LICENSE
+.. _LICENSE: https://github.com/parallelUQ/PUQ/blob/main/LICENSE
