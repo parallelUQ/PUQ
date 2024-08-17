@@ -47,7 +47,7 @@ administrator.
 Developer's Certificate
 -----------------------
 
-ParMOO is distributed under a 3-clause BSD license (see LICENSE_).
+PUQ is distributed under an MIT license (see LICENSE_).
 The act of submitting a pull request or patch will be understood as an
 affirmation of the following:
 
@@ -80,4 +80,4 @@ affirmation of the following:
       this project or the open source license(s) involved.
 
 
-.. _LICENSE: https://github.com/parmoo/parmoo/blob/main/LICENSE
+.. _LICENSE: https://github.com/PUQ/PUQ/blob/main/LICENSE

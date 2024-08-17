@@ -17,19 +17,16 @@ Known issues and desired features will be raised on GitHub post-release.
 
 Known issues:
 
- - update unit tests to use sim/obj/const libraries
- - restructure test suite, unit tests are currently not usable as
-   additional documentation
-
+ - create unit tests 
+ - create documentation
 
 Desired features:
 
  - add a funcx simulation interface, using libEnsemble release 0.9
- - static visualization tools for plotting results
- - a visualization dashboard for viewing progress interactively
 
- Release 0.1.1
--------------
+
+Release 0.1.1
+--------------
 
 :Date: Aug 16, 2024
 
@@ -39,13 +36,12 @@ Known issues and desired features will be raised on GitHub post-release.
 
 Known issues:
 
- - update unit tests to use sim/obj/const libraries
- - restructure test suite, unit tests are currently not usable as
-   additional documentation
+ - update unit tests to increase coverage
+ - test it with higher versions of libEnsemble
+ - improve documentation
 
 
 Desired features:
 
- - add a funcx simulation interface, using libEnsemble release 0.9
- - static visualization tools for plotting results
- - a visualization dashboard for viewing progress interactively
+ - new methods stochastic simulation models
+ - generalize methods for both design inputs and parameters

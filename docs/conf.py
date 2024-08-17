@@ -21,7 +21,7 @@ sys.path.append(os.path.abspath('../PUQ/surrogatesupport'))
 # -- Project information -----------------------------------------------------
 
 project = 'PUQ'
-copyright = '2023, Özge Sürer, Matthew Plumlee, Stefan M. Wild'
+copyright = '2024, Özge Sürer, Matthew Plumlee, Stefan M. Wild'
 author = 'Özge Sürer, Matthew Plumlee, Stefan M. Wild'
 
 # The full version, including alpha/beta/rc tags
