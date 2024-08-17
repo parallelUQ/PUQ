@@ -11,17 +11,17 @@
     :target: https://puq.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-==================================================================================
-PUQ: Python package for parallel uncertainty quantification
-==================================================================================
+====================================================================================================================================
+PUQ: Python package for generating experimental designs tailored for uncertainty quantification, featuring parallel implementations
+====================================================================================================================================
 
 Dependencies
 ~~~~~~~~~~~~
 
-PUQ is a Python package for the method introduced in the paper titled 'Sequential
-Bayesian experimental design for calibration of expensive simulation models.'
+PUQ is a Python package that employs novel experimental design techniques with intelligent selection criteria, 
+refining data collection to enhance the efficiency and effectiveness of uncertainty quantification.
 
-This code requires Python (version 3.6 or later) and pip. 
+This code is tested with Python 3.9 and 3.10 and requires pip.
 
 Set up 
 ~~~~~~
