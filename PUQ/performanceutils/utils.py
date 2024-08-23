@@ -46,11 +46,14 @@ def plot_workers(PM, joblist, acqlist):
     
 
 def plot_acc(axes, n, acclevel, rlist, labellist, logscale=False, fontsize=18, n0=0):
-    clist = ['blue', 'red', 'green', 'magenta', 'orange', 'dimgrey', 'lime', 'dimgrey', 'lime']
-
+    #clist = ['blue', 'red', 'green', 'magenta', 'orange', 'dimgrey', 'lime', 'dimgrey', 'lime']
+    clist = ['b', 'r', 'g', 'm', 'y', 'c']
+    mlist = ['P', 'p', '*', 'o', 's', 'h']
+    linelist = ['-', '--', '-.', ':', '-.', ':'] 
     for accid, res in enumerate(rlist):
-        axes.plot(np.arange(1, n+1), res.acc, label=labellist[accid], color=clist[accid])
-        axes.vlines(x=res.complete_no, ymin=0, ymax=res.acc_threshold, linewidth=2, color=clist[accid], linestyles='dashed')
+        #axes.plot(np.arange(1, n+1), res.acc, marker=mlist[accid], markersize=10, linestyle=linelist[accid], linewidth=2.0, label=labellist[accid], color=clist[accid])
+        axes.plot(np.arange(1, n+1), res.acc, linestyle=linelist[accid], linewidth=5.0, label=labellist[accid], color=clist[accid])
+        axes.vlines(x=res.complete_no, ymin=0, ymax=res.acc_threshold, linewidth=5, color=clist[accid], linestyles=linelist[accid])
         
     axes.hlines(y=acclevel, xmin=0, xmax=n, linewidth=2, color = 'k')
     axes.set_xlabel("# of parameters", fontsize=fontsize)
@@ -79,7 +82,10 @@ def plot_acqtime(axes, n, acclevel, rlist, labellist, logscale=False, fontsize=1
         axes.set_yscale('log') 
         
 def plot_endtime(axes, n, acclevel, rlist, labellist, worker, logscale=False, fontsize=18):
-    clist = ['blue', 'red', 'green', 'magenta', 'orange', 'dimgrey', 'lime', 'dimgrey', 'lime']
+    #clist = ['blue', 'red', 'green', 'magenta', 'orange', 'dimgrey', 'lime', 'dimgrey', 'lime']
+    clist = ['b', 'r', 'g', 'm', 'y', 'c']
+    mlist = ['P', 'p', '*', 'o', 's', 'h']
+    linelist = ['-', '--', '-.', ':', '-.', ':'] 
 
     minworker = []
     maxtime = 0
@@ -88,9 +94,10 @@ def plot_endtime(axes, n, acclevel, rlist, labellist, worker, logscale=False, fo
         minworker.append(endtime[worker])
         if maxtime < np.max(endtime):
             maxtime = np.max(endtime)
-        axes.plot(np.arange(1, n+1), endtime, label=labellist[endid], color=clist[endid])
-        axes.vlines(x=res.complete_no, ymin=0, ymax = endtime[res.complete_no], linewidth=2, color=clist[endid], linestyles='dashed')
-        axes.hlines(y=endtime[res.complete_no], xmin=0, xmax=res.complete_no, linewidth=2, color=clist[endid], linestyles='dashed')
+        #axes.plot(np.arange(1, n+1), endtime, label=labellist[endid], color=clist[endid])
+        axes.plot(np.arange(1, n+1), endtime, linestyle=linelist[endid], linewidth=5.0, label=labellist[endid], color=clist[endid])
+        axes.vlines(x=res.complete_no, ymin=0, ymax = endtime[res.complete_no], linewidth=5, color=clist[endid], linestyles=linelist[endid])
+        axes.hlines(y=endtime[res.complete_no], xmin=0, xmax=res.complete_no, linewidth=5, color=clist[endid], linestyles=linelist[endid])
 
     axes.set_xlabel("# of parameters", fontsize=fontsize)
     axes.set_ylabel("Wall-clock time", fontsize=fontsize)
@@ -102,8 +109,11 @@ def plot_endtime(axes, n, acclevel, rlist, labellist, worker, logscale=False, fo
     axes.tick_params(axis='both', which='major', labelsize=fontsize-5)
     
 def plot_errorend(axes, n, acclevel, rlist, labellist, worker, logscale=False, fontsize=18):
-    clist = ['blue', 'red', 'green', 'magenta', 'orange', 'dimgrey', 'lime', 'dimgrey', 'lime']
-
+    #clist = ['blue', 'red', 'green', 'magenta', 'orange', 'dimgrey', 'lime', 'dimgrey', 'lime']
+    clist = ['b', 'r', 'g', 'm', 'y', 'c']
+    mlist = ['P', 'p', '*', 'o', 's', 'h']
+    linelist = ['-', '--', '-.', ':', '-.', ':'] 
+    
     minworker = []
     maxtime = 0
     minacc = 10
@@ -114,8 +124,9 @@ def plot_errorend(axes, n, acclevel, rlist, labellist, worker, logscale=False, f
             maxtime = np.max(endtime)
         if minacc > np.min(res.acc):
             minacc = np.min(res.acc)
-        axes.plot(endtime, res.acc, label=labellist[endid], color=clist[endid])
-        axes.vlines(x=endtime[res.complete_no], ymin=0, ymax=acclevel, linewidth=2, color=clist[endid], linestyles='dashed')
+        #axes.plot(endtime, res.acc, label=labellist[endid], color=clist[endid])
+        axes.plot(endtime, res.acc, linestyle=linelist[endid], linewidth=5.0, label=labellist[endid], color=clist[endid])
+        axes.vlines(x=endtime[res.complete_no], ymin=0, ymax=acclevel, linewidth=5, color=clist[endid], linestyles=linelist[endid])
         
     axes.hlines(y=acclevel, xmin=0, xmax=maxtime, linewidth=2, color = 'k')
 

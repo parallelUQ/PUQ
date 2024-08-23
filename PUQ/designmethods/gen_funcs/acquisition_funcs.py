@@ -134,3 +134,5 @@ def hybrid_ei():
     return
 def hybrid_pi():
     return
+def rnd():
+    return

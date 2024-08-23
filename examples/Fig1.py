@@ -59,3 +59,23 @@ fig, axes = plt.subplots(1, 3, figsize=(24, 6))
 plot_acc(axes[0], n, acclevel, result, labellist=lbl, logscale=True, fontsize=25, n0=1)
 plot_endtime(axes[1], n, acclevel, result, labellist=lbl, worker=worker, logscale=True, fontsize=25)
 plot_errorend(axes[2], n, acclevel, result, labellist=lbl, worker=worker, logscale=True, fontsize=25)
+axes[1].legend(loc='upper center', bbox_to_anchor=(0.5, -0.2),
+          fancybox=True, shadow=True, ncol=4, fontsize=20)
+
+# fig, axes = plt.subplots(1, 1, figsize=(6, 6)) 
+# plot_acc(axes, n, acclevel, result, labellist=lbl, logscale=True, fontsize=25, n0=1)
+# axes.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2),
+#           fancybox=True, shadow=True, ncol=4, fontsize=20)
+# plt.show()
+
+# fig, axes = plt.subplots(1, 1, figsize=(6, 6)) 
+# plot_endtime(axes, n, acclevel, result, labellist=lbl, worker=worker, logscale=True, fontsize=25)
+# axes.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2),
+#           fancybox=True, shadow=True, ncol=4, fontsize=20)
+# plt.show()
+
+# fig, axes = plt.subplots(1, 1, figsize=(6, 6)) 
+# plot_errorend(axes, n, acclevel, result, labellist=lbl, worker=worker, logscale=True, fontsize=25)
+# axes.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2),
+#           fancybox=True, shadow=True, ncol=4, fontsize=20)
+# plt.show()

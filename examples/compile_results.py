@@ -9,7 +9,8 @@ linelist = ['-', '--', '-.', ':', '-.', ':']
 labelsb = ['EI', 'EIVAR', 'HYBRID', 'RND']
 method = ['ei', 'eivar', 'hybrid_ei', 'rnd']
 example_name = ['sphere', 'matyas', 'ackley']
-#example_name = ['himmelblau', 'holder', 'easom']
+example_name = ['himmelblau', 'holder', 'easom']
+
 batch = 1
 worker = 2
 rep = 30
@@ -28,7 +29,7 @@ for metric in ['AE', 'MAD']:
             else:
                 axes[exid].plot(np.arange(len(avgTV)), avgTV, label=labelsb[mid], color=clist[mid], linestyle=linelist[mid])
         axes[exid].set_yscale('log')
-        axes[exid].set_xscale('log')
+        #axes[exid].set_xscale('log')
         axes[exid].set_xlabel('# of parameters', fontsize=fonts) 
         if exid == 0:
             if metric == 'AE':
@@ -84,10 +85,11 @@ if show2:
     labelsb = ['b=1', 'b=32', 'b=64', 'b=128']
     method = ['ei']
     batch_sizes = [1, 32, 64, 128]
+    batch_sizes = [1, 5, 25, 125]
     example_name = ['sphere', 'matyas', 'ackley']
     #example_name = ['matyas']
-    example_name = ['himmelblau', 'holder', 'easom']
-    worker = 129
+    #example_name = ['himmelblau', 'holder', 'easom']
+    worker = 126
     rep = 28
     fonts = 22
 
@@ -105,7 +107,7 @@ if show2:
                     else:
                         axes[exid].plot(np.arange(len(avgTV)), avgTV, label=labelsb[bid], color=clist[bid], linestyle=linelist[bid])
             axes[exid].set_yscale('log')
-            axes[exid].set_xscale('log')
+            #axes[exid].set_xscale('log')
             axes[exid].set_xlabel('# of parameters', fontsize=fonts) 
             if exid == 0:
                 if metric == 'AE':
