@@ -14,8 +14,3 @@ running::
 
 Coverage reports are produced under the relevant directory only if all tests are
 used.
-
-If you have the source distribution, you can run the tests in the top-level
-directory containing the setup script with ::
-
- python setup.py test

@@ -119,7 +119,7 @@ if [ "$RUN_EMU_TESTS" = true ] && [ "$RUN_CAL_TESTS" = true ]; then
 else
   if [ "$RUN_UQ_TESTS" = true ]; then
     if [ -z "$TEST_INPUT" ]; then
-      echo -e "\n************** Running: surmise.emulation Test-Suite **************\n"
+      echo -e "\n************** Running: PUQ Test-Suite **************\n"
       for DIR in $TEST_SUBDIR_EMU_CAL
       do
         cd $DIR
