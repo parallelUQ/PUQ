@@ -29,7 +29,7 @@ This code is tested with Python 3.9 and 3.10 and requires pip.
 Set up 
 ~~~~~~
 
-We recommend creating a Python virtual environment within the working directory of PUQ. 
+We recommend creating a Python virtual enviroent within the working directory of PUQ. 
 If a virtual environment is created, PUQ's required packages are installed and 
 isolated from those installed a priori. Creating a virtual environment will also prevent
 having conflicting packages on a user's machine. You may need to install the virtual 
