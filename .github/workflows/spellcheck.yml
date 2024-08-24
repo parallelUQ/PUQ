@@ -1,27 +1,27 @@
 name: Spellcheck RST files
 
- on:
-   push:
-     branches: [ "dev/ijoc_paper" ]
-   pull_request:
-     branches: [ "dev/ijoc_paper" ]
+on:
+  push:
+    branches: [ "dev/ijoc_paper" ]
+  pull_request:
+    branches: [ "dev/ijoc_paper" ]
 
- jobs:
-   spellcheck:
-     runs-on: ubuntu-latest
-     steps:
-       - name: Checkout code
-         uses: actions/checkout@v3
+jobs:
+  spellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-       - name: Install pyspelling
-         run: pip install pyspelling
+      - name: Install pyspelling
+        run: pip install pyspelling
 
-       - name: Spellcheck RST files
-         run: |
-           pyspelling -c .spellcheckconfig.yml 
+      - name: Spellcheck RST files
+        run: |
+          pyspelling -c .spellcheckconfig.yml 
 
-       - name: Upload spellcheck report
-         uses: actions/upload-artifact@v2
-         with:
-           name: spellcheck-report
-           path: spellcheck-report.txt
+      - name: Upload spellcheck report
+        uses: actions/upload-artifact@v2
+        with:
+          name: spellcheck-report
+          path: spellcheck-report.txt
