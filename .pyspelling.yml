@@ -1,0 +1,19 @@
+matrix:
+  - name: reStructuredText
+    sources:
+      - 'docs/*.rst'  # Targets all .rst files
+      - 'README.rst'
+      - 'CHANGELOG.rst' 
+      - 'CONTRIBUTING.rst'     
+      - 'SUPPORT.rst'    
+    dictionary:
+        wordlists:
+          - .wordlist.txt             
+    spelling:
+      language: en_US
+
+    encoding: utf-8
+    ignore:
+      - '**/venv/**'
+      - '**/build/**'
+    output: spelling_report.rst  # Optional: Specify an output file for the report
