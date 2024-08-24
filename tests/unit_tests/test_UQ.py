@@ -3,7 +3,7 @@ import pytest
 from contextlib import contextmanager
 from PUQ.design import designer
 from PUQ.prior import prior_dist
-
+import scipy.stats as sps
 
 class himmelblau:
     def __init__(self):
