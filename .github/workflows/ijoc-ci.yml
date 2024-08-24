@@ -1,10 +1,10 @@
-name: CI Technometrics
+name: CI IJOC
 
 on:
   push:
-    branches: [ "techno_paper"]
+    branches: [ "dev/ijoc_paper"]
   pull_request:
-    branches: [ "techno_paper"]
+    branches: [ "dev/ijoc_paper"]
 
 jobs:
   run-full-tests:
@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ["3.9"]
+        python-version: ["3.9", "3.10"]
 
     steps:
     - uses: actions/checkout@v2
@@ -28,4 +28,4 @@ jobs:
         pip install -e .
     - name: Test with pytest
       run: |
-        python ./examples/figure1b.py
+        python ./examples/run_test_funcs.py

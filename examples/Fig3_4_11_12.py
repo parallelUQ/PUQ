@@ -3,9 +3,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Generates Fig 3, 4, 11, 12
-clist = ['b', 'r', 'g', 'm', 'y', 'c', 'pink', 'purple']
+#clist = ['b', 'r', 'g', 'm', 'y', 'c', 'pink', 'purple']
+#mlist = ['P', 'p', '*', 'o', 's', 'h']
+#linelist = ['-', '--', '-.', ':', '-.', ':'] 
+
+clist = ['b', 'r', 'g', 'm', 'y', 'c']
 mlist = ['P', 'p', '*', 'o', 's', 'h']
 linelist = ['-', '--', '-.', ':', '-.', ':'] 
+lw = 5
+ms = 15
+me = 200
 
 labelsb = ['EI', 'EIVAR', 'HYBRID', 'RND']
 method = ['ei', 'eivar', 'hybrid_ei', 'rnd']
@@ -25,9 +32,13 @@ for example_name in figs:
                 avgAE, avgtime, avgTV = plotresult(path, out, ex, worker, batch, rep, m, n0=0, nf=1000)
                 #print(avgAE[0:10])
                 if metric == 'AE':
-                    axes[exid].plot(np.arange(len(avgAE)), avgAE, label=labelsb[mid], color=clist[mid], linestyle=linelist[mid])
+                    axes[exid].plot(np.arange(len(avgAE)), avgAE, label=labelsb[mid], 
+                                    color=clist[mid], linestyle=linelist[mid], 
+                                    linewidth=lw, marker=mlist[mid], markersize=ms, markevery=me)
                 else:
-                    axes[exid].plot(np.arange(len(avgTV)), avgTV, label=labelsb[mid], color=clist[mid], linestyle=linelist[mid])
+                    axes[exid].plot(np.arange(len(avgTV)), avgTV, label=labelsb[mid], 
+                                    color=clist[mid], linestyle=linelist[mid], 
+                                    linewidth=lw, marker=mlist[mid], markersize=ms, markevery=me)
             axes[exid].set_yscale('log')
             #axes[exid].set_xscale('log')
             axes[exid].set_xlabel('# of parameters', fontsize=fonts) 

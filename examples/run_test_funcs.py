@@ -1,16 +1,15 @@
 import numpy as np
 from PUQ.design import designer
-from PUQ.designmethods.utils import parse_arguments, save_output
+from PUQ.designmethods.utils import parse_arguments
 import scipy.stats as sps
 from PUQ.prior import prior_dist
-from test_funcs import sphere
-import seaborn as sns
-import pandas as pd
-import matplotlib.pyplot as plt
+from test_funcs import holder, ackley, easom, sphere, matyas, himmelblau
 
 args = parse_arguments()
-cls_data = sphere()
 
+example = 'himmelblau'
+cls_data = eval(example)()
+args.al_func = 'ei'
 # # # Create a mesh for test set # # # 
 xpl = np.linspace(cls_data.thetalimits[0][0], cls_data.thetalimits[0][1], 50)
 ypl = np.linspace(cls_data.thetalimits[1][0], cls_data.thetalimits[1][1], 50)
@@ -32,11 +31,14 @@ test_data = {'theta': thetatest,
              'f': ftest,
              'p': ptest,
              'p_prior': 1} 
+
  # # # # # # # # # # # # # # # # # # # # # 
 prior_func = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], b=cls_data.thetalimits[:, 1])
  # # # # # # # # # # # # # # # # # # # # # 
-init_seeds = 1
-final_seeds = 2
+
+init_seeds = args.init_seeds
+final_seeds = args.final_seeds
+
 n_init = 10
 for s in np.arange(init_seeds, final_seeds):
     
@@ -49,53 +51,20 @@ for s in np.arange(init_seeds, final_seeds):
     
     al_data = designer(data_cls=cls_data, 
                           method='SEQCALOPT', 
-                          args={'mini_batch': args.minibatch, 
-                                'n_init_thetas': 10,
-                                'nworkers': args.nworkers,
-                                'AL': 'hybrid_ei', 
+                          args={'mini_batch': 1, 
+                                'nworkers': 2,
+                                'AL': args.al_func, 
                                 'seed_n0': int(s),
                                 'prior': prior_func,
                                 'data_test': test_data,
-                                'max_evals': 20,
+                                'max_evals': 50,
                                 'candsize': args.candsize, 
                                 'refsize': args.refsize,
                                 'believer': args.believer})
-    
-    save_output(al_data, cls_data.data_name, args.al_func, args.nworkers, args.minibatch, int(s))
-    
-    
-    show = True
-    if show:
-        theta_al = al_data._info['theta']
-        TV       = al_data._info['TV']
-        HD       = al_data._info['HD']
-        AE       = al_data._info['AE']
-        time     = al_data._info['time']
-        
-        sns.pairplot(pd.DataFrame(theta_al))
-        plt.show()
-        plt.scatter(np.arange(len(TV)), TV)
-        plt.yscale('log')
-        plt.ylabel('MAD')
-        plt.show()
-        
-        plt.scatter(np.arange(len(AE)), AE)
-        plt.yscale('log')
-        plt.ylabel('AE')
-        plt.show()
-        
-        plt.scatter(np.arange(len(time[1:])), time[1:])
-        plt.yscale('log')
-        plt.ylabel('Time')
-        plt.show()
-        
-        fig, ax = plt.subplots()    
-        cp = ax.contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap='RdGy')
-        ax.scatter(theta_al[:, 0], theta_al[:, 1], c='black', marker='+', zorder=2)
-        ax.scatter(thetainit[:, 0], thetainit[:, 1], zorder=2, marker='o', facecolors='none', edgecolors='blue')
-        ax.set_xlabel(r'$\theta_1$', fontsize=16)
-        ax.set_ylabel(r'$\theta_2$', fontsize=16)
-        ax.tick_params(axis='both', labelsize=16)
-        plt.show()
-        
+
+    theta_al = al_data._info['theta']
+    TV       = al_data._info['TV']
+    HD       = al_data._info['HD']
+    AE       = al_data._info['AE']
+    time     = al_data._info['time']
         

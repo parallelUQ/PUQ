@@ -107,9 +107,6 @@ def fit_emulator(x, theta, fevals, thetalimits):
     fevals_c = fevals[:, ~idnan]
     theta_c = theta[~idnan, :]
     
-    print('total param:', theta.shape[0])
-    print('total emu:', theta_c.shape[0])
-    
     emu = emulator(x, 
                    theta_c, 
                    fevals_c, 
