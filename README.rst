@@ -10,6 +10,9 @@
 .. image:: https://readthedocs.org/projects/puq/badge/?version=latest
     :target: https://puq.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
+    
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/psf/black
 
 ====================================================================================================================================
 PUQ: Python package for generating experimental designs tailored for uncertainty quantification, featuring parallel implementations
