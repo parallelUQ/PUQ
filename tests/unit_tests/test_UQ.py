@@ -3,10 +3,39 @@ import pytest
 from contextlib import contextmanager
 from PUQ.design import designer
 from PUQ.prior import prior_dist
-from test_funcs import himmelblau
 
 
+class himmelblau:
+    def __init__(self):
 
+        self.data_name   = 'himmelblau'
+        self.thetalimits = np.array([[0, 1], [0, 1]])
+        self.truelimits = np.array([[-5, 5], [-5, 5]])
+        self.obsvar      = np.array([[1]], dtype='float64') 
+        self.real_data   = np.array([[1]], dtype='float64') 
+        self.out     = [('f', float)]
+        self.p           = 2
+        self.d           = 1
+        self.x           = np.arange(0, self.d)[:, None]
+        self.real_x      = np.arange(0, self.d)[:, None]
+
+    def function(self, theta1, theta2):
+        
+        theta1 = self.truelimits[0][0] + theta1*(self.truelimits[0][1] - self.truelimits[0][0])
+        theta2 = self.truelimits[1][0] + theta2*(self.truelimits[1][1] - self.truelimits[1][0])
+        f = (theta1**2 + theta2 - 11)**2 + (theta1 + theta2**2 -7)**2
+        return f
+    
+    def sim(self, H, persis_info, sim_specs, libE_info):
+        """
+        Wraps the himmelblau function
+        """
+        artificial_time(persis_info, sim_specs)
+        function = sim_specs['user']['function']
+        H_o = np.zeros(1, dtype=sim_specs['out'])
+        H_o['f'] = function(H['thetas'][0][0], H['thetas'][0][1])
+        return H_o, persis_info
+    
 example = 'himmelblau'
 cls_data = eval(example)()
 
