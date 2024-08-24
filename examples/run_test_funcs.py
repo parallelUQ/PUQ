@@ -33,7 +33,8 @@ test_data = {'theta': thetatest,
              'p_prior': 1} 
 
  # # # # # # # # # # # # # # # # # # # # # 
-prior_func = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], b=cls_data.thetalimits[:, 1])
+prior_func = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], 
+                                        b=cls_data.thetalimits[:, 1])
  # # # # # # # # # # # # # # # # # # # # # 
 
 init_seeds = args.init_seeds

@@ -5,9 +5,9 @@ name: PUQ CI
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: [ "dev/ijoc_paper" ]
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: [ "dev/ijoc_paper" ]
 
 jobs:
   run-full-tests:
