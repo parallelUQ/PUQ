@@ -4,7 +4,17 @@ from contextlib import contextmanager
 from PUQ.design import designer
 from PUQ.prior import prior_dist
 import scipy.stats as sps
+from threading import Event
 
+def artificial_time(persis_info, sim_specs):
+    rand_stream = persis_info['rand_stream']
+    run_time = rand_stream.normal(0.1, 0.1, 1)
+    if run_time[0] < 0.01:
+        r = 0.01
+    else:
+        r = run_time[0]
+    Event().wait(r)
+    
 class himmelblau:
     def __init__(self):
 
