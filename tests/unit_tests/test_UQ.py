@@ -65,6 +65,15 @@ test_data = {'theta': thetatest,
 prior_func = prior_dist(dist='uniform')(a=cls_data.thetalimits[:, 0], 
                                         b=cls_data.thetalimits[:, 1])
 
+n_init = 10
+s = 0
+thetainit  = prior_func.rnd(n_init, s) 
+finit = np.zeros(n_init)
+for tid, t in enumerate(thetainit):
+    finit[tid] = cls_data.function(t[0], t[1])
+test_data['thetainit'] = thetainit
+test_data['finit'] = finit[None, :]
+    
 @contextmanager
 def does_not_raise():
     yield
