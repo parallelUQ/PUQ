@@ -24,12 +24,12 @@ Dependencies
 PUQ is a Python package that employs novel experimental design techniques with intelligent selection criteria, 
 refining data collection to enhance the efficiency and effectiveness of uncertainty quantification.
 
-This code is tested with Python 3.9 and 3.10 and requires pip.
+This code is tested with Python 3.9, 3.10, and 3.11 and requires pip.
 
 Set up 
 ~~~~~~
 
-We recommend creating a Python virtual enviroent within the working directory of PUQ. 
+We recommend creating a Python virtual environment within the working directory of PUQ. 
 If a virtual environment is created, PUQ's required packages are installed and 
 isolated from those installed a priori. Creating a virtual environment will also prevent
 having conflicting packages on a user's machine. You may need to install the virtual 
@@ -114,51 +114,44 @@ These examples replicate the results presented in the paper titled 'Performance 
 Sequential Experimental Design for Calibration in Parallel Computing Environments' 
 by Sürer and Wild (2024).
 
-**Instructions for running the illustrative examples**
+**Instructions for running the illustrative examples with performance model**
 
-To replicate Figures~1--3, respectively:
+To replicate Figures~6--9, respectively:
 
 1)Go to the ``examples/`` directory.
 
 2)Execute the followings from the command line::
 
- python3 figure1b.py
- python3 figure2.py
- python3 figure3.py
-
-Running each script should not take more than 60 sec. See the figures (png files) saved under ``examples/`` directory.
-
-**Instructions for running the prominent empirical results**
-
-Instructions are provided to replicate each panel in Figure~6.
-
-To replicate the upper-left panel (banana function), execute the following from the command line::
-
- python3 figure6.py -funcname banana
+ python3 Fig6.py
+ python3 Fig7.py
+ python3 Fig8.py
+ python3 Fig9.py
  
-Running this script takes about 2.5hrs on a personal Mac laptop. 
-Once completed, ``Figure6_banana.png`` is saved under ``examples/`` directory.
+Running each script should not take more than 90 sec. See the figures (jpeg files) saved under ``examples/`` directory.
+
+**Instructions for running the sequential design using different synthetic simulation models**
+
+To replicate Figure~2, execute the following from the command line::
+
+ python3 Fig2.py
  
-To replicate the upper-right panel (bimodal function), execute the following from the command line::
+Running this script takes about a minute on a personal Mac laptop. 
 
- python3 figure6.py -funcname bimodal
+To collect ``-max_eval`` simulation outputs from parameters acquired with 
+different acquition functions (``-al_func``) and synthetic simulation models (``-funcname``), 
+one can use the script ``run_test_funcs.py``.
 
-Running this script takes about 2.5hrs on a personal Mac laptop. 
-Once completed, ``Figure6_bimodal.png`` is saved under ``examples/`` directory.
+As an example, execute the followings from the command line::
+
+ python3 run_test_funcs.py -funcname ackley -al_func ei -max_eval 200
+ python3 run_test_funcs.py -funcname easom -al_func ei -max_eval 200
+ python3 run_test_funcs.py -funcname himmelblau -al_func eivar -max_eval 200
+ python3 run_test_funcs.py -funcname holder -al_func eivar -max_eval 200
+ python3 run_test_funcs.py -funcname matyas -al_func hybrid_ei -max_eval 200
+ python3 run_test_funcs.py -funcname sphere -al_func hybrid_ei -max_eval 200
  
-To replicate the lower-left panel (unimodal function), execute the following from the command line::
-
- python3 figure6.py -funcname unimodal
-
-Running this script takes about 2hr on a personal Mac laptop. 
-Once completed, ``Figure6_unimodal.png`` is saved under ``examples/`` directory.
- 
-To replicate the lower-right panel (unidentifiable function), execute the following from the command line::
-
- python3 figure6.py -funcname unidentifiable
- 
-Running this script takes about 2.5hrs on a personal Mac laptop. 
-Once completed, ``Figure6_unidentifiable.png`` is saved under ``examples/`` directory.
+Once completed, ``Figure_funcname.jpg`` is saved under ``examples/`` directory.
+Running this script takes about one minute on a personal Mac laptop::
   
 Final comments
 ~~~~~~~~~~~~~~

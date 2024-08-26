@@ -4,12 +4,15 @@ from PUQ.designmethods.utils import parse_arguments
 import scipy.stats as sps
 from PUQ.prior import prior_dist
 from test_funcs import holder, ackley, easom, sphere, matyas, himmelblau
+import matplotlib.pyplot as plt
+import time
+
+start = time.time()
 
 args = parse_arguments()
 
-example = "himmelblau"
-cls_data = eval(example)()
-args.al_func = "ei"
+cls_data = eval(args.funcname)()
+
 # # # Create a mesh for test set # # #
 xpl = np.linspace(cls_data.thetalimits[0][0], cls_data.thetalimits[0][1], 50)
 ypl = np.linspace(cls_data.thetalimits[1][0], cls_data.thetalimits[1][1], 50)
@@ -58,7 +61,7 @@ for s in np.arange(init_seeds, final_seeds):
             "seed_n0": int(s),
             "prior": prior_func,
             "data_test": test_data,
-            "max_evals": 50,
+            "max_evals": args.max_eval,
             "candsize": args.candsize,
             "refsize": args.refsize,
             "believer": args.believer,
@@ -66,7 +69,25 @@ for s in np.arange(init_seeds, final_seeds):
     )
 
     theta_al = al_data._info["theta"]
-    TV = al_data._info["TV"]
-    HD = al_data._info["HD"]
-    AE = al_data._info["AE"]
-    time = al_data._info["time"]
+    ft = 20
+    ms = 50
+    fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+    cp = ax.contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap="RdGy")
+    ax.scatter(theta_al[:, 0], theta_al[:, 1], c="black", marker="+", s=ms, zorder=2)
+    ax.scatter(
+        thetainit[:, 0],
+        thetainit[:, 1],
+        zorder=2,
+        marker="o",
+        facecolors="none",
+        edgecolors="blue",
+    )
+    ax.set_xlabel(r"$\theta_1$", fontsize=ft)
+    ax.set_ylabel(r"$\theta_2$", fontsize=ft)
+    ax.tick_params(axis="both", labelsize=ft)
+    
+    plt.savefig('Figure_' + args.funcname + '.jpg', format='jpeg', bbox_inches="tight", dpi=500)
+    plt.show()
+
+end = time.time()
+print('Elapsed time =', round(end - start, 3))

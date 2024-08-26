@@ -1,6 +1,5 @@
 from PUQ.performance import performanceModel
 from PUQ.performanceutils.utils import (
-    plot_workers,
     plot_acc,
     plot_acqtime,
     plot_endtime,
@@ -66,9 +65,9 @@ for mid, m in enumerate(label):
     result.append(PM)
 
 lbl = [r"$\mathcal{A}_1$", r"$\mathcal{A}_2$", r"$\mathcal{A}_3$", r"$\mathcal{A}_4$"]
-
+ft = 25
 fig, axes = plt.subplots(1, 3, figsize=(24, 6))
-plot_acc(axes[0], n, acclevel, result, labellist=lbl, logscale=True, fontsize=25, n0=1)
+plot_acc(axes[0], n, acclevel, result, labellist=lbl, logscale=True, fontsize=ft, n0=1)
 plot_endtime(
     axes[1],
     n,
@@ -77,7 +76,7 @@ plot_endtime(
     labellist=lbl,
     worker=worker,
     logscale=True,
-    fontsize=25,
+    fontsize=ft,
 )
 plot_errorend(
     axes[2],
@@ -87,7 +86,7 @@ plot_errorend(
     labellist=lbl,
     worker=worker,
     logscale=True,
-    fontsize=25,
+    fontsize=ft,
 )
 axes[1].legend(
     loc="upper center",
@@ -95,5 +94,7 @@ axes[1].legend(
     fancybox=True,
     shadow=True,
     ncol=4,
-    fontsize=20,
+    fontsize=ft,
 )
+plt.savefig('Figure1.jpg', format='jpeg', bbox_inches="tight", dpi=500)
+plt.show()

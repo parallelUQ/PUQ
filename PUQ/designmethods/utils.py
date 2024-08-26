@@ -40,6 +40,13 @@ def parse_arguments():
         help="Acquisition function.",
     )
     parser.add_argument(
+        "-funcname",
+        metavar="N2",
+        default="himmelblau",
+        type=str,
+        help="Simulation function.",
+    )
+    parser.add_argument(
         "-candsize", metavar="N2", default=100, type=int, help="Candidate size."
     )
     parser.add_argument(

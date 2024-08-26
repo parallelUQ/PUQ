@@ -82,12 +82,11 @@ def plot_workers(PM, joblist, acqlist):
 
 
 def plot_acc(axes, n, acclevel, rlist, labellist, logscale=False, fontsize=18, n0=0):
-    # clist = ['blue', 'red', 'green', 'magenta', 'orange', 'dimgrey', 'lime', 'dimgrey', 'lime']
+
     clist = ["b", "r", "g", "m", "y", "c"]
-    mlist = ["P", "p", "*", "o", "s", "h"]
+    mlist = ["P", "o", "*", "s", "p", "h"]
     linelist = ["-", "--", "-.", ":", "-.", ":"]
     for accid, res in enumerate(rlist):
-        # axes.plot(np.arange(1, n+1), res.acc, marker=mlist[accid], markersize=10, linestyle=linelist[accid], linewidth=2.0, label=labellist[accid], color=clist[accid])
         axes.plot(
             np.arange(1, n + 1),
             res.acc,
@@ -158,9 +157,9 @@ def plot_acqtime(
 def plot_endtime(
     axes, n, acclevel, rlist, labellist, worker, logscale=False, fontsize=18
 ):
-    # clist = ['blue', 'red', 'green', 'magenta', 'orange', 'dimgrey', 'lime', 'dimgrey', 'lime']
+
     clist = ["b", "r", "g", "m", "y", "c"]
-    mlist = ["P", "p", "*", "o", "s", "h"]
+    mlist = ["P", "o", "*", "s", "p", "h"]
     linelist = ["-", "--", "-.", ":", "-.", ":"]
 
     minworker = []
@@ -170,7 +169,6 @@ def plot_endtime(
         minworker.append(endtime[worker])
         if maxtime < np.max(endtime):
             maxtime = np.max(endtime)
-        # axes.plot(np.arange(1, n+1), endtime, label=labellist[endid], color=clist[endid])
         axes.plot(
             np.arange(1, n + 1),
             endtime,
@@ -209,9 +207,8 @@ def plot_endtime(
 def plot_errorend(
     axes, n, acclevel, rlist, labellist, worker, logscale=False, fontsize=18
 ):
-    # clist = ['blue', 'red', 'green', 'magenta', 'orange', 'dimgrey', 'lime', 'dimgrey', 'lime']
     clist = ["b", "r", "g", "m", "y", "c"]
-    mlist = ["P", "p", "*", "o", "s", "h"]
+    mlist = ["P", "o", "*", "s", "p", "h"]
     linelist = ["-", "--", "-.", ":", "-.", ":"]
 
     minworker = []
@@ -224,7 +221,6 @@ def plot_errorend(
             maxtime = np.max(endtime)
         if minacc > np.min(res.acc):
             minacc = np.min(res.acc)
-        # axes.plot(endtime, res.acc, label=labellist[endid], color=clist[endid])
         axes.plot(
             endtime,
             res.acc,
