@@ -138,7 +138,7 @@ To replicate Figure~2, execute the following from the command line::
 Running this script takes about a minute on a personal Mac laptop. 
 
 To collect ``-max_eval`` simulation outputs from parameters acquired with 
-different acquition functions (``-al_func``) and synthetic simulation models (``-funcname``), 
+different acquisition functions (``-al_func``) and synthetic simulation models (``-funcname``), 
 one can use the script ``run_test_funcs.py``.
 
 As an example, execute the followings from the command line::

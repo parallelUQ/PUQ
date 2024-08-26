@@ -104,12 +104,14 @@ for varid, var in enumerate(varlist):
             axes[varid, scaleid].set_yscale("log")
             axes[varid, scaleid].set_xticks(batches)
             axes[varid, scaleid].set_xticklabels(batches)
-            axes[varid, scaleid].tick_params(axis="both", which="major", labelsize=ft-5)
+            axes[varid, scaleid].tick_params(
+                axis="both", which="major", labelsize=ft - 5
+            )
             axes[varid, scaleid].set_xlabel("b", fontsize=ft)
     axes[varid, 0].set_ylabel("Wall-clock time", fontsize=ft)
     if varid == len(varlist) - 1:
         handles, labels = axes[varid, 0].get_legend_handles_labels()
-        
+
         labels = [r"$\tilde{a}$=" + l for l in labels]
         fig.legend(
             handles,
@@ -122,8 +124,8 @@ for varid, var in enumerate(varlist):
             fancybox=True,
             shadow=True,
         )
-plt.savefig('Figure7.jpg', format='jpeg', bbox_inches="tight", dpi=500)
+plt.savefig("Figure7.jpg", format="jpeg", bbox_inches="tight", dpi=500)
 plt.show()
 
 end = time.time()
-print('Elapsed time =', round(end - start, 3))
+print("Elapsed time =", round(end - start, 3))

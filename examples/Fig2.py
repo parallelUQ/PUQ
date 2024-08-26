@@ -58,7 +58,7 @@ for s in np.arange(init_seeds, final_seeds):
         args={
             "mini_batch": 1,
             "nworkers": 2,
-            "AL": 'ei',
+            "AL": "ei",
             "seed_n0": int(s),
             "prior": prior_func,
             "data_test": test_data,
@@ -75,7 +75,7 @@ for s in np.arange(init_seeds, final_seeds):
         args={
             "mini_batch": 1,
             "nworkers": 2,
-            "AL": 'hybrid_ei',
+            "AL": "hybrid_ei",
             "seed_n0": int(s),
             "prior": prior_func,
             "data_test": test_data,
@@ -95,7 +95,9 @@ for s in np.arange(init_seeds, final_seeds):
 
         fig, ax = plt.subplots(1, 2, figsize=(16, 6))
         cp = ax[0].contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap="RdGy")
-        ax[0].scatter(theta_ei[:, 0], theta_ei[:, 1], c="black", marker="+", s=ms, zorder=2)
+        ax[0].scatter(
+            theta_ei[:, 0], theta_ei[:, 1], c="black", marker="+", s=ms, zorder=2
+        )
         ax[0].scatter(
             thetainit[:, 0],
             thetainit[:, 1],
@@ -107,9 +109,11 @@ for s in np.arange(init_seeds, final_seeds):
         ax[0].set_xlabel(r"$\theta_1$", fontsize=ft)
         ax[0].set_ylabel(r"$\theta_2$", fontsize=ft)
         ax[0].tick_params(axis="both", labelsize=ft)
-        
+
         cp = ax[1].contour(Xpl, Ypl, ptest.reshape(50, 50), 20, cmap="RdGy")
-        ax[1].scatter(theta_hyb[:, 0], theta_hyb[:, 1], c="black", marker="+", s=ms, zorder=2)
+        ax[1].scatter(
+            theta_hyb[:, 0], theta_hyb[:, 1], c="black", marker="+", s=ms, zorder=2
+        )
         ax[1].scatter(
             thetainit[:, 0],
             thetainit[:, 1],
@@ -121,8 +125,8 @@ for s in np.arange(init_seeds, final_seeds):
         ax[1].set_xlabel(r"$\theta_1$", fontsize=ft)
         ax[1].set_ylabel(r"$\theta_2$", fontsize=ft)
         ax[1].tick_params(axis="both", labelsize=ft)
-        plt.savefig('Figure2.jpg', format='jpeg', bbox_inches="tight", dpi=500)
+        plt.savefig("Figure2.jpg", format="jpeg", bbox_inches="tight", dpi=500)
         plt.show()
 
 end = time.time()
-print('Elapsed time =', round(end - start, 3))
+print("Elapsed time =", round(end - start, 3))

@@ -46,8 +46,8 @@ axes[1].legend(
     ncol=4,
     fontsize=ft,
 )
-plt.savefig('Figure6.jpg', format='jpeg', bbox_inches="tight", dpi=500)
+plt.savefig("Figure6.jpg", format="jpeg", bbox_inches="tight", dpi=500)
 plt.show()
 
 end = time.time()
-print('Elapsed time =', round(end - start, 3))
+print("Elapsed time =", round(end - start, 3))

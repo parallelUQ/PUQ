@@ -99,7 +99,7 @@ for varid, var in enumerate(varlist):
             axes[sid].set_yscale("log")
             axes[sid].set_xticks(batches)
             axes[sid].set_xticklabels(batches)
-            axes[sid].tick_params(axis="both", which="major", labelsize=ft-5)
+            axes[sid].tick_params(axis="both", which="major", labelsize=ft - 5)
             axes[sid].set_xlabel("b", fontsize=ft)
     axes[0].set_ylabel("Wall-clock time", fontsize=ft)
     if varid == len(varlist) - 1:
@@ -115,8 +115,8 @@ for varid, var in enumerate(varlist):
             fancybox=True,
             shadow=True,
         )
-    plt.savefig('Figure8.jpg', format='jpeg', bbox_inches="tight", dpi=500)
+    plt.savefig("Figure8.jpg", format="jpeg", bbox_inches="tight", dpi=500)
     plt.show()
 
 end = time.time()
-print('Elapsed time =', round(end - start, 3))
+print("Elapsed time =", round(end - start, 3))

@@ -96,5 +96,5 @@ axes[1].legend(
     ncol=4,
     fontsize=ft,
 )
-plt.savefig('Figure1.jpg', format='jpeg', bbox_inches="tight", dpi=500)
+plt.savefig("Figure1.jpg", format="jpeg", bbox_inches="tight", dpi=500)
 plt.show()

@@ -85,9 +85,11 @@ for s in np.arange(init_seeds, final_seeds):
     ax.set_xlabel(r"$\theta_1$", fontsize=ft)
     ax.set_ylabel(r"$\theta_2$", fontsize=ft)
     ax.tick_params(axis="both", labelsize=ft)
-    
-    plt.savefig('Figure_' + args.funcname + '.jpg', format='jpeg', bbox_inches="tight", dpi=500)
+
+    plt.savefig(
+        "Figure_" + args.funcname + ".jpg", format="jpeg", bbox_inches="tight", dpi=500
+    )
     plt.show()
 
 end = time.time()
-print('Elapsed time =', round(end - start, 3))
+print("Elapsed time =", round(end - start, 3))

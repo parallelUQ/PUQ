@@ -137,24 +137,27 @@ for varid, var in enumerate(varlist):
             axes[0, sid].set_yscale("log")
             axes[0, sid].set_xticks(workers)
             axes[0, sid].set_xticklabels(workers)
-            axes[0, sid].tick_params(axis="both", which="major", labelsize=ft-5)
+            axes[0, sid].tick_params(axis="both", which="major", labelsize=ft - 5)
 
             axes[1, sid].set_xscale("log")
             axes[1, sid].set_yscale("log")
             axes[1, sid].set_xticks(workers)
             axes[1, sid].set_xticklabels(workers)
-            axes[1, sid].tick_params(axis="both", which="major", labelsize=ft-5)
+            axes[1, sid].tick_params(axis="both", which="major", labelsize=ft - 5)
 
             axes[2, sid].set_xscale("log")
             axes[2, sid].set_yscale("log")
             axes[2, sid].set_xticks(workers)
             axes[2, sid].set_xticklabels(workers)
-            axes[2, sid].tick_params(axis="both", which="major", labelsize=ft-5)
+            axes[2, sid].tick_params(axis="both", which="major", labelsize=ft - 5)
             axes[2, sid].set_xlabel("# of workers", fontsize=ft)
 
         axes[0, sid].plot(
-            workers, [1, 1 / 2, 1 / 4, 1 / 8, 1 / 16, 1 / 32], color="black", 
-            linestyle=linelist[4], linewidth=4
+            workers,
+            [1, 1 / 2, 1 / 4, 1 / 8, 1 / 16, 1 / 32],
+            color="black",
+            linestyle=linelist[4],
+            linewidth=4,
         )
     axes[0, 0].set_ylabel("Wall-clock time (scaled)", fontsize=ft)
     axes[1, 0].set_ylabel("Idle time", fontsize=ft)
@@ -172,8 +175,8 @@ for varid, var in enumerate(varlist):
             fancybox=True,
             shadow=True,
         )
-    plt.savefig('Figure9.jpg', format='jpeg', bbox_inches="tight", dpi=500)
+    plt.savefig("Figure9.jpg", format="jpeg", bbox_inches="tight", dpi=500)
     plt.show()
 
 end = time.time()
-print('Elapsed time =', round(end - start, 3))
+print("Elapsed time =", round(end - start, 3))
