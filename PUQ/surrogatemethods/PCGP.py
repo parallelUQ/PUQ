@@ -1,4 +1,7 @@
-"""PCGP (Higdon et al., 2008). """
+"""PCGP (Higdon et al., 2008). 
+    The code is based on the Python package surmise by Plumlee, Surer, 
+    Wild, and Chan (2023).
+"""
 
 import numpy as np
 import scipy.optimize as spo

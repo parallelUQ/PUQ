@@ -47,7 +47,7 @@ for scaleid, scale in enumerate(acqscale):
             for r in range(repno):
                 for id_b, b in enumerate(batches):
                     PM = performanceModel(worker=worker, batch=b, n=n, n0=worker)
-                    PM.gen_gentime(scale, scale, 0.001, typeGen="linear")
+                    PM.gen_acqtime(scale, scale, 0.001, typeGen="linear")
                     PM.gen_simtime(
                         sim_mean, sim_mean * var, 0.01, typeSim="normal", seed=r
                     )

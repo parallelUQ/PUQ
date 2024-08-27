@@ -32,7 +32,7 @@ for sid, sim_mean in enumerate(simmeans):
             for r in range(repno):
                 for id_w, w in enumerate(workers):
                     PM = performanceModel(worker=w, batch=b, n=n, n0=w)
-                    PM.gen_gentime(genparams[0][0], 0.001, typeGen="constant")
+                    PM.gen_acqtime(genparams[0][0], 0.001, typeGen="constant")
                     PM.gen_simtime(
                         sim_mean, sim_mean * var, 0.001, typeSim="normal", seed=r
                     )

@@ -40,7 +40,7 @@ for mid, m in enumerate(label):
     ## ##
     xt = np.arange(0, len(avgtime))
     xtest = np.arange(0, n)
-    PM.gen_gentime(xt, avgtime, xtest, typeGen="regress")
+    PM.gen_acqtime(xt, avgtime, xtest, typeGen="regress")
     ## ##
 
     ## ##

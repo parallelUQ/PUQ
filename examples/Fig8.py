@@ -40,7 +40,7 @@ for sid, sim_mean in enumerate(simmeans):
 
                 for id_b, b in enumerate(batches):
                     PM = performanceModel(worker=worker, batch=b, n=n, n0=n0)
-                    PM.gen_gentime(genparams[aid], 0.001, typeGen="constant")
+                    PM.gen_acqtime(genparams[aid], 0.001, typeGen="constant")
                     PM.gen_simtime(
                         simmeans[sid], simmeans[sid], 0.001, typeSim="normal", seed=r
                     )

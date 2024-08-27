@@ -1,13 +1,7 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Sep  3 17:40:00 2022
-
-@author: ozgesurer
-"""
-
 """
 This module contains a class that implements the main emulation method.
+This module is designed based on the Python package surmise by Plumlee, Surer, 
+Wild, and Chan (2023).
 """
 import numpy as np
 import importlib
@@ -741,7 +735,7 @@ class emulator(object):
 
             .. code-block:: python
 
-                emlator.remove(theta=theta)
+                emulator.remove(theta=theta)
 
         Parameters
         ----------

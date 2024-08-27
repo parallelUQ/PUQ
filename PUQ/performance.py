@@ -11,7 +11,7 @@ class performanceModel(object):
         self.n = n
         self.n0 = n0
 
-    def gen_gentime(self, *args, typeGen="linear"):
+    def gen_acqtime(self, *args, typeGen="linear"):
         self.genmethod = eval("gentime." + typeGen)
         self.gentime = self.genmethod(*args, n=self.n, batch=self.batch, n0=self.n0)
         return

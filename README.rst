@@ -151,7 +151,7 @@ As an example, execute the followings from the command line::
  python3 run_test_funcs.py -funcname sphere -al_func hybrid_ei -max_eval 200
  
 Once completed, ``Figure_funcname.jpg`` is saved under ``examples/`` directory.
-Running this script takes about one minute on a personal Mac laptop::
+Running each script should not take more than one minute on a personal Mac laptop.
   
 Final comments
 ~~~~~~~~~~~~~~
