@@ -26,7 +26,7 @@ for mid, m in enumerate(label):
 
     PM = performanceModel(worker=1, batch=1, n=n, n0=0)
 
-    ## ##
+    # Read from existing experimental data
     filename = (
         path
         + "performanceAnalytics/new_fun_all/new_examples/"
@@ -35,19 +35,14 @@ for mid, m in enumerate(label):
         + label[mid]
     )
     avgae, avgtime = get_rep_data(s, w, b, rep, filename, labelf[mid])
-    ## ##
 
-    ## ##
+    # Gen acq and sim time
     xt = np.arange(0, len(avgtime))
     xtest = np.arange(0, n)
     PM.gen_acqtime(xt, avgtime, xtest, typeGen="regress")
-    ## ##
-
-    ## ##
     PM.gen_simtime(0.0001, 0.0001, 0, typeSim="normal")
-    ## ##
 
-    ## ##
+    # Fit a progress curve
     minl = np.min(avgae)
     maxl = np.max(avgae)
     lnew = [(litem - 0) / (maxl - 0) for litem in avgae]
@@ -55,9 +50,9 @@ for mid, m in enumerate(label):
     x_a = np.log(np.arange(1, len(lnew) + 1))
     y_a = np.log(lnew)
     xtest_a = np.log(np.arange(1, n + 1))
-    PM.gen_accuracy(x_a, y_a, xtest_a, typeAcc="regress")
+    PM.gen_curve(x_a, y_a, xtest_a, typeAcc="regress")
     PM.acc = np.exp(PM.acc)
-    ## ##
+
 
     PM.simulate()
     PM.summarize()

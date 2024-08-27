@@ -21,7 +21,7 @@ class performanceModel(object):
         self.simtime = self.simmethod(*args, n=self.n, seed=seed)
         return
 
-    def gen_accuracy(self, *args, typeAcc="exponential"):
+    def gen_curve(self, *args, typeAcc="exponential"):
         self.accmethod = eval("accuracy." + typeAcc)
         self.acc = self.accmethod(*args, n=self.n, batch=self.batch, ninit=self.n0)
         return

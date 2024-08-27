@@ -36,7 +36,7 @@ for sid, sim_mean in enumerate(simmeans):
                     PM.gen_simtime(
                         sim_mean, sim_mean * var, 0.001, typeSim="normal", seed=r
                     )
-                    PM.gen_accuracy(
+                    PM.gen_curve(
                         accparams[id_b][0], accparams[id_b][1], typeAcc="exponential"
                     )
                     PM.simulate()

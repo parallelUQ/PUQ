@@ -51,7 +51,7 @@ for scaleid, scale in enumerate(acqscale):
                     PM.gen_simtime(
                         sim_mean, sim_mean * var, 0.01, typeSim="normal", seed=r
                     )
-                    PM.gen_accuracy(-1, accparams[id_b][1], typeAcc="exponential")
+                    PM.gen_curve(-1, accparams[id_b][1], typeAcc="exponential")
                     PM.simulate()
                     PM.summarize()
                     PM.complete(acclevel)

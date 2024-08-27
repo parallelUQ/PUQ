@@ -21,7 +21,7 @@ for bid, b in enumerate(batches):
     PM = performanceModel(worker=worker, batch=b, n=n, n0=n0)
     PM.gen_acqtime(1, 1, 0.25, typeGen="linear")
     PM.gen_simtime(1, 1, 0.1, typeSim="normal", seed=1)
-    PM.gen_accuracy(-1, acclevel[bid], typeAcc="exponential")
+    PM.gen_curve(-1, acclevel[bid], typeAcc="exponential")
 
     PM.simulate()
     PM.summarize()
