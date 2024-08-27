@@ -3,6 +3,7 @@ This module contains a class that implements the main emulation method.
 This module is designed based on the Python package surmise by Plumlee, Surer, 
 Wild, and Chan (2023).
 """
+
 import numpy as np
 import importlib
 import copy
