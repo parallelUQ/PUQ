@@ -53,7 +53,6 @@ for mid, m in enumerate(label):
     PM.gen_curve(x_a, y_a, xtest_a, typeAcc="regress")
     PM.acc = np.exp(PM.acc)
 
-
     PM.simulate()
     PM.summarize()
     PM.complete(acclevel)
