@@ -6,7 +6,6 @@ from PUQ.prior import prior_dist
 from test_funcs import holder, ackley, easom, sphere, matyas, himmelblau
 
 
-
 args = parse_arguments()
 
 cls_data = eval(args.funcname)()
@@ -65,4 +64,3 @@ for s in np.arange(init_seeds, final_seeds):
             "believer": args.believer,
         },
     )
-
