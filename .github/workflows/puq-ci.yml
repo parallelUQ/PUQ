@@ -5,9 +5,9 @@ name: PUQ CI
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "develop", "dev/ijoc_paper" ]
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "develop", "dev/ijoc_paper" ]
 
 jobs:
   run-full-tests:
@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ["3.9", "3.10"]
+        python-version: ["3.9", "3.10", "3.11"]
 
     steps:
     - uses: actions/checkout@v2
