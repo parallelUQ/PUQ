@@ -1,0 +1,42 @@
+name: CI Papers
+
+on:
+  push:
+    branches: [ "main", "techno_paper", "dev/ijoc_paper"]
+  pull_request:
+    branches: [ "main", "techno_paper", "dev/ijoc_paper"]
+
+jobs:
+  run-full-tests:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.9", "3.10", "3.11"]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install pip==21.2.4
+        python -m pip install -r requirements.txt
+        pip install -e .
+    - name: Test with pytest on main branch
+      if: github.ref == 'refs/heads/main'
+      run: |
+        python ./examples/figure1b.py
+
+    - name: Test with pytest on techno branch
+      if: github.ref == 'refs/heads/techno_paper'
+      run: |
+        python ./examples/figure1b.py        
+
+    - name: Test with pytest on dev/ijoc_paper branch
+      if: github.ref == 'refs/heads/dev/ijoc_paper'
+      run: |
+        python ./examples/ci_example.py        
