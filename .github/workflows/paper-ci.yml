@@ -26,10 +26,12 @@ jobs:
         python -m pip install pip==21.2.4
         python -m pip install -r requirements.txt
         pip install -e .
-    - name: Test with pytest
+    - name: Test with pytest on main branch
       if: github.ref == 'refs/heads/main'
       run: |
         python ./examples/figure1b.py
+
+    - name: Test with pytest on dev/ijoc_paper branch
       if: github.ref == 'refs/heads/dev/ijoc_paper'
       run: |
-        python ./examples/ci_example.py          
+        python ./examples/ci_example.py        
