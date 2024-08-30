@@ -2,9 +2,9 @@ name: spellcheck
 
 on:
   push:
-    branches: [ "dev/ijoc_paper" ]
+    branches: ["main", "dev/ijoc_paper" ]
   pull_request:
-    branches: [ "dev/ijoc_paper" ]
+    branches: ["main", "dev/ijoc_paper" ]
 
 jobs:
   spelling:
