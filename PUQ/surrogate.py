@@ -1,6 +1,7 @@
 """
 This module contains a class that implements the main emulation method.
 """
+
 import numpy as np
 import importlib
 import copy

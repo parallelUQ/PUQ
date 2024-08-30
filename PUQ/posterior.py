@@ -1,6 +1,7 @@
 """
 This module contains a class for posterior.
 """
+
 import numpy as np
 import importlib
 import copy
