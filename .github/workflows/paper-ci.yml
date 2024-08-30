@@ -28,8 +28,8 @@ jobs:
         pip install -e .
     - name: Test with pytest
       if: github.ref == 'refs/heads/main'
-        run: |
-          python ./examples/figure1b.py
+      run: |
+        python ./examples/figure1b.py
       if: github.ref == 'refs/heads/dev/ijoc_paper'
-        run: |
-          python ./examples/ci_example.py          
+      run: |
+        python ./examples/ci_example.py          
