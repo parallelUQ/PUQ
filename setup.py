@@ -5,7 +5,7 @@ import numpy
 
 setup(
     name="PUQ",
-    version="0.1.1",
+    version="0.1.0",
     author="Özge Sürer, Matthew Plumlee, Stefan M. Wild",
     author_email="surero@miamioh.edu",
     description="Python package for generating experimental designs tailored for uncertainty quantification, featuring parallel implementations",
