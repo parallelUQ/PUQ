@@ -73,7 +73,7 @@ Once installed, a user should see ``build/`` directory created.
 Testing
 ~~~~~~~
 
-The test suite requires the pytest_ and pytest-cov_ packages, which can be installed via `pip install pytest pytest-cov`.
+The test suite requires the pytest_ and pytest-cov_ packages, which can be installed via ``pip install pytest pytest-cov``.
 
 The test suite can be run from the ``tests/`` directory of the source distribution by running::
 
@@ -124,9 +124,9 @@ To replicate Figures~1--3, respectively:
 
 2) Execute the followings from the command line::
 
- python3 figure1b.py
- python3 figure2.py
- python3 figure3.py
+   python3 figure1b.py
+   python3 figure2.py
+   python3 figure3.py
 
 Running each script should not take more than 60 sec. See the figures (png files) saved under ``examples/`` directory.
 
