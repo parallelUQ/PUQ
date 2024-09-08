@@ -46,8 +46,8 @@ with 'apt install python3.9-venv'
 
 3) Use the following command to create a virtual environment::
 
-  python3 -m venv venv/  
-  source venv/bin/activate  
+    python3 -m venv venv/  
+    source venv/bin/activate  
  
 We note that creating a virtual environment is not a required step. However, we tested this
 procedure to prevent any conflict, and the code runs smoothly.
@@ -61,11 +61,11 @@ To install the PUQ package:
 
 2) Use the following command to install the required packages::
 
- pip install -r requirements.txt
+    pip install -r requirements.txt
 
 3) From the command line, use the following command to install PUQ::
 
- pip install -e .
+    pip install -e .
 
 Once installed, a user should see ``build/`` directory created.
 
