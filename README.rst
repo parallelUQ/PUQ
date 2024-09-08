@@ -11,6 +11,9 @@
     :target: https://puq.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/psf/black
+
 |
 
 .. after_badges_rst_tag
@@ -37,11 +40,11 @@ having conflicting packages on a user's machine. You may need to install the vir
 environment on your system (if a user's system does not have it), for example, 
 with 'apt install python3.9-venv'
 
-1)Extract the zipped file.
+1) Extract the zipped file.
 
-2)From the command line, go to the directory of the source code.
+2) From the command line, go to the directory of the source code.
 
-3)Use the following command to create a virtual environment::
+3) Use the following command to create a virtual environment::
 
   python3 -m venv venv/  
   source venv/bin/activate  
@@ -54,13 +57,13 @@ Installation
 
 To install the PUQ package:
 
-1)Go to the directory of the source code (if a user has not done so yet).
+1) Go to the directory of the source code (if a user has not done so yet).
 
-2)Use the following command to install the required packages::
+2) Use the following command to install the required packages::
 
  pip install -r requirements.txt
 
-3)From the command line, use the following command to install PUQ::
+3) From the command line, use the following command to install PUQ::
 
  pip install -e .
 
@@ -70,8 +73,9 @@ Once installed, a user should see ``build/`` directory created.
 Testing
 ~~~~~~~
 
-The test suite requires the pytest_ and pytest-cov_ packages to be installed
-and can be run from the ``tests/`` directory of the source distribution by running::
+The test suite requires the pytest_ and pytest-cov_ packages, which can be installed via `pip install pytest pytest-cov`.
+
+The test suite can be run from the ``tests/`` directory of the source distribution by running::
 
 ./run-tests.sh
 
@@ -116,9 +120,9 @@ Experimental Design for Calibration of Expensive Simulation Models' by Sürer, P
 
 To replicate Figures~1--3, respectively:
 
-1)Go to the ``examples/`` directory.
+1) Go to the ``examples/`` directory.
 
-2)Execute the followings from the command line::
+2) Execute the followings from the command line::
 
  python3 figure1b.py
  python3 figure2.py
