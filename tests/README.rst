@@ -14,3 +14,7 @@ running::
 
 Coverage reports are produced under the relevant directory only if all tests are
 used.
+
+
+.. _pytest-cov: https://pypi.org/project/pytest-cov/
+.. _pytest: https://pypi.org/project/pytest/

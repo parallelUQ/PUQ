@@ -11,9 +11,13 @@
     :target: https://puq.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-====================================================================================================================================
-PUQ: Python package for generating experimental designs tailored for uncertainty quantification, featuring parallel implementations
-====================================================================================================================================
+|
+
+.. after_badges_rst_tag
+
+======================================================================================================================================
+PUQ: Python package for generating experimental designs tailored for uncertainty quantification and featuring parallel implementations
+======================================================================================================================================
 
 Dependencies
 ~~~~~~~~~~~~
@@ -21,7 +25,7 @@ Dependencies
 PUQ is a Python package that employs novel experimental design techniques with intelligent selection criteria, 
 refining data collection to enhance the efficiency and effectiveness of uncertainty quantification.
 
-This code is tested with Python 3.9 and 3.10 and requires pip.
+This code is tested with Python 3.9, 3.10, and 3.11 and requires pip.
 
 Set up 
 ~~~~~~
@@ -79,13 +83,11 @@ The documentation is stored in ``docs/`` and is compiled with the Sphinx Python
 documentation generator. It is written in the reStructuredText format. These
 files are hosted at `Read the Docs <http://PUQ.readthedocs.io>`_.
 
-To compile the documentation, first ensure that Sphinx is installed. Then, to
-generate documentation, run command ``make html`` from terminal within this directory as follows ::
+To compile the documentation, from the directory of the source code, run the following command :: 
 
- cd docs
- make html
+ sphinx-build -M html docs docs
 
-The HTML files are then stored in ``docs/_build/html``
+The HTML files are then stored in ``docs/html``
 
 
 **Citation:**
