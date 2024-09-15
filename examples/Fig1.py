@@ -58,6 +58,7 @@ for mid, m in enumerate(label):
     PM.complete(acclevel)
     result.append(PM)
 
+
 lbl = [r"$\mathcal{A}_1$", r"$\mathcal{A}_2$", r"$\mathcal{A}_3$", r"$\mathcal{A}_4$"]
 ft = 25
 fig, axes = plt.subplots(1, 3, figsize=(24, 6))

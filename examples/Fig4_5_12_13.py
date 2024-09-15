@@ -73,13 +73,13 @@ for ex_id, example_name in enumerate(figs):
         )
         if ex_id == 0:
             if metric == "AE":
-                plt.savefig("Figure3.jpg", format="jpeg", bbox_inches="tight", dpi=500)
-            else:
                 plt.savefig("Figure4.jpg", format="jpeg", bbox_inches="tight", dpi=500)
+            else:
+                plt.savefig("Figure5.jpg", format="jpeg", bbox_inches="tight", dpi=500)
         else:
             if metric == "AE":
-                plt.savefig("Figure11.jpg", format="jpeg", bbox_inches="tight", dpi=500)
-            else:
                 plt.savefig("Figure12.jpg", format="jpeg", bbox_inches="tight", dpi=500)
+            else:
+                plt.savefig("Figure13.jpg", format="jpeg", bbox_inches="tight", dpi=500)
 
         plt.show()

@@ -72,7 +72,7 @@ for figno, example_name in enumerate(figs):
             fontsize=fonts,
         )
         if figno == 0:
-            plt.savefig("Figure5.jpg", format="jpeg", bbox_inches="tight", dpi=500)
+            plt.savefig("Figure6.jpg", format="jpeg", bbox_inches="tight", dpi=500)
         else:
-            plt.savefig("Figure13.jpg", format="jpeg", bbox_inches="tight", dpi=500)
+            plt.savefig("Figure14.jpg", format="jpeg", bbox_inches="tight", dpi=500)
         plt.show()
