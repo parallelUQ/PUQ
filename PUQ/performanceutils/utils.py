@@ -78,6 +78,7 @@ def plot_workers(PM, joblist, acqlist):
         fontsize=18,
     )
     # plt.xlim(0, sorted(endjob)[-1])
+    plt.title(str(PM.batch) + "," + str(PM.worker))
     plt.show()
 
 
@@ -101,7 +102,7 @@ def plot_acc(axes, n, acclevel, rlist, labellist, logscale=False, fontsize=18, n
             ymax=res.acc_threshold,
             linewidth=5,
             color=clist[accid],
-            linestyles=linelist[accid],
+            linestyles=(0, (2, 5)),
         )
 
     axes.hlines(y=acclevel, xmin=0, xmax=n, linewidth=2, color="k")
@@ -109,6 +110,7 @@ def plot_acc(axes, n, acclevel, rlist, labellist, logscale=False, fontsize=18, n
     axes.set_ylabel("Error", fontsize=fontsize)
     axes.tick_params(axis="both", which="major", labelsize=fontsize - 5)
     axes.set_xlim([n0, n])
+    axes.set_ylim(0, 1.1)
     if logscale:
         axes.set_xscale("log")
         axes.set_yscale("log")
@@ -183,7 +185,7 @@ def plot_endtime(
             ymax=endtime[res.complete_no],
             linewidth=5,
             color=clist[endid],
-            linestyles=linelist[endid],
+            linestyles=(0, (2, 5)),
         )
         axes.hlines(
             y=endtime[res.complete_no],
@@ -191,7 +193,7 @@ def plot_endtime(
             xmax=res.complete_no,
             linewidth=5,
             color=clist[endid],
-            linestyles=linelist[endid],
+            linestyles=(0, (2, 5)),
         )
 
     axes.set_xlabel("# of parameters", fontsize=fontsize)
@@ -235,7 +237,7 @@ def plot_errorend(
             ymax=acclevel,
             linewidth=5,
             color=clist[endid],
-            linestyles=linelist[endid],
+            linestyles=(0, (2, 5)),
         )
 
     axes.hlines(y=acclevel, xmin=0, xmax=maxtime, linewidth=2, color="k")

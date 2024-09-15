@@ -31,6 +31,7 @@ def eivar(
     # Update emulator for uncompleted jobs.
     idnan = np.isnan(fevals).any(axis=0).flatten()
     theta_uc = theta[idnan, :]
+    fevals_c = fevals[:, ~idnan]
     if sum(idnan) > 0:
         fevalshat_uc = emu.predict(x=x, theta=theta_uc)
         emu.update(theta=theta_uc, f=fevalshat_uc.mean())
@@ -39,19 +40,13 @@ def eivar(
     n_x, p = x.shape[0], theta.shape[1]
     obsvar3d = obsvar.reshape(1, n_x, n_x)
 
-    # Create a candidate list
-    if n == 1:
-        n_clist = 100 * n
-    else:
-        n_clist = 100 * int(n)  # 100*int(np.ceil(np.log(n)))
+    liar = np.mean(fevals_c)
 
-    if type_init == "LHS":
-        sampling = LHS(xlimits=thetalimits)
-        clist = sampling(n_clist)
-    else:
-        clist = prior_func.rnd(n_clist, None)
+    print(fevals_c.shape)
 
     for i in range(n):
+        clist = prior_func.rnd(candsize, None)
+
         emupredict = emu.predict(x, thetatest)
         emumean = emupredict.mean()
         emumeanT = emumean.T
@@ -76,14 +71,34 @@ def eivar(
             )
             acq_func.append(posteivar)
 
-        idc = np.argmin(acq_func)
-        ctheta = clist[idc, :].reshape((1, p))
-        theta_acq.append(ctheta)
-        clist = np.delete(clist, idc, 0)
+        if n == 1:
+            idc = np.argmin(acq_func)
+            ctheta = clist[idc, :].reshape((1, p))
+            theta_acq.append(ctheta)
+            break
+        else:
+            if believer == 1:
+                idc = np.argmin(acq_func)
+                ctheta = clist[idc, :].reshape((1, p))
 
+                # Kriging believer strategy
+                fevalsnew = emu.predict(x=x, theta=ctheta)
+                emu.update(theta=ctheta, f=fevalsnew.mean())
+
+            elif believer == 2:
+                idc = np.argmin(acq_func)
+                ctheta = clist[idc, :].reshape((1, p))
+
+                # Constant liar strategy
+                fevalsnew = liar.reshape(1, 1)
+                emu.update(theta=ctheta, f=fevalsnew)
+
+            theta_acq.append(ctheta)
+
+        # clist = np.delete(clist, idc, 0)
         # Kriging believer strategy
-        fevalsnew = emu.predict(x=x, theta=ctheta)
-        emu.update(theta=ctheta, f=fevalsnew.mean())
+        # fevalsnew = emu.predict(x=x, theta=ctheta)
+        # emu.update(theta=ctheta, f=fevalsnew.mean())
 
     theta_acq = np.array(theta_acq).reshape((n, p))
 

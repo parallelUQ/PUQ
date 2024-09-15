@@ -20,7 +20,7 @@ def normal(*args, n, seed):
     return time
 
 
-def constant(*args, n):
+def constant(*args, n, seed):
     a = args[0]
 
     time = a * np.repeat(1, n)

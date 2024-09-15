@@ -45,7 +45,7 @@ def fit(fitinfo, data_cls, args):
     max_evals = args["max_evals"]
     test_data = args["data_test"]
 
-    if AL_type in ["ei", "pi", "hybrid_ei", "hybrid_pi"]:
+    if AL_type in ["ei", "pi", "hybrid_ei", "hybrid_pi", "eivar"]:
         candsize = args["candsize"]
         refsize = args["refsize"]
         believer = args["believer"]
@@ -118,11 +118,26 @@ def fit(fitinfo, data_cls, args):
         libE_specs=libE_specs,
     )
 
+    emu = fit_emulator(data_cls.x, H["thetas"], H["f"][None, :], data_cls.thetalimits)
+
+    TV, HD, AE = collect_data(
+        emu,
+        data_cls.x,
+        H["f"][None, :],
+        data_cls.x,
+        test_data["theta"],
+        test_data["p_prior"],
+        test_data["p"],
+        np.reshape(data_cls.real_data[0, :], (1, data_cls.real_data.shape[1])),
+        data_cls.obsvar.reshape(1, data_cls.d, data_cls.d),
+    )
+
     fitinfo["f"] = H["f"]
     fitinfo["theta"] = H["thetas"]
-    fitinfo["TV"] = H["TV"]
-    fitinfo["HD"] = H["HD"]
-    fitinfo["AE"] = H["AE"]
+    fitinfo["TV"] = np.concatenate((H["TV"], np.array([TV])))
+    fitinfo["HD"] = np.concatenate((H["HD"], np.array([HD])))
+    fitinfo["AE"] = np.concatenate((H["AE"], np.array([AE])))
+
     fitinfo["time"] = H["time"]
     return
 
@@ -138,6 +153,7 @@ def compute_timepass(start_time, new_theta):
 def collect_data(
     emu, x, fevals, real_x, thetatest, priortest, posttest, true_fevals, obsvar3d
 ):
+
     emupredict = emu.predict(x=x, theta=thetatest)
     emumean = emupredict.mean()
     emuvar, is_cov = get_emuvar(emupredict)
@@ -233,25 +249,25 @@ def gen_f(H, persis_info, gen_specs, libE_info):
         if update_model:
             starttime = time.time()
 
-            if len(theta) % 50 == 0:
-                print("Updating model...\n")
+            # if len(theta) % 50 == 0:
+            print("Updating model...\n")
 
-                print(
-                    "Percentage Pending: %0.2f ( %d / %d)"
-                    % (
-                        100 * np.round(np.mean(pending), 4),
-                        np.sum(pending),
-                        np.prod(pending.shape),
-                    )
+            print(
+                "Percentage Pending: %0.2f ( %d / %d)"
+                % (
+                    100 * np.round(np.mean(pending), 4),
+                    np.sum(pending),
+                    np.prod(pending.shape),
                 )
-                print(
-                    "Percentage Complete: %0.2f ( %d / %d)"
-                    % (
-                        100 * np.round(np.mean(complete), 4),
-                        np.sum(complete),
-                        np.prod(pending.shape),
-                    )
+            )
+            print(
+                "Percentage Complete: %0.2f ( %d / %d)"
+                % (
+                    100 * np.round(np.mean(complete), 4),
+                    np.sum(complete),
+                    np.prod(pending.shape),
                 )
+            )
 
             fcomb = np.concatenate((finit, fevals), axis=1)
             thetacomb = np.concatenate((thetainit, theta), axis=0)
@@ -287,6 +303,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 obsvar3d,
             )
             n_init = n_workers - 1
+
             theta = acquisition_f(
                 n_init,
                 x,
