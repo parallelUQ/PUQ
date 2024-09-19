@@ -116,16 +116,17 @@ by Sürer and Wild (2024).
 
 **Instructions for running the illustrative examples with performance model**
 
-To replicate Figures~6--9, respectively:
+To replicate Figures~3 and 7--10, respectively:
 
 1)Go to the ``examples/`` directory.
 
 2)Execute the followings from the command line::
 
- python3 Fig6.py
+ python3 Fig3.py
  python3 Fig7.py
  python3 Fig8.py
  python3 Fig9.py
+ python3 Fig10.py
  
 Running each script should not take more than 90 sec. See the figures (jpeg files) saved under ``examples/`` directory.
 
