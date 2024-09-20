@@ -78,7 +78,7 @@ if __name__ == "__main__":
             output_file = "48Ca_temp.out"
             input_file = "frescox_temp_input.in"
             os.system("frescox < frescox_temp_input.in > 48Ca_temp.out")
-            
+
             # Read outputs
             with open(output_file) as f:
                 content = f.readlines()
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     print("Generating test data")
     test_data = generate_test_data(cls_fresco)
     print("End of test data generation")
-    
+
     # Set a uniform prior
     prior_func = prior_dist(dist="uniform")(
         a=cls_fresco.thetalimits[:, 0], b=cls_fresco.thetalimits[:, 1]
@@ -185,16 +185,14 @@ if __name__ == "__main__":
     )
     n0 = 32
     f = al_fresco._info["f"]
-    
+
     fig = plt.figure(figsize=(6, 4))
     ax = fig.add_subplot(1, 1, 1)
-    plt.rcParams['font.family'] = 'DejaVu Sans' 
+    plt.rcParams["font.family"] = "DejaVu Sans"
     for i in range(theta_al.shape[0]):
         if i < n0:
             if i > 0:
-                ax.plot(
-                    np.arange(15), np.exp(f[i, :]), color="gray", alpha=1, zorder=1
-                )
+                ax.plot(np.arange(15), np.exp(f[i, :]), color="gray", alpha=1, zorder=1)
             else:
                 ax.plot(
                     np.arange(15),
@@ -222,7 +220,7 @@ if __name__ == "__main__":
         np.arange(15), real_data.T, color="black", marker="P", zorder=2, label="Data"
     )
     ax.set_xticks(ticks=np.arange(15)[::3], labels=real_x.flatten()[::3])
-    #ax.set_yticks(fontsize=16)
+    # ax.set_yticks(fontsize=16)
     ax.set_xlabel("Degree", fontsize=16)
     ax.set_ylabel("Cross section", fontsize=16)
     ax.set_yscale("log")
