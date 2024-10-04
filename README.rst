@@ -40,7 +40,9 @@ with 'apt install python3.9-venv'
 
 2) From the command line, go to the directory of the source code.
 
-3) Use the following command to create a virtual environment::
+3) Use the following command to create a virtual environment:
+
+.. code-block:: python
 
   python3 -m venv venv/  
   source venv/bin/activate  
@@ -55,11 +57,15 @@ To install the PUQ package:
 
 1) Go to the directory of the source code (if a user has not done so yet).
 
-2) Use the following command to install the required packages::
+2) Use the following command to install the required packages:
+
+.. code-block:: python
 
  pip install -r requirements.txt
 
-3) From the command line, use the following command to install PUQ::
+3) From the command line, use the following command to install PUQ:
+
+.. code-block:: python
 
  pip install -e .
 
@@ -70,9 +76,11 @@ Testing
 ~~~~~~~
 
 The test suite requires the pytest_ and pytest-cov_ packages to be installed
-and can be run from the ``tests/`` directory of the source distribution by running::
+and can be run from the ``tests/`` directory of the source distribution by running:
 
-./run-tests.sh
+.. code-block:: python
+
+ ./run-tests.sh
 
 
 Documentation
@@ -83,7 +91,9 @@ documentation generator. It is written in the reStructuredText format. These
 files are hosted at `Read the Docs <http://PUQ.readthedocs.io>`_.
 
 To compile the documentation, first ensure that Sphinx is installed. Then, to
-generate documentation, run command ``make html`` from terminal within this directory as follows ::
+generate documentation, from a terminal run ``make html`` within the ``docs/`` directory as follows:
+
+.. code-block:: python
 
  cd docs
  make html
@@ -116,11 +126,13 @@ by Sürer and Wild (2024).
 
 **Instructions for running the illustrative examples with performance model**
 
-To replicate Figures~3 and 7--10, respectively:
+To replicate Figures~3 and 7--10:
 
-1)Go to the ``examples/`` directory.
+1) Go to the ``examples/`` directory.
 
-2)Execute the followings from the command line::
+2) Execute any of the following from the command line:
+
+.. code-block:: python
 
  python3 Fig3.py
  python3 Fig7.py
@@ -132,7 +144,9 @@ Running each script should not take more than 90 sec. See the figures (jpeg file
 
 **Instructions for running the sequential design using different synthetic simulation models**
 
-To replicate Figure~2, execute the following from the command line::
+To replicate Figure~2, execute the following from the command line:
+
+.. code-block:: python
 
  python3 Fig2.py
  
@@ -142,7 +156,9 @@ To collect ``-max_eval`` simulation outputs from parameters acquired with
 different acquisition functions (``-al_func``) and synthetic simulation models (``-funcname``), 
 one can use the script ``run_test_funcs.py``.
 
-As an example, execute the followings from the command line::
+As an example, execute any of the following from the command line:
+
+.. code-block:: python
 
  python3 run_test_funcs.py -funcname ackley -al_func ei -max_eval 200
  python3 run_test_funcs.py -funcname easom -al_func ei -max_eval 200
