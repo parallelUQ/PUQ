@@ -112,9 +112,11 @@ The HTML files are then stored in ``docs/html``
 Examples
 ~~~~~~~~
 
-We provide examples in the ``examples/`` directory to illustrate the basic usage of PUQ. 
-These examples replicate the results presented in the paper titled 'Sequential Bayesian 
-Experimental Design for Calibration of Expensive Simulation Models' by Sürer, Plumlee, and Wild (2024).
+We provide examples in the `examples </examples>`_
+directory to illustrate the basic usage of PUQ. 
+
+These examples replicate some results presented in our papers. 
+`README` file within the directory provides further instructions.
 
   
 Final comments
