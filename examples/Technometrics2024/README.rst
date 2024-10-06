@@ -2,7 +2,6 @@
 Examples
 ~~~~~~~~
 
-We provide examples in the ``examples/`` directory to illustrate the basic usage of PUQ. 
 These examples replicate the results presented in the paper titled 'Sequential Bayesian 
 Experimental Design for Calibration of Expensive Simulation Models' by Sürer, Plumlee, and Wild (2024).
 
@@ -10,7 +9,7 @@ Experimental Design for Calibration of Expensive Simulation Models' by Sürer, P
 
 To replicate Figures~1--3, respectively:
 
-1) Go to the ``examples/`` directory.
+1) Go to the ``examples/Technometrics2024`` directory.
 
 2) Execute the followings from the command line::
 
