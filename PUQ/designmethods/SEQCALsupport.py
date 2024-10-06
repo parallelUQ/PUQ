@@ -107,6 +107,26 @@ def load_H(H, thetas, mse, hd, generated_no, offset=0, set_priorities=False):
 
     return H
 
+def load_H_opt(H, thetas, mse, hd, ae, time, generated_no, offset=0, set_priorities=False):
+    """Fill inputs into H0.
+    There will be num_points x num_thetas entries
+    """
+    n_thetas = len(thetas)
+    start = offset * n_thetas
+
+    if thetas.shape[1] < 2:
+        H["thetas"][start : start + n_thetas] = thetas.flatten()
+    else:
+        H["thetas"][start : start + n_thetas] = thetas
+
+    H["TV"][start : start + n_thetas] = np.repeat(mse, n_thetas)
+    H["HD"][start : start + n_thetas] = np.repeat(hd, n_thetas)
+    H["AE"][start : start + n_thetas] = np.repeat(ae, n_thetas)
+    H["time"][start : start + n_thetas] = time
+    if set_priorities:
+        H["priority"] = assign_priority(n_thetas, generated_no)
+
+    return H
 
 def fit_emulator(x, theta, fevals, thetalimits):
     idnan = np.isnan(fevals).any(axis=0).flatten()
