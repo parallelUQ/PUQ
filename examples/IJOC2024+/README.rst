@@ -1,7 +1,6 @@
 Examples
 ~~~~~~~~
 
-We provide examples in the ``examples/`` directory to illustrate the basic usage of PUQ. 
 These examples replicate the results presented in the paper titled 'Performance Analysis of 
 Sequential Experimental Design for Calibration in Parallel Computing Environments' 
 by Sürer and Wild (2024).
