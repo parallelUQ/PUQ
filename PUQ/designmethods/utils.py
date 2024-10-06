@@ -25,6 +25,12 @@ def parse_arguments():
     )
     parser.add_argument("-seed_n0", metavar="N2", default=1, type=int, help="Seed No.")
     parser.add_argument(
+        "-init_seeds", metavar="N2", default=1, type=int, help="Init Seed No."
+    )
+    parser.add_argument(
+        "-final_seeds", metavar="N2", default=2, type=int, help="Final Seed No."
+    )
+    parser.add_argument(
         "-al_func",
         metavar="N2",
         default="eivar",
