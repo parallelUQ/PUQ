@@ -25,6 +25,13 @@ def rebuild_condition(complete, prev_complete, n_theta=2, n_initial=10):
         nflag = True
     return nflag
 
+def rebuild_condition_opt(complete, prev_complete, n_theta=2):
+
+    if np.sum(complete) - np.sum(prev_complete) < n_theta:
+        nflag = False
+    else:
+        nflag = True
+    return nflag
 
 def create_arrays(n_x, n_thetas):
     """Create 2D (point * rows) arrays fevals, pending and complete"""
