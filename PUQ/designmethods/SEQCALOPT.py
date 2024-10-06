@@ -12,7 +12,7 @@ from PUQ.designmethods.gen_funcs.HYBRID_EI import hybrid_ei
 from PUQ.designmethods.gen_funcs.RND import rnd
 from PUQ.designmethods.SEQCALsupport import (
     fit_emulator,
-    load_H,
+    load_H_opt,
     update_arrays,
     create_arrays,
     pad_arrays,
@@ -328,7 +328,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
             )
             time_pass = compute_timepass(starttime, theta)
             H_o = np.zeros(len(theta), dtype=gen_specs["out"])
-            H_o = load_H(
+            H_o = load_H_opt(
                 H_o, theta, TV, HD, AE, time_pass, generated_no, set_priorities=True
             )
             tag, Work, calc_in = ps.send_recv(H_o)
@@ -374,7 +374,7 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 time_pass = compute_timepass(starttime, new_theta)
 
                 H_o = np.zeros(len(new_theta), dtype=gen_specs["out"])
-                H_o = load_H(
+                H_o = load_H_opt(
                     H_o,
                     new_theta,
                     TV,
