@@ -86,8 +86,7 @@ def does_not_raise():
 
 @pytest.mark.parametrize(
     "input1,expectation",
-    [("ei", does_not_raise()),
-    ("hybrid_ei", does_not_raise())],
+    [("ei", does_not_raise()), ("hybrid_ei", does_not_raise())],
 )
 def test_none_input(input1, expectation):
     with expectation:
