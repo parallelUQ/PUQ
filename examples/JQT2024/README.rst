@@ -10,14 +10,14 @@ Instructions for running the illustrative examples
 
 To replicate Figures~1--4, respectively:
 
-1)Go to the ``examples/JQT2024`` directory.
+1) Go to the ``examples/JQT2024`` directory.
 
-2)Execute the followings from the command line::
+2) Execute the followings from the command line::
 
- python3 Figure1.py
- python3 Figure2.py
- python3 Figure3.py
- python3 Figure4.py
+    python3 Figure1.py
+    python3 Figure2.py
+    python3 Figure3.py
+    python3 Figure4.py
 
 Running each script should not take more than 60 sec. See the figures (png files) saved under the directory.
 
