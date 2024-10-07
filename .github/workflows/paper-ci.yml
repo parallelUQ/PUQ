@@ -2,9 +2,9 @@ name: CI Papers
 
 on:
   push:
-    branches: [ "main", "techno_paper", "dev/ijoc_paper"]
+    branches: [ "main", "develop"]
   pull_request:
-    branches: [ "main", "techno_paper", "dev/ijoc_paper"]
+    branches: [ "main", "develop"]
 
 jobs:
   run-full-tests:
@@ -26,17 +26,12 @@ jobs:
         python -m pip install pip==21.2.4
         python -m pip install -r requirements.txt
         pip install -e .
-    - name: Test with pytest on main branch
+    - name: Test with pytest on main branch (an example from Technometrics paper)
       if: github.ref == 'refs/heads/main'
       run: |
-        python ./examples/figure1b.py
+        python ./examples/Technometrics2024/figure1b.py
 
-    - name: Test with pytest on techno branch
-      if: github.ref == 'refs/heads/techno_paper'
+    - name: Test with pytest on main branch (an example from IJOC paper)
+      if: github.ref == 'refs/heads/main'
       run: |
-        python ./examples/figure1b.py        
-
-    - name: Test with pytest on dev/ijoc_paper branch
-      if: github.ref == 'refs/heads/dev/ijoc_paper'
-      run: |
-        python ./examples/ci_example.py        
+        python ./examples/IJOC2024+/ci_example.py         
