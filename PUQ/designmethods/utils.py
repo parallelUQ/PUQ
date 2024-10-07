@@ -105,4 +105,3 @@ def read_output(path1, name, al_func, nworker, minibatch, seedno):
         design_obj = pickle.load(file)
 
     return design_obj
-

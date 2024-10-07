@@ -25,6 +25,7 @@ def rebuild_condition(complete, prev_complete, n_theta=2, n_initial=10):
         nflag = True
     return nflag
 
+
 def rebuild_condition_opt(complete, prev_complete, n_theta=2):
 
     if np.sum(complete) - np.sum(prev_complete) < n_theta:
@@ -32,6 +33,7 @@ def rebuild_condition_opt(complete, prev_complete, n_theta=2):
     else:
         nflag = True
     return nflag
+
 
 def create_arrays(n_x, n_thetas):
     """Create 2D (point * rows) arrays fevals, pending and complete"""
@@ -107,7 +109,10 @@ def load_H(H, thetas, mse, hd, generated_no, offset=0, set_priorities=False):
 
     return H
 
-def load_H_opt(H, thetas, mse, hd, ae, time, generated_no, offset=0, set_priorities=False):
+
+def load_H_opt(
+    H, thetas, mse, hd, ae, time, generated_no, offset=0, set_priorities=False
+):
     """Fill inputs into H0.
     There will be num_points x num_thetas entries
     """
@@ -127,6 +132,7 @@ def load_H_opt(H, thetas, mse, hd, ae, time, generated_no, offset=0, set_priorit
         H["priority"] = assign_priority(n_thetas, generated_no)
 
     return H
+
 
 def fit_emulator(x, theta, fevals, thetalimits):
     idnan = np.isnan(fevals).any(axis=0).flatten()
