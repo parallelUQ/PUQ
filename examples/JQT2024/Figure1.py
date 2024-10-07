@@ -1,6 +1,6 @@
 import numpy as np
 from PUQ.design import designer
-from PUQ.utils import parse_arguments
+from PUQ.designmethods.utils import parse_arguments
 from PUQ.prior import prior_dist
 from plots_design import create_test, samplingdata
 from PUQ.surrogate import emulator
