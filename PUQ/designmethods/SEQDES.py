@@ -4,7 +4,7 @@ from PUQ.designmethods.gen_funcs.CMAXVAR import maxvar
 from PUQ.designmethods.gen_funcs.CEIVAR import ceivar
 from PUQ.designmethods.gen_funcs.CEIVARX import ceivarx
 from PUQ.designmethods.SEQCALsupport import load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
-from PUQ.designmethods.utils import collect_data, fit_emulator1d, find_mle
+from PUQ.designmethods.SEQDESsupport import collect_data, fit_emulator1d, find_mle
 from libensemble.message_numbers import STOP_TAG, PERSIS_STOP, FINISHED_PERSISTENT_GEN_TAG, EVAL_GEN_TAG
 from libensemble.tools.persistent_support import PersistentSupport
 from libensemble.alloc_funcs.start_only_persistent import only_persistent_gens as alloc_f
