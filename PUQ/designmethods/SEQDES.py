@@ -1,6 +1,6 @@
 import numpy as np
-from PUQ.designmethods.gen_funcs.IMSPE import imspe
-from PUQ.designmethods.gen_funcs.MAXVAR import maxvar
+from PUQ.designmethods.gen_funcs.CIMSPE import imspe
+from PUQ.designmethods.gen_funcs.CMAXVAR import maxvar
 from PUQ.designmethods.gen_funcs.CEIVAR import ceivar
 from PUQ.designmethods.gen_funcs.CEIVARX import ceivarx
 from PUQ.designmethods.SEQCALsupport import load_H, update_arrays, create_arrays, pad_arrays, select_condition, rebuild_condition
