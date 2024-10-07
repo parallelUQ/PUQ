@@ -6,7 +6,7 @@ from ptest_funcs import sinfunc
 import matplotlib.pyplot as plt
 from PUQ.surrogate import emulator
 from Figure2support import ceivarfig, ceivarxfig
-from PUQ.designmethods.utils import find_mle
+from PUQ.designmethods.SEQDESsupport import find_mle
 
 
 options = [0, 1]

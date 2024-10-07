@@ -1,6 +1,6 @@
 import numpy as np
 from PUQ.design import designer
-from PUQ.utils import parse_arguments, save_output
+from PUQ.designmethods.utils import parse_arguments, save_output
 from PUQ.prior import prior_dist
 from plots_design import create_test, add_result, samplingdata, observe_results
 from ptest_funcs import sinfunc
@@ -12,7 +12,7 @@ nmax = 100
 result = []
 
 args.seedmin = 0
-args.seedmax = 1
+args.seedmax = 30
 if __name__ == "__main__":
     for s in np.arange(args.seedmin, args.seedmax):
         print('Start replication=' + str(s))
