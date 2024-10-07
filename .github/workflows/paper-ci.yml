@@ -34,4 +34,4 @@ jobs:
     - name: Test with pytest on main branch (an example from IJOC paper)
       if: github.ref == 'refs/heads/main'
       run: |
-        python ./examples/IJOC2024+/ci_example.py         
+        python ./examples/IJOC2024+/ci_example.py -funcname "holder"        
