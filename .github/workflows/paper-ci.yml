@@ -2,9 +2,9 @@ name: CI Papers
 
 on:
   push:
-    branches: [ "main", "develop", "test/addanotheraction"]
+    branches: [ "main", "develop"]
   pull_request:
-    branches: [ "main", "develop", "test/addanotheraction"]
+    branches: [ "main", "develop"]
 
 jobs:
   run-full-tests:
