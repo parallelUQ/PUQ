@@ -1,0 +1,38 @@
+name: CI Papers
+
+on:
+  push:
+    branches: [ "main", "develop", "test/addnotheraction"]
+  pull_request:
+    branches: [ "main", "develop", "test/addnotheraction"]
+
+jobs:
+  run-full-tests:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m ensurepip --upgrade
+        python -m pip install --upgrade setuptools
+        pip install -r requirements.txt
+        pip install -e .
+    - name: Test with pytest on main branch (an example from Technometrics paper)
+      if: github.ref == 'refs/heads/main'
+      run: |
+        python ./examples/Technometrics2024/figure1b.py
+
+    - name: Test with pytest on main branch (an example from IJOC paper)
+      if: github.ref == 'refs/heads/main'
+      run: |
+        python ./examples/IJOC2024+/ci_example.py -funcname "holder"        
