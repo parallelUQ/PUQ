@@ -67,3 +67,5 @@ himmelblau
 jpeg
 jpg
 matyas
+ensurepip
+setuptools
