@@ -28,11 +28,11 @@ jobs:
         pip install -r requirements.txt
         pip install -e .
     - name: Test with pytest on main branch (an example from Technometrics paper)
-      if: github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
       run: |
         python ./examples/Technometrics2024/figure1b.py
 
     - name: Test with pytest on main branch (an example from IJOC paper)
-      if: github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
       run: |
         python ./examples/IJOC2024+/ci_example.py -funcname "holder"        
