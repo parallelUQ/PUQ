@@ -20,7 +20,7 @@ setup(
     install_requires=[
         "pandas",
         "matplotlib",
-        "libensemble==0.9.1",
+        "libensemble==1.4.2",
         "torch",
         "scikit-learn",
         "smt",
