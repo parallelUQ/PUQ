@@ -250,24 +250,24 @@ def gen_f(H, persis_info, gen_specs, libE_info):
             starttime = time.time()
 
             # if len(theta) % 50 == 0:
-            print("Updating model...\n")
+            # print("Updating model...\n")
 
-            print(
-                "Percentage Pending: %0.2f ( %d / %d)"
-                % (
-                    100 * np.round(np.mean(pending), 4),
-                    np.sum(pending),
-                    np.prod(pending.shape),
-                )
-            )
-            print(
-                "Percentage Complete: %0.2f ( %d / %d)"
-                % (
-                    100 * np.round(np.mean(complete), 4),
-                    np.sum(complete),
-                    np.prod(pending.shape),
-                )
-            )
+            # print(
+            #     "Percentage Pending: %0.2f ( %d / %d)"
+            #     % (
+            #         100 * np.round(np.mean(pending), 4),
+            #         np.sum(pending),
+            #         np.prod(pending.shape),
+            #     )
+            # )
+            # print(
+            #     "Percentage Complete: %0.2f ( %d / %d)"
+            #     % (
+            #         100 * np.round(np.mean(complete), 4),
+            #         np.sum(complete),
+            #         np.prod(pending.shape),
+            #     )
+            # )
 
             fcomb = np.concatenate((finit, fevals), axis=1)
             thetacomb = np.concatenate((thetainit, theta), axis=0)
