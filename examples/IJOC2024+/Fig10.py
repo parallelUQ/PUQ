@@ -70,10 +70,18 @@ for sid, sm in enumerate(s_mean):
         for bid, b in enumerate(batches):
             if b <= w:
                 res_c = [res for res in result if ((res["w"] == w) & (res["b"] == b))]
-                idle[bid, wid] = np.mean([res_c[i]["res"].avg_idle_time for i in range(0, repno)])
-                computing[bid, wid] = np.mean([res_c[i]["res"].computing_hours for i in range(0, repno)])
-                endtime[bid, wid] = np.mean([res_c[i]["res"].complete_time for i in range(0, repno)])
-                endtime_temp[bid, wid] = np.mean([res_c[i]["res"].complete_time for i in range(0, repno)])
+                idle[bid, wid] = np.mean(
+                    [res_c[i]["res"].avg_idle_time for i in range(0, repno)]
+                )
+                computing[bid, wid] = np.mean(
+                    [res_c[i]["res"].computing_hours for i in range(0, repno)]
+                )
+                endtime[bid, wid] = np.mean(
+                    [res_c[i]["res"].complete_time for i in range(0, repno)]
+                )
+                endtime_temp[bid, wid] = np.mean(
+                    [res_c[i]["res"].complete_time for i in range(0, repno)]
+                )
             else:
                 idle[bid, wid] = np.nan
                 computing[bid, wid] = np.nan

@@ -60,7 +60,6 @@ for accid, acc in enumerate(accparams):
 
             timemat[aid, sid] = rmin
             bmat[aid, sid] = bmin
-            
 
     ft = 25
     subplot_ax = fig.add_subplot(gs[accid])

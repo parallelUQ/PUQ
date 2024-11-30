@@ -72,8 +72,10 @@ for vid, var in enumerate(varlist):
         for aid, am in enumerate(a_mean):
             for bid, b in enumerate(batches):
                 res_c = [res for res in result if ((res["am"] == am) & (res["b"] == b))]
-                timemat[aid, bid] = np.mean([res_c[i]["res"].complete_time for i in range(0, len(res_c))])
-        
+                timemat[aid, bid] = np.mean(
+                    [res_c[i]["res"].complete_time for i in range(0, len(res_c))]
+                )
+
         subplot_ax = fig.add_subplot(gs[vid, sid])
         bo = np.argsort(np.argsort(timemat, axis=1), axis=1)
         im = subplot_ax.imshow(bo, aspect="auto", cmap="YlOrRd")
