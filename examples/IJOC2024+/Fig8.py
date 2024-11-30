@@ -107,17 +107,17 @@ for vid, var in enumerate(varlist):
         if vid == 1:
             subplot_ax.set_xlabel(r"Batch size ($b$)", fontsize=ft)
         if sid == 0:
-            subplot_ax.set_ylabel(r"Acquisition time ($\tilde{a}^A$)", fontsize=ft)
+            subplot_ax.set_ylabel(r"Acquisition time ($\breve{a}^A$)", fontsize=ft)
 
         subplot_ax.tick_params(axis="both", which="major", labelsize=ft - 5)
 
         if vid == 0:
             if sid == 0:
-                subplot_ax.set_title(r"$\tilde{a}^S = 2^3$", fontsize=ft)
+                subplot_ax.set_title(r"$\breve{a}^S = 2^3$", fontsize=ft)
             elif sid == 1:
-                subplot_ax.set_title(r"$\tilde{a}^S = 2^6$", fontsize=ft)
+                subplot_ax.set_title(r"$\breve{a}^S = 2^6$", fontsize=ft)
             elif sid == 2:
-                subplot_ax.set_title(r"$\tilde{a}^S = 2^9$", fontsize=ft)
+                subplot_ax.set_title(r"$\breve{a}^S = 2^9$", fontsize=ft)
 
         # for aid, am in enumerate(a_mean):
         #     for bid, b in enumerate(batches):

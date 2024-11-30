@@ -241,13 +241,13 @@ for sid, sm in enumerate(s_mean):
 
     if sid == 0:
         if colid == 0:
-            subplot_ax.set_title(r"$\tilde{a}^S = 2^0$", fontsize=ft)
+            subplot_ax.set_title(r"$\breve{a}^S = 2^0$", fontsize=ft)
     if sid == 1:
         if colid == 2:
-            subplot_ax.set_title(r"$\tilde{a}^S = 2^3$", fontsize=ft)
+            subplot_ax.set_title(r"$\breve{a}^S = 2^3$", fontsize=ft)
     if sid == 2:
         if colid == 4:
-            subplot_ax.set_title(r"$\tilde{a}^S = 2^6$", fontsize=ft)
+            subplot_ax.set_title(r"$\breve{a}^S = 2^6$", fontsize=ft)
     # for i in range(len(batches)):
     #     for j in range(len(workers)):
     #         if batches[i] <= workers[j]:

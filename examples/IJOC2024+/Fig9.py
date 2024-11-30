@@ -97,9 +97,9 @@ for accid, acc in enumerate(accparams):
                 )
 
     subplot_ax.grid(which="minor", color="w", linestyle="-", linewidth=3)
-    subplot_ax.set_xlabel(r"Simulation time ($\tilde{a}^S$)", fontsize=ft)
+    subplot_ax.set_xlabel(r"Simulation time ($\breve{a}^S$)", fontsize=ft)
     if accid == 0:
-        subplot_ax.set_ylabel(r"Acquisition time ($\tilde{a}^A$)", fontsize=ft)
+        subplot_ax.set_ylabel(r"Acquisition time ($\breve{a}^A$)", fontsize=ft)
 
     # bounds to differentiate colors
     bounds = [0.5, 1.5, 3.5, 7.5, 15.5, 31.5, 63.5, 127.5, 255.5, 512]
