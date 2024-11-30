@@ -24,7 +24,7 @@ for bid, b in enumerate(batches):
     PM.gen_curve(-1, acclevel[bid], typeAcc="exponential")
 
     PM.simulate()
-    PM.summarize()
+    # PM.summarize()
 
     PM.complete(level)
     result.append(PM)

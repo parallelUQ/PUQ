@@ -5,7 +5,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.colors as mcolors
 from matplotlib.gridspec import GridSpec
 
-repno = 1
+repno = 10
 n = 2560
 worker = 256
 batches = [1, 2, 4, 8, 16, 32, 64, 128, 256]
@@ -30,7 +30,7 @@ for accid, acc in enumerate(accparams):
                     PM.gen_simtime(sm, sm, 0.01, typeSim="normal", seed=r)
                     PM.gen_curve(acc[0], acc[1] + id_b * 0.02, typeAcc="exponential")
                     PM.simulate()
-                    PM.summarize()
+                    # PM.summarize()
                     PM.complete(acclevel)
                     result.append(
                         {
@@ -42,7 +42,7 @@ for accid, acc in enumerate(accparams):
                             "res": PM,
                         }
                     )
-                    print(PM.complete_no)
+                    # print(PM.complete_no)
 
     timemat = np.zeros((len(a_mean), len(s_mean)))
     bmat = np.zeros((len(a_mean), len(s_mean)))
@@ -60,6 +60,7 @@ for accid, acc in enumerate(accparams):
 
             timemat[aid, sid] = rmin
             bmat[aid, sid] = bmin
+            
 
     ft = 25
     subplot_ax = fig.add_subplot(gs[accid])

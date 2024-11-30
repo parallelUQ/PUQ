@@ -7,7 +7,7 @@ from matplotlib.gridspec import GridSpec
 
 start = time.time()
 
-repno = 1
+repno = 10
 n = 2560
 varlist = [0.1, 10]
 
@@ -54,7 +54,7 @@ for vid, var in enumerate(varlist):
                     PM.gen_simtime(sm, sm * var, 0.01, typeSim="normal", seed=r)
                     PM.gen_curve(-1, accparams[id_b][1], typeAcc="exponential")
                     PM.simulate()
-                    PM.summarize()
+                    # PM.summarize()
                     PM.complete(acclevel)
                     result.append(
                         {
@@ -66,14 +66,14 @@ for vid, var in enumerate(varlist):
                             "res": PM,
                         }
                     )
-                    print(PM.complete_no)
+                    # print(PM.complete_no)
 
         timemat = np.zeros((len(a_mean), len(batches)))
         for aid, am in enumerate(a_mean):
             for bid, b in enumerate(batches):
                 res_c = [res for res in result if ((res["am"] == am) & (res["b"] == b))]
-                timemat[aid, bid] = res_c[0]["res"].complete_time
-
+                timemat[aid, bid] = np.mean([res_c[i]["res"].complete_time for i in range(0, len(res_c))])
+        
         subplot_ax = fig.add_subplot(gs[vid, sid])
         bo = np.argsort(np.argsort(timemat, axis=1), axis=1)
         im = subplot_ax.imshow(bo, aspect="auto", cmap="YlOrRd")
