@@ -51,7 +51,7 @@ with 'apt install python3.9-venv'
 
 3) Use the following command to create a virtual environment::
 
-    python3 -m venv venv/  
+    python -m venv venv/  
     source venv/bin/activate  
  
 We note that creating a virtual environment is not a required step. However, we tested this
