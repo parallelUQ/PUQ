@@ -1,4 +1,6 @@
 numpy==1.25.2
 scipy==1.12.0
-wheel
-dill
+seaborn==0.13.2
+libensemble==0.9.1
+dill==0.3.6
+smt==1.1.0

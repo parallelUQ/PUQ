@@ -18,8 +18,6 @@ setup(
     install_requires=[
         "pandas",
         "matplotlib",
-        "libensemble==0.9.1",
-        "scikit-learn",
         "smt",
     ],
     include_dirs=[numpy.get_include()],
