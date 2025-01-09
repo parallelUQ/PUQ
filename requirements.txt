@@ -1,7 +1,4 @@
 numpy<2.0.0
 scipy
 wheel
-sphinx>=7.2
-sphinx-rtd-theme==1.3.0
-docutils<0.19
 dill
