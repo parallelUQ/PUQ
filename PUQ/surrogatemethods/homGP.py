@@ -190,7 +190,7 @@ def mleHomGP(X, Z, lower=None, upper=None, known={}, noiseControl={},
             opval = spo.minimize(fn,
                                  parinit,
                                  method='L-BFGS-B',
-                                 options={'gtol': 0.001},
+                                 #options={'gtol': 0.001},
                                  jac=gr,
                                  bounds=spo.Bounds(lowerOpt, upperOpt),
                                  args=(X0, Z0, Z, mult, known.get("theta"), known.get("g"), beta0, envtemp))
