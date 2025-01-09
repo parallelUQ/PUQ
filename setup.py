@@ -19,7 +19,6 @@ setup(
         "pandas",
         "matplotlib",
         "libensemble==0.9.1",
-        "torch",
         "scikit-learn",
         "smt",
     ],
