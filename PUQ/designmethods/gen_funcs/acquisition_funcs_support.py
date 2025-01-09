@@ -1,79 +1,87 @@
 """Contains supplemental methods for acquisitionn funcs."""
 
 import numpy as np
-import scipy.stats as sps
+from PUQ.surrogate import emulator
+from numpy.linalg import inv, det
 
+def impute(ct, x, fE, tE, reps, emu, rnd_str):
+        
+    # NEW PART
+    if fE.shape[0] > 1:
+        cpred = emu.predict(x=x, theta=ct)
+        cm = cpred.mean()
+        cS = cpred._info['S']
+        cR = cpred._info['R']
+        fnoise = rnd_str.multivariate_normal(mean=cm.flatten(), 
+                                               cov=cS[:, :, 0] + cR[:, :, 0], 
+                                               size=reps)
 
-def compute_likelihood(emumean, emuvar, obs, obsvar, is_cov):
-    if emumean.shape[0] == 1:
-        emuvar = emuvar.reshape(emumean.shape)
-        ll = sps.norm.pdf(obs - emumean, 0, np.sqrt(obsvar + emuvar))
+        tE = np.concatenate([tE, np.repeat(ct, reps, axis=0)])
+        fE = np.concatenate([fE, fnoise.T], axis=1)
     else:
-        ll = np.zeros(emumean.shape[1])
-        for i in range(emumean.shape[1]):
-            mean = emumean[:, i]  # [emumean[0, i], emumean[1, i]]
+        cpred = emu.predict(x=x, theta=ct)
+        cm = cpred.mean()
+        cv = cpred._info['var_noisy']
+        fnoise = rnd_str.normal(loc=cm.flatten(), 
+                                  scale=np.sqrt(cv.flatten()), 
+                                  size=reps)
 
-            if is_cov:
-                cov = emuvar[:, i, :] + obsvar
-            else:
-                cov = np.diag(emuvar[:, i]) + obsvar
+        tE = np.concatenate([tE, np.repeat(ct, reps, axis=0)])
+        fE = np.concatenate([fE, fnoise.reshape(1, reps)], axis=1)
+    
+    return fE, tE
 
-            rnd = sps.multivariate_normal(mean=mean, cov=cov)
-            ll[i] = rnd.pdf(obs)  # rnd.pdf([obs[0, 0], obs[0, 1]])
+def impute_CL(ct, x, fE, tE, reps, liar):
 
-    return ll
+    #print(fE)
+    d = fE.shape[0]
+    
+    tE = np.concatenate([tE, np.repeat(ct, reps, axis=0)])
+    fE = np.concatenate([fE, np.repeat(liar, reps).reshape(d, reps)], axis=1)
+    
+    #print(fE)
+    
+    return fE, tE
 
+def build_emulator(x, theta, f, pcset):
 
-def compute_postvar(obs, emumean, covmat1, covmat2, coef):
-    # n_x = emumean.shape[0]
-    # if n_x > 1:
-    #     diags = np.diag(obsvar)
-    # else:
-    #     diags = 1*obsvar
-    # coef = (2**n_x)*(np.sqrt(np.pi)**n_x)*np.sqrt(np.prod(diags))
+    emu = emulator(x=x, 
+                   theta=theta, 
+                   f=f,                
+                   method="pcHetGP",
+                   args={'lower':None, 'upper':None,
+                          'noiseControl':{'k_theta_g_bounds': (1, 100), 'g_max': 1e2, 'g_bounds': (1e-6, 1)}, 
+                          'init':{}, 
+                          'known':{}, 
+                           'settings':{"linkThetas": 'joint', "logN": True, "initStrategy": 'residuals', 
+                                     "checkHom": True, "penalty": True, "trace": 0, "return.matrices": True, 
+                                     "return.hom": False, "factr": 1e9},
+                           'pc_settings':pcset})
+    return emu
 
-    part1 = multiple_pdfs(obs, emumean, covmat2)
-    part2 = multiple_pdfs(obs, emumean, covmat1)
+def compute_ivar(emu, ttest, x, obs, obsvar):
+    
+    testP = emu.predict(x=x, theta=ttest)
+    d = len(x)
+    obsvar3d = obsvar.reshape(1, d, d) 
+    
+    # ntest x d
+    mu = testP._info['mean'].T 
+    S =  testP._info['S']
+    St = np.transpose(S, (2, 0, 1))
 
-    # part1 = compute_likelihood(emumean, emuvar, obs, 0.5*obsvar, is_cov)
-    part1 = part1 * (1 / coef)
+    # ntest x d x d
+    M = St + 0.5*obsvar3d
+    N = St + obsvar3d
 
-    # part2 = compute_likelihood(emumean, emuvar, obs, obsvar, is_cov)
-    part2 = part2**2
+    f = multiple_pdfs(obs, mu, M)
+    g = multiple_pdfs(obs, mu, N)
 
-    return part1 - part2
-
-
-def compute_eivar_fig(
-    obsvar, summatrix2, summatrix, emuphi, emumean, emuvar, obs, is_cov
-):
-    rndpdf2 = multiple_pdfs(obs, emumean, summatrix2)
-    denum2 = obsvar
-    # See Eq. 31
-    covmat1 = (summatrix + emuphi) * 0.5
-    covmat2 = summatrix - emuphi
-
-    rndpdf = multiple_pdfs(obs, emumean, covmat1)
-
-    denum = multiple_determinants(covmat2)
-    part2 = rndpdf / np.sqrt(denum)
-    # print(part2.shape)
-    return (np.sum(rndpdf2 / np.sqrt(denum2)) - np.sum(part2)) * (
-        1 / (2 * np.pi ** (0.5))
-    )
-
-
-def compute_eivar(summatrix, emuphi, emumean, emuvar, obs, is_cov, prioreval):
-    # See Eq. 31
-    covmat1 = (summatrix + emuphi) * 0.5
-    covmat2 = summatrix - emuphi
-
-    rndpdf = multiple_pdfs(obs, emumean, covmat1)
-
-    denum = multiple_determinants(covmat2)
-    part2 = rndpdf / np.sqrt(denum)
-    # print(part2.shape)
-    return -np.sum(part2 * (prioreval**2))
+    coef = (1/((2**d)*(np.sqrt(np.pi)**d)*np.sqrt(det(obsvar))))
+    
+    # ivar compute
+    ivar = np.sum(coef*f - g**2)
+    return ivar
 
 
 def multiple_pdfs(x, means, covs):
@@ -111,48 +119,3 @@ def multiple_determinants(covs):
     logdets = np.sum(np.log(vals), axis=1)
     return np.exp(logdets)  # dets#np.exp(logdets)
 
-
-def get_emuvar(emupredict):
-    is_cov = False
-    try:
-        emuvar = emupredict.covx()
-        is_cov = True
-    except Exception:
-        emuvar = emupredict.var()
-
-    return emuvar, is_cov
-
-
-def eivar_sup(clist, theta, theta_test, emu, data_cls):
-    real_x = data_cls.real_x
-    obs = data_cls.real_data
-    obsvar = data_cls.obsvar
-    obsvar3d = obsvar.reshape(1, 1, 1)
-    x = data_cls.x
-    emupred_test = emu.predict(x=data_cls.x, theta=theta_test)
-    emumean = emupred_test.mean()
-    emuvar, is_cov = get_emuvar(emupred_test)
-    emumeanT = emumean.T
-    emuvarT = emuvar.transpose(1, 0, 2)
-    var_obsvar1 = emuvarT + obsvar3d
-    var_obsvar2 = emuvarT + 0.5 * obsvar3d
-
-    # Get the n_ref x d x d x n_cand phi matrix
-    emuphi4d = emu.acquisition(x=x, theta1=theta_test, theta2=clist)
-    acq_func = []
-
-    # Pass over all the candidates
-    for c_id in range(len(clist)):
-        posteivar = compute_eivar_fig(
-            obsvar,
-            var_obsvar2[:, real_x, real_x.T],
-            var_obsvar1[:, real_x, real_x.T],
-            emuphi4d[:, real_x, real_x.T, c_id],
-            emumeanT[:, real_x.flatten()],
-            emuvar[real_x, :, real_x.T],
-            obs,
-            is_cov,
-        )
-        acq_func.append(posteivar)
-
-    return acq_func

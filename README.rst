@@ -28,12 +28,7 @@ Dependencies
 PUQ is a Python package that employs novel experimental design techniques with intelligent selection criteria, 
 refining data collection to enhance the efficiency and effectiveness of uncertainty quantification.
 
-This code is tested with Python 3.9, 3.10, 3.11, and 3.12 and requires pip.
-
-Python 3.12 users need to install setuptools manually via::
-
-    python -m ensurepip --upgrade
-    python -m pip install --upgrade setuptools
+This code is tested with Python 3.9, 3.10, and 3.11 and requires pip.
 
 Set up 
 ~~~~~~
@@ -51,7 +46,7 @@ with 'apt install python3.9-venv'
 
 3) Use the following command to create a virtual environment::
 
-    python -m venv venv/  
+    python3 -m venv venv/  
     source venv/bin/activate  
  
 We note that creating a virtual environment is not a required step. However, we tested this

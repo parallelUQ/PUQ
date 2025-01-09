@@ -1,7 +1,6 @@
 """
 This module contains a class that implements the main emulation method.
 """
-
 import numpy as np
 import importlib
 import copy
@@ -14,6 +13,7 @@ class emulator(object):
         x=None,
         theta=None,
         f=None,
+        thetaprime=None,
         method="PCGP",
         passthroughfunc=None,
         args={},
@@ -85,6 +85,7 @@ class emulator(object):
         self.__ptf = passthroughfunc
         if self.__ptf is not None:
             return
+
         self._args = copy.deepcopy(args)
 
         if f is not None:
@@ -205,8 +206,8 @@ class emulator(object):
         )
         return strrepr
 
-    def __call__(self, x=None, theta=None, args=None):
-        return self.predict(x, theta, args)
+    def __call__(self, x=None, theta=None, thetaprime=None, args=None):
+        return self.predict(x, theta, thetaprime, args)
 
     def fit(self, args=None):
         """
@@ -221,15 +222,15 @@ class emulator(object):
             Optional dictionary containing options you would like to pass to
             fit function. It will add/modify those in self._args.
         """
-
         if args is not None:
             argstemp = {**self._args, **copy.deepcopy(args)}
         else:
             argstemp = copy.copy(self._args)
         x, theta, f = self.__preprocess()
+
         self.method.fit(self._info, x, theta, f, **argstemp)
 
-    def predict(self, x=None, theta=None, args={}):
+    def predict(self, x=None, theta=None, thetaprime=None, args={}):
         """
         Fits an emulator or surrogate.
 
@@ -336,11 +337,16 @@ class emulator(object):
                 )
 
         info = {}
-        self.method.predict(info, self._info, x, theta, **argstemp)
+        self.method.predict(info, self._info, x, theta, thetaprime, **argstemp)
         return prediction(info, self)
 
     def acquisition(self, x=None, theta1=None, theta2=None):
         return self.method.acquisition(self._info, x, theta1, theta2)
+
+    def computeC(self, x=None, theta1=None, realdata=None, realvar=None):
+
+        return self.method.computeC(self._info, x, theta1, realdata, realvar)
+        
 
     def supplement(
         self,

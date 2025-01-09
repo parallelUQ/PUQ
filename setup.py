@@ -6,10 +6,8 @@ import numpy
 setup(
     name="PUQ",
     version="0.1.0",
-    author="Özge Sürer, Matthew Plumlee, Stefan M. Wild",
-    author_email="surero@miamioh.edu",
-    description="Python package for generating experimental designs tailored for uncertainty quantification, featuring parallel implementations",
-    url="https://github.com/parallelUQ/PUQ",
+    author="Blinded Authors",
+    description="Uncertainty quantification methods with parallel implementations",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -20,16 +18,10 @@ setup(
     install_requires=[
         "pandas",
         "matplotlib",
-        "libensemble==1.4.2",
+        "libensemble==0.9.1",
         "torch",
         "scikit-learn",
         "smt",
-    ],
-    ext_modules=[
-        Extension(
-            "PUQ.surrogatesupport.matern_covmat",
-            sources=["PUQ/surrogatesupport/matern_covmat.pyx"],
-        ),
     ],
     include_dirs=[numpy.get_include()],
 )
