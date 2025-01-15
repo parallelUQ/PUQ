@@ -300,6 +300,87 @@ def twodpaper(cls_func, Xpl, Ypl, p_test, theta0, reps0, thetainit=None, name=No
     plt.show() 
         
 
+def twodpaperrev(cls_func, Xpl, Ypl, p_test, dictl, thetainit=None, name=None):
+    from matplotlib.ticker import MaxNLocator
+    from matplotlib.colors import ListedColormap
+    yellow_colors = [
+        (1, 1, 1),
+        (1, 1, 0.8),  # light yellow
+        (1, 1, 0.6),  
+        (1, 1, 0.4),  
+        (1, 1, 0.2),  
+        (1, 1, 0),    # yellow    
+        (1, 0.9, 0),  # dark yellow
+        (1, 0.8, 0),  # yellow-orange
+        (1, 0.6, 0),  # orange
+        (1, 0.4, 0),  # dark orange
+        (1, 0.2, 0)   # very dark orange
+    ]
+    yellow_cmap = ListedColormap(yellow_colors, name='yellow')
+
+    if cls_func.data_name in ['unimodal', 'branin']:
+        nmesh = len(Xpl)
+        P = np.zeros((nmesh, nmesh))
+        for i in range(nmesh):
+            for j in range(nmesh):
+                P[i, j] = cls_func.noise(np.array([Xpl[i, j], Ypl[i, j]])[None, :]).flatten()
+        
+        Pvar = P
+    else:
+        nmesh = len(Xpl)
+        P = np.zeros((nmesh, nmesh, 2))
+        for i in range(nmesh):
+            for j in range(nmesh):
+                P[i, j, :] = cls_func.noise(np.array([Xpl[i, j], Ypl[i, j]])[None, :]).flatten()
+        Pvar = np.sum(P, axis=2)
+        
+    fig, ax = plt.subplots(1, 3, figsize=(15, 4.5), constrained_layout=True)
+    
+    for i in range(0, 3):
+        if i == 0:
+            for el in dictl:
+                if el['method'] == 'ivar':
+                    reps0 = el['reps0']
+                    theta0 = el['theta0']
+        elif i == 1:
+            for el in dictl:
+                if el['method'] == 'var':
+                    reps0 = el['reps0']
+                    theta0 = el['theta0']
+        elif i == 2:
+            for el in dictl:
+                if el['method'] == 'imse':
+                    reps0 = el['reps0']
+                    theta0 = el['theta0']
+            
+                    
+        cs = ax[i].contourf(Xpl, Ypl, Pvar, cmap=yellow_cmap, alpha=0.75)
+        if i == 2:
+            cbar = fig.colorbar(cs, ax=ax[i], pad=0.1)
+        cp = ax[i].contour(Xpl, Ypl, p_test.reshape(nmesh, nmesh), 20, cmap="coolwarm")
+        
+        if thetainit is None:
+            for label, x_count, y_count in zip(reps0, theta0[:, 0], theta0[:, 1]):
+                if label <= 2:
+                    ax[i].annotate(label, xy=(x_count, y_count), xytext=(0, 0), textcoords='offset points', fontsize=12, color='cyan')  
+                else:
+                    ax[i].annotate(label, xy=(x_count, y_count), xytext=(0, 0), textcoords='offset points', fontsize=12, color='black')  
+        else:
+            for label, x_count, y_count in zip(reps0, theta0[:, 0], theta0[:, 1]):
+                if np.array([x_count, y_count]) in thetainit:
+                    ax[i].annotate(label, xy=(x_count, y_count), xytext=(0, 0), textcoords='offset points', fontsize=12, color='cyan')  
+                else:
+                    ax[i].annotate(label, xy=(x_count, y_count), xytext=(0, 0), textcoords='offset points', fontsize=12, color='black')  
+                    
+    
+        ax[i].set_xticks([0, 0.5, 1])  # Custom tick locations for x-axis
+        ax[i].set_yticks([0, 0.5, 1])  # Custom tick locations for y-axis
+        ax[i].set_xlabel(r"$\theta_1$", fontsize=16)
+        ax[i].set_ylabel(r"$\theta_2$", fontsize=16)
+        ax[i].tick_params(axis="both", labelsize=16)
+
+    plt.savefig(name, bbox_inches='tight')
+    plt.show() 
 
     
 def heatmap(cls_func):
