@@ -24,3 +24,6 @@ zzz_outputs/
 examples/1_banana_explore
 examples/2_bimodal_explore
 examples/3_unimodal_explore
+examples/4_SIR_explore
+examples/5_SEIRDS_explore
+
