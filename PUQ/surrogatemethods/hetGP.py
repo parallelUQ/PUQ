@@ -721,20 +721,7 @@ def mleHetGP(X, Z,
     fitinfo['eps'] = eps
     fitinfo['trendtype'] = trendtype
     fitinfo['is_homGP'] = False
-    #fitinfo['nll'] = opval.fun
-    
 
-
-    # values = [0.8367, 1.1516, -7.9251, -5.8644, -8.5293, -7.3552, -7.5042,
-    #           -7.0089, -8.3106, -8.3518, -5.5814, -8.4839, -8.0848, -8.2968,
-    #           -8.4812, -8.7633, -4.8743, 1.0261, 0
-    #           ]
-    # par = np.array(values)
-        
-    # fn(par, X0, Z0, Z, mult, hom_ll=-np.inf, env=None, logN=True)
-    # gr(par, X0, Z0, Z, mult, Delta=None, theta=None, g=None, k_theta_g=None, theta_g=None, logN=True, beta0=None, hom_ll=-np.inf, env=None)
-
-        
     return fitinfo
 
 def logLikHet(X0, Z0, Z, mult, Delta, theta, g, k_theta_g=None, theta_g=None, 

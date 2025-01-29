@@ -63,6 +63,9 @@ class allocate:
         elif self.method == 'ivar':
             Cinfo = self.compute_ivar_weights()
             C = Cinfo.flatten()  
+        elif self.method == 'var':
+            Cinfo = self.compute_var_weights()
+            C = Cinfo.flatten()  
 
         idneg = C < 0
         weight = np.sqrt(np.abs(C[idneg]))
@@ -216,6 +219,32 @@ class allocate:
 
         return C
 
+    def compute_var_weights(self):
+    
+        d = len(self.x)
+        pred_nugs = self.emu.predict(x=self.x, theta=self.theta, thetaprime=None)
+   
+        obsvar3d = self.obsvar.reshape(1, d, d)
+        
+        # ntest x d
+        mu = pred_nugs._info['mean'].T 
+        S = pred_nugs._info['S'] 
+        St = np.transpose(S, (2, 0, 1))
+        
+        # ntest x d x d
+        Nb = St + 0.5*obsvar3d
+        N = St + obsvar3d
+
+        f = multiple_pdfs(self.obs, mu, Nb)
+        g = multiple_pdfs(self.obs, mu, N)   
+        
+        coef = (1/((2**d)*(np.sqrt(np.pi)**d)*np.sqrt(det(self.obsvar))))
+        
+        var = coef*f - g**2
+        C = -1*var 
+
+        return C
+    
     def make_int(self, bdg, n_frac):
         # Make integer
         n_floor = np.floor(n_frac)

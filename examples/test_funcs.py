@@ -242,10 +242,9 @@ class branin:
         return H_o, persis_info
 
     def noise(self, theta):
-        V = np.repeat(1, self.d)
-        V = V.reshape(self.d, theta.shape[0])
-        
-        return V
+        cov = np.array([[0.05, 0], [0, 0.05]])
+        var = scipy.stats.multivariate_normal(mean=[0.2, 0.85], cov=cov)
+        return 1 + 2*var.pdf(theta).reshape(self.d, theta.shape[0])
 
     def realdata(self, seed):
 
@@ -260,4 +259,306 @@ class branin:
                                                   size=1)
             self.real_data = M + R
 
-        
+class himmelblau:
+    def __init__(self):
+
+        self.data_name = "himmelblau"
+        self.thetalimits = np.array([[0, 1], [0, 1]])
+        self.truelimits = np.array([[-5, 5], [-5, 5]])
+        self.obsvar = np.array([[100]], dtype="float64")
+        self.real_data = None
+        self.out = [("f", float)]
+        self.p = 2
+        self.d = 1
+        self.x = np.arange(0, self.d)[:, None]
+        self.theta_true = np.array([0.11085, 0.16])
+
+    def function(self, theta1, theta2):
+
+        theta1 = self.truelimits[0][0] + theta1 * (
+            self.truelimits[0][1] - self.truelimits[0][0]
+        )
+        theta2 = self.truelimits[1][0] + theta2 * (
+            self.truelimits[1][1] - self.truelimits[1][0]
+        )
+        f = (theta1**2 + theta2 - 11) ** 2 + (theta1 + theta2**2 - 7) ** 2
+        return f
+
+    def sim_f(self, thetas, persis_info):
+        f = self.function(thetas[0], thetas[1])
+        V = self.noise(np.array([thetas[0], thetas[1]])[None, :])
+        R = persis_info["rand_stream"].normal(0, np.sqrt(V[0]), 1)
+        f += R
+        return f
+
+    def sim(self, H, persis_info, sim_specs, libE_info):
+        function        = sim_specs['user']['sim_f']
+        H_o             = np.zeros(1, dtype=sim_specs['out'])
+        H_o['f']        = function(H['thetas'][0], persis_info)
+
+        return H_o, persis_info
+
+    def noise(self, theta):
+        cov = np.array([[0.01, 0], [0, 0.01]])
+        var = scipy.stats.multivariate_normal(mean=[0.5, 0.5], cov=cov)
+        return 10 + 5*var.pdf(theta).reshape(self.d, theta.shape[0])
+
+
+    def realdata(self, seed):
+
+        M = np.array(self.function(self.theta_true[0], self.theta_true[1]), 
+                     dtype='float64')
+        if seed is None:
+            self.real_data = M
+        else:
+            persis_info = {'rand_stream': np.random.default_rng(seed)}
+            R = persis_info['rand_stream'].normal(0, 
+                                                  np.sqrt(self.obsvar[0]),
+                                                  size=1)
+            self.real_data = M + R
+            
+class holder:
+    def __init__(self):
+
+        self.data_name = "holder"
+        self.thetalimits = np.array([[0, 1], [0, 1]])
+        self.truelimits = np.array([[-10, 10], [-10, 10]])
+        self.obsvar = np.array([[50]], dtype="float64")
+        self.real_data = None
+        self.out = [("f", float)]
+        self.p = 2
+        self.d = 1
+        self.x = np.arange(0, self.d)[:, None]
+        self.theta_true = np.array([0.1, 0.01])
+
+    def function(self, theta1, theta2):
+
+        theta1 = self.truelimits[0][0] + theta1 * (
+            self.truelimits[0][1] - self.truelimits[0][0]
+        )
+        theta2 = self.truelimits[1][0] + theta2 * (
+            self.truelimits[1][1] - self.truelimits[1][0]
+        )
+        f = -np.abs(
+            np.sin(theta1)
+            * np.cos(theta2)
+            * np.exp(np.abs(1 - (np.sqrt(theta1**2 + theta2**2) / np.pi)))
+        )
+        return f
+
+    def sim_f(self, thetas, persis_info):
+        f = self.function(thetas[0], thetas[1])
+        V = self.noise(np.array([thetas[0], thetas[1]])[None, :])
+        R = persis_info["rand_stream"].normal(0, np.sqrt(V[0]), 1)
+        f += R
+        return f
+
+    def sim(self, H, persis_info, sim_specs, libE_info):
+        function        = sim_specs['user']['sim_f']
+        H_o             = np.zeros(1, dtype=sim_specs['out'])
+        H_o['f']        = function(H['thetas'][0], persis_info)
+
+        return H_o, persis_info
+
+    def noise(self, theta):
+        cov = np.array([[0.1, 0], [0, 0.1]])
+        var = scipy.stats.multivariate_normal(mean=[0.5, 0.75], cov=cov)
+        return 1 + 2*var.pdf(theta).reshape(self.d, theta.shape[0])
+  
+
+    def realdata(self, seed):
+
+        M = np.array(self.function(self.theta_true[0], self.theta_true[1]), 
+                     dtype='float64')
+        if seed is None:
+            self.real_data = M
+        else:
+            persis_info = {'rand_stream': np.random.default_rng(seed)}
+            R = persis_info['rand_stream'].normal(0, 
+                                                  np.sqrt(self.obsvar[0]),
+                                                  size=1)
+            self.real_data = M + R
+            
+class easom:
+    def __init__(self):
+
+        self.data_name = "easom"
+        self.thetalimits = np.array([[0, 1], [0, 1]])
+        self.truelimits = np.array([[-10, 10], [-10, 10]])
+        self.obsvar = np.array([[0.001]], dtype="float64")
+        self.real_data = None
+        self.out = [("f", float)]
+        self.p = 2
+        self.d = 1
+        self.x = np.arange(0, self.d)[:, None]
+        self.theta_true = np.array([0.75, 0.75])
+
+    def function(self, theta1, theta2):
+
+        theta1 = self.truelimits[0][0] + theta1 * (
+            self.truelimits[0][1] - self.truelimits[0][0]
+        )
+        theta2 = self.truelimits[1][0] + theta2 * (
+            self.truelimits[1][1] - self.truelimits[1][0]
+        )
+        f = (
+            -np.cos(theta1)
+            * np.cos(theta2)
+            * np.exp(-((theta1 - np.pi) ** 2 + (theta2 - np.pi) ** 2))
+        )
+        return f
+
+    def sim_f(self, thetas, persis_info):
+        f = self.function(thetas[0], thetas[1])
+        V = self.noise(np.array([thetas[0], thetas[1]])[None, :])
+        R = persis_info["rand_stream"].normal(0, np.sqrt(V[0]), 1)
+        f += R
+        return f
+
+    def sim(self, H, persis_info, sim_specs, libE_info):
+        function        = sim_specs['user']['sim_f']
+        H_o             = np.zeros(1, dtype=sim_specs['out'])
+        H_o['f']        = function(H['thetas'][0], persis_info)
+
+        return H_o, persis_info
+
+    def noise(self, theta):
+        cov = np.array([[0.1, 0], [0, 0.1]])
+        var = scipy.stats.multivariate_normal(mean=[0.5, 0.75], cov=cov)
+        return 1 + 2*var.pdf(theta).reshape(self.d, theta.shape[0])
+
+    def realdata(self, seed):
+
+        M = np.array(self.function(self.theta_true[0], self.theta_true[1]), 
+                     dtype='float64')
+        if seed is None:
+            self.real_data = M
+        else:
+            persis_info = {'rand_stream': np.random.default_rng(seed)}
+            R = persis_info['rand_stream'].normal(0, 
+                                                  np.sqrt(self.obsvar[0]),
+                                                  size=1)
+            self.real_data = M + R
+            
+            
+class ackley:
+    def __init__(self):
+
+        self.data_name = "ackley"
+        self.thetalimits = np.array([[0, 1], [0, 1]])
+        self.truelimits = np.array([[-5, 5], [-5, 5]])
+        self.obsvar = np.array([[10]], dtype="float64")
+        self.real_data = None
+        self.out = [("f", float)]
+        self.p = 2
+        self.d = 1
+        self.x = np.arange(0, self.d)[:, None]
+        self.theta_true = np.array([0.5, 0.5])
+
+    def function(self, theta1, theta2):
+
+        theta1 = self.truelimits[0][0] + theta1 * (
+            self.truelimits[0][1] - self.truelimits[0][0]
+        )
+        theta2 = self.truelimits[1][0] + theta2 * (
+            self.truelimits[1][1] - self.truelimits[1][0]
+        )
+        f = (
+            -20.0 * np.exp(-0.2 * np.sqrt(0.5 * (theta1**2 + theta2**2)))
+            - np.exp(0.5 * (np.cos(2 * np.pi * theta1) + np.cos(2 * np.pi * theta2)))
+            + np.e
+            + 20
+        )
+
+        return f
+
+    def sim_f(self, thetas, persis_info):
+        f = self.function(thetas[0], thetas[1])
+        V = self.noise(np.array([thetas[0], thetas[1]])[None, :])
+        R = persis_info["rand_stream"].normal(0, np.sqrt(V[0]), 1)
+        f += R
+        return f
+
+    def sim(self, H, persis_info, sim_specs, libE_info):
+        function        = sim_specs['user']['sim_f']
+        H_o             = np.zeros(1, dtype=sim_specs['out'])
+        H_o['f']        = function(H['thetas'][0], persis_info)
+
+        return H_o, persis_info
+
+    def noise(self, theta):
+        cov = np.array([[0.1, 0], [0, 0.1]])
+        var = scipy.stats.multivariate_normal(mean=[0.5, 0.85], cov=cov)
+        return 1 + 2*var.pdf(theta).reshape(self.d, theta.shape[0])
+
+
+    def realdata(self, seed):
+
+        M = np.array(self.function(self.theta_true[0], self.theta_true[1]), 
+                     dtype='float64')
+        if seed is None:
+            self.real_data = M
+        else:
+            persis_info = {'rand_stream': np.random.default_rng(seed)}
+            R = persis_info['rand_stream'].normal(0, 
+                                                  np.sqrt(self.obsvar[0]),
+                                                  size=1)
+            self.real_data = M + R
+            
+class sphere:
+    def __init__(self):
+
+        self.data_name = "sphere"
+        self.thetalimits = np.array([[0, 1], [0, 1]])
+        self.truelimits = np.array([[-5, 5], [-5, 5]])
+        self.obsvar = np.array([[1]], dtype="float64")
+        self.real_data = None
+        self.out = [("f", float)]
+        self.p = 2
+        self.d = 1
+        self.x = np.arange(0, self.d)[:, None]
+        self.theta_true = np.array([0.5, 0.5])
+
+    def function(self, theta1, theta2):
+        theta1 = self.truelimits[0][0] + theta1 * (
+            self.truelimits[0][1] - self.truelimits[0][0]
+        )
+        theta2 = self.truelimits[1][0] + theta2 * (
+            self.truelimits[1][1] - self.truelimits[1][0]
+        )
+        f = theta1**2 + theta2**2
+        return f
+
+
+    def sim_f(self, thetas, persis_info):
+        f = self.function(thetas[0], thetas[1])
+        V = self.noise(np.array([thetas[0], thetas[1]])[None, :])
+        R = persis_info["rand_stream"].normal(0, np.sqrt(V[0]), 1)
+        f += R
+        return f
+
+    def sim(self, H, persis_info, sim_specs, libE_info):
+        function        = sim_specs['user']['sim_f']
+        H_o             = np.zeros(1, dtype=sim_specs['out'])
+        H_o['f']        = function(H['thetas'][0], persis_info)
+
+        return H_o, persis_info
+
+    def noise(self, theta):
+        cov = np.array([[0.1, 0], [0, 0.1]])
+        var = scipy.stats.multivariate_normal(mean=[0.5, 0.5], cov=cov)
+        return 1 + 1*var.pdf(theta).reshape(self.d, theta.shape[0])
+
+
+    def realdata(self, seed):
+
+        M = np.array(self.function(self.theta_true[0], self.theta_true[1]), 
+                     dtype='float64')
+        if seed is None:
+            self.real_data = M
+        else:
+            persis_info = {'rand_stream': np.random.default_rng(seed)}
+            R = persis_info['rand_stream'].normal(0, 
+                                                  np.sqrt(self.obsvar[0]),
+                                                  size=1)
+            self.real_data = M + R

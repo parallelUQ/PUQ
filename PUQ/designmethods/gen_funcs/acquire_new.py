@@ -53,6 +53,8 @@ class acquire:
         self.rand_stream = rand_stream
         self.impute_str = "KB" if impute_str is None else impute_str
         self.skip = False if skip is None else skip
+        
+        # print("Explore rule: ", self.method, " with ", self.impute_str)
 
     def acquire_new(self):
         if self.method == 'simse':
@@ -284,7 +286,7 @@ class acquire:
         
         tnew = []
         det = np.linalg.det(obsvar)
-        print(n_x)
+
         for i in range(self.bnew):
             pcL = emu.predict(x=x, theta=cL)
             mu, S = pcL._info["mean"].T, pcL._info["S"]
