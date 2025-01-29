@@ -26,4 +26,7 @@ examples/2_bimodal_explore
 examples/3_unimodal_explore
 examples/4_SIR_explore
 examples/5_SEIRDS_explore
+examples/1_banana_exploit
+examples/2_bimodal_exploit
+examples/3_unimodal_exploit
 
