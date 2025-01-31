@@ -100,6 +100,10 @@ def lineplot(df, examples, batches, metric="TV", ci=None, label=None):
     for i, example in enumerate(examples):
         df1 = df.loc[df["example"] == example]
         print(df1.shape)
+        if le == 1:
+            axs = ax
+        else:
+            axs = ax[i]
         sns.lineplot(
             data=df1,
             x="t",
@@ -109,10 +113,10 @@ def lineplot(df, examples, batches, metric="TV", ci=None, label=None):
             palette=["r", "g", "b", "c"],
             errorbar=ci,
             linewidth=5,
-            ax=ax[i],
+            ax=axs,
         )
         if example in ["bimodal", "SEIRDS"]:
-            lgd = ax[i].legend(
+            lgd = axs.legend(
                 loc="upper center",
                 bbox_to_anchor=(1.2, 0.8),
                 fancybox=True,
@@ -121,14 +125,14 @@ def lineplot(df, examples, batches, metric="TV", ci=None, label=None):
                 fontsize=ft - 5,
             )
         else:
-            ax[i].legend([], [], frameon=False)
-        ax[i].set_yscale("log")
+            axs.legend([], [], frameon=False)
+        axs.set_yscale("log")
         if metric == "TV":
-            ax[i].set_xlabel("t", fontsize=ft)
+            axs.set_xlabel("t", fontsize=ft)
         else:
-            ax[i].set_xlabel("# of simulation evaluations", fontsize=ft)
-        ax[i].set_ylabel("MAD", fontsize=ft)
-        ax[i].tick_params(axis="both", labelsize=ft)
+            axs.set_xlabel("# of simulation evaluations", fontsize=ft)
+        axs.set_ylabel("MAD", fontsize=ft)
+        axs.tick_params(axis="both", labelsize=ft)
     if label is not None:
         plt.savefig(label, bbox_inches='tight')
     plt.show()

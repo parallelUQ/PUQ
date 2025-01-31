@@ -59,7 +59,7 @@ if exploresynth:
         df, dfexpl = read_data(rep0=[0, 0, 0], 
                                 repf=[30, 30, 30], 
                                 methods=methods, 
-                                batches=batches, 
+                                batches=[8, 64], 
                                 examples=examples, 
                                 ids=ids,
                                 ee='explore',
