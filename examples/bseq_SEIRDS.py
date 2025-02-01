@@ -23,7 +23,7 @@ n0 = 50
 rep0 = 2
 rho = 1/2
 batch = args.minibatch
-maxiter = 32
+maxiter = 16
 
 
 # # Create test data

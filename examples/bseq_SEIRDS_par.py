@@ -94,24 +94,24 @@ if __name__ == "__main__":
                 f0[:, i] = cls_func.sim_f(theta0[i, :], persis_info=persis_info)
             
 
-            # al_ivar = designer(
-            #     data_cls=cls_func,
-            #     method="p_sto_bseq",
-            #     acquisition="seivar",
-            #     args={
-            #         "prior": prior_func,
-            #         "data_test": test_data,
-            #         "max_iter": maxiter,
-            #         "nworkers": workers,
-            #         "batch_size": batch,
-            #         "des_init":{'seed':s, 'theta':theta0, 'f':f0},
-            #         "alloc_settings":{'method':'ivar', 'use_Ki':True, 'rho': rho, 'theta':None, 'a0':None, 'gen':False},
-            #         "pc_settings":{'standardize':True, 'latent':False},
-            #         "des_settings":{'is_exploit':True, 'is_explore':True, 'nL': 500, 'impute_str': 'update'}
-            #     },
-            # )
+            al_ivar = designer(
+                data_cls=cls_func,
+                method="p_sto_bseq",
+                acquisition="seivar",
+                args={
+                    "prior": prior_func,
+                    "data_test": test_data,
+                    "max_iter": maxiter,
+                    "nworkers": workers,
+                    "batch_size": batch,
+                    "des_init":{'seed':s, 'theta':theta0, 'f':f0},
+                    "alloc_settings":{'method':'ivar', 'use_Ki':True, 'rho': rho, 'theta':None, 'a0':None, 'gen':False},
+                    "pc_settings":{'standardize':True, 'latent':False},
+                    "des_settings":{'is_exploit':True, 'is_explore':True, 'nL': 500, 'impute_str': 'update'}
+                },
+            )
 
-            # save_output(al_ivar, cls_func.data_name, 'ivar', workers, batch, s, sd)
+            save_output(al_ivar, cls_func.data_name, 'ivar', workers, batch, s, sd)
     
             al_imse = designer(
                 data_cls=cls_func,
@@ -157,109 +157,26 @@ if __name__ == "__main__":
             
             save_output(al_unif, cls_func.data_name, 'unif', workers, batch, s, sd)
 
-            # al_var = designer(
-            #     data_cls=cls_func,
-            #     method="p_sto_bseq",
-            #     acquisition="var",
-            #     args={
-            #         "prior": prior_func,
-            #         "data_test": test_data,
-            #         "max_iter": maxiter,
-            #         "nworkers": workers,
-            #         "batch_size": batch,
-            #         "des_init":{'seed':s, 'theta':theta0, 'f':f0},
-            #         "alloc_settings":{'method':'ivar', 'use_Ki':True, 'rho': rho, 'theta':None, 'a0':None, 'gen':False},
-            #         "pc_settings":{'standardize':True, 'latent':False},
-            #         "des_settings":{'is_exploit':True, 'is_explore':True, 'nL': 500, 'impute_str': 'update'}
-            #     },
-            # )
+            al_var = designer(
+                data_cls=cls_func,
+                method="p_sto_bseq",
+                acquisition="var",
+                args={
+                    "prior": prior_func,
+                    "data_test": test_data,
+                    "max_iter": maxiter,
+                    "nworkers": workers,
+                    "batch_size": batch,
+                    "des_init":{'seed':s, 'theta':theta0, 'f':f0},
+                    "alloc_settings":{'method':'ivar', 'use_Ki':True, 'rho': rho, 'theta':None, 'a0':None, 'gen':False},
+                    "pc_settings":{'standardize':True, 'latent':False},
+                    "des_settings":{'is_exploit':True, 'is_explore':True, 'nL': 500, 'impute_str': 'update'}
+                },
+            )
 
-            # save_output(al_var, cls_func.data_name, 'var', workers, batch, s, sd)
-        Parallel(n_jobs=6)(delayed(OneRep)(rep_no, batch, workers) for rep_no in range(0, total_reps))   
+            save_output(al_var, cls_func.data_name, 'var', workers, batch, s, sd)
+            
+        Parallel(n_jobs=10)(delayed(OneRep)(rep_no, batch, workers) for rep_no in range(0, total_reps))   
+    
     design_end = time.time()
     print("Elapsed time: " + str(round(design_end - design_start, 2)))
-
-epi = False
-if epi:
-    from summary import read_data, boxplot, lineplot, exp_ratio, SIR2D, SIRtheta, SIRfuncevals, visual_theta, boxplot_batch, interval_score, interval_score_SIR, SEIRDSfuncevals
-
-    examples = ['SIR', 'SEIRDS']
-    #examples = ['SEIRDS']
-    #examples = ['SEIRDS']
-    batches = [8, 16, 32, 64]
-    # batches = [8]
-    #batches = [16, 32, 64]
-    methods = ['ivar', 'imse', 'unif', 'var']
-    #methods = ['ivar', 'var']
-    ids = ['4', '5']
-    #ids = ['5']
-    ee = 'explore'
-    ntotal = [256, 384]
-    #ntotal = [384]
-    n0 = [30, 100]
-    #n0 = [100]
-    df, dfexpl = read_data(rep0=[0, 0], 
-                           repf=[30, 30], 
-                           methods=methods, 
-                           batches=batches, 
-                           examples=examples,
-                           ids=ids,
-                           ee=ee,
-                           folderpath=cd + "/",
-                           ntotal=ntotal,
-                           initial=n0)
-    
-    lineplot(df, examples, batches, ci=None)
-    exp_ratio(dfexpl, examples, methods, batches, ntotals=ntotal)
-    
-    interval_score_SIR(examples=examples,
-                        methods=methods, 
-                        batches=batches, 
-                        rep0=[0, 0], 
-                        repf=[30, 30], 
-                        initial=n0, 
-                        ids=ids, 
-                        folderpath=cd + "/",
-                        ee=ee)
-    
-    df, dfexpl = read_data(rep0=[0, 0], 
-                            repf=[30, 30], 
-                            methods=methods, 
-                            batches=batches, 
-                            examples=examples, 
-                            ids=ids,
-                            ee=ee,
-                            metric='iter',
-                            folderpath=cd + "/",
-                            ntotal=ntotal,
-                            initial=n0)
-    
-    lineplot(df, examples, batches, metric='iter', ci=None)
-    
-    b = 16
-    r = 1
-    for r in range(0, 30):
-        SIR2D('SIR', 8, "var", r, ids="4", ee="explore", folderpath=cd + "/")
-        SIR2D('SIR', 32, "var", r, ids="4", ee="explore", folderpath=cd + "/")
-    
-    # b = 16, r = 1
-    SIRfuncevals(example='SIR', 
-                  batch=b, 
-                  r=r, 
-                  ids='4', 
-                  ee="explore", 
-                  initial=30, 
-                  folderpath=cd + "/")
-
-    # b = 16 r = 1
-    SEIRDSfuncevals(example='SEIRDS', 
-                  batch=b, 
-                  r=r, 
-                  ids='5', 
-                  ee=ee, 
-                  initial=100,
-                  folderpath=cd + "/")
-    
-
-    
-    

@@ -7,8 +7,7 @@ from PUQ.design import designer
 from smt.sampling_methods import LHS
 import matplotlib.pyplot as plt
 from PUQ.surrogatemethods.covariances import cov_gen
-from scipy.linalg import cholesky, inv
-from PUQ.surrogate import emulator
+from scipy.linalg import cholesky
 from PUQ.designmethods.gen_funcs.acquisition_funcs_support import (
     multiple_pdfs,
     build_emulator,
@@ -47,6 +46,7 @@ def update_alloc(fitinfo, x, X0new=None, mult=None, munew=None):
             Kgi = Kgi @ Kgi.T
             M = np.dot(Cg, np.dot(Kgi, info["Delta"] - info["nmean"]))
             Lambda = info["nmean"] + M
+
             if info["logN"]:
                 Lambda = np.exp(Lambda)
             else:
@@ -59,6 +59,7 @@ def update_alloc(fitinfo, x, X0new=None, mult=None, munew=None):
             Ki = np.linalg.inv((Ki))
             info["Ki"] = Ki @ Ki.T
 
+ft = 18
 
 def observe_posterior(
     Xpl,
@@ -115,9 +116,9 @@ def observe_posterior(
 
     ax.set_xticks([0, 0.5, 1])
     ax.set_yticks([0, 0.5, 1])
-    ax.set_xlabel(r"$\theta_1$", fontsize=16)
-    ax.set_ylabel(r"$\theta_2$", fontsize=16)
-    ax.tick_params(axis="both", labelsize=16)
+    ax.set_xlabel(r"$\theta_1$", fontsize=ft)
+    ax.set_ylabel(r"$\theta_2$", fontsize=ft)
+    ax.tick_params(axis="both", labelsize=ft)
     plt.savefig(labelfig, bbox_inches="tight")
     plt.show()
 
@@ -130,9 +131,9 @@ def emu_observe(Xpl, Ypl, meanmesh):
         cbar = fig.colorbar(cs)
         ax.set_xticks([0, 0.5, 1])  # Custom tick locations for x-axis
         ax.set_yticks([0, 0.5, 1])  # Custom tick locations for y-axis
-        ax.set_xlabel(r"$\theta_1$", fontsize=16)
-        ax.set_ylabel(r"$\theta_2$", fontsize=16)
-        ax.tick_params(axis="both", labelsize=16)
+        ax.set_xlabel(r"$\theta_1$", fontsize=ft)
+        ax.set_ylabel(r"$\theta_2$", fontsize=ft)
+        ax.tick_params(axis="both", labelsize=ft)
         plt.show()
 
 
