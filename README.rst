@@ -33,7 +33,7 @@ This code is tested with Python 3.9, 3.10, and 3.11 and requires pip.
 In the following, we provide the instructions to replicate examples from the paper titled 'Batch sequential
 experimental design for calibration of stochastic simulation models.'
 
-This code is publicly availeble `PUQ Github Repo <https://github.com/parallelUQ/PUQ/tree/dev/batch_sequential?tab=readme-ov-file>`_ 
+This code is publicly available at `PUQ Github Repo <https://github.com/parallelUQ/PUQ/tree/dev/batch_sequential?tab=readme-ov-file>`_.
 
 Set up 
 ~~~~~~
@@ -87,8 +87,21 @@ Once installed, a user should see ``build/`` directory created.
 Examples
 ~~~~~~~~
 
-We provide examples in the `examples </examples>`_
-directory to illustrate the basic usage of PUQ. 
+We provide all the examples presented in the paper in the `examples </examples>`_. 
+
+Instructions for running the illustrative examples:
+
+To replicate Figures~1--3, respectively:
+
+1) Go to the examples/ directory.
+
+2) Execute the followings from the command line:
+
+    python Figure1_2.py
+    python Figure3.py
+
+Running each script should not take more than 60 sec. See the figures (png files) saved under examples/ directory.
+
 
 
 

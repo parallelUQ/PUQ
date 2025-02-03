@@ -682,17 +682,17 @@ def Figure1(f, theta, x, obsvar, real_data, theta_test, f_test, p_test, cls_func
     quantile = 0.975
     upper_bound_nug = norm.ppf(quantile, loc=mean, scale=np.sqrt(var_noisy))
 
-    ft = 20
-    fig, ax = plt.subplots()
-    ax.plot(theta_test, f_test, color="red")
-    ax.plot(
+    fig, ax = plt.subplots(1, 3, figsize=(15, 3.5), constrained_layout=True)
+    ft = 18
+    ax[0].plot(theta_test, f_test, color="red")
+    ax[0].plot(
         theta_test.flatten(),
         mean.flatten(),
         linestyle="dashed",
         color="blue",
         linewidth=2.5,
     )
-    plt.fill_between(
+    ax[0].fill_between(
         theta_test.flatten(),
         mean.flatten() - np.sqrt(var.flatten()),
         mean.flatten() + np.sqrt(var.flatten()),
@@ -703,14 +703,13 @@ def Figure1(f, theta, x, obsvar, real_data, theta_test, f_test, p_test, cls_func
         linestyle="dotted",
     )
 
-    ax.scatter(
+    ax[0].scatter(
         theta.flatten(), f.flatten(), s=60, facecolors="none", edgecolors="green"
     )
-    ax.set_xlabel(r"$\theta$", fontsize=ft)
-    ax.set_ylabel(r"$\zeta(\theta)$", fontsize=ft)
-    ax.tick_params(axis="both", labelsize=ft)
-    plt.savefig("Figure1a.png", bbox_inches="tight")
-    plt.show()
+    ax[0].set_xlabel(r"$\theta$", fontsize=ft)
+    ax[0].set_ylabel(r"$\zeta(\theta)$", fontsize=ft)
+    ax[0].tick_params(axis="both", labelsize=ft)
+
 
     phat = np.zeros(theta_test.shape[0])
     phatvar = np.zeros(theta_test.shape[0])
@@ -724,41 +723,37 @@ def Figure1(f, theta, x, obsvar, real_data, theta_test, f_test, p_test, cls_func
             tid
         ] ** 2
 
-    fig, ax = plt.subplots()
-    ax.plot(theta_test, p_test, color="red")
-    ax.plot(theta_test, phat, color="blue", linestyle="dashed", linewidth=2.5)
-    plt.fill_between(
+    ax[1].plot(theta_test, p_test, color="red")
+    ax[1].plot(theta_test, phat, color="blue", linestyle="dashed", linewidth=2.5)
+    ax[1].fill_between(
         theta_test.flatten(),
         (phat - np.sqrt(phatvar)).flatten(),
         (phat + np.sqrt(phatvar)).flatten(),
         color="blue",
         alpha=0.1,
     )
-    ax.set_xlabel(r"$\theta$", fontsize=ft)
-    ax.set_ylabel(r"$p(y|\theta)$", fontsize=ft)
-    ax.tick_params(axis="both", labelsize=ft)
-    plt.savefig("Figure1b.png", bbox_inches="tight")
-    plt.show()
+    ax[1].set_xlabel(r"$\theta$", fontsize=ft)
+    ax[1].set_ylabel(r"$p(y|\theta)$", fontsize=ft)
+    ax[1].tick_params(axis="both", labelsize=ft)
 
-    fig, ax = plt.subplots()
-    ax.plot(
+    ax[2].plot(
         theta_test.flatten(),
         emupred._info["nugs"].flatten(),
         color="blue",
         linestyle="dashed",
         linewidth=2.5,
     )
-    ax.plot(theta_test.flatten(), cls_func.noise(theta_test).flatten(), color="black")
-    ax.set_xlabel(r"$\theta$", fontsize=ft)
-    ax.set_ylabel(r"$\mathbb{V}[\nu]$", fontsize=ft)
-    ax.tick_params(axis="both", labelsize=ft)
-    plt.savefig("Figure1c.png", bbox_inches="tight")
+    ax[2].plot(theta_test.flatten(), cls_func.noise(theta_test).flatten(), color="black")
+    ax[2].set_xlabel(r"$\theta$", fontsize=ft)
+    ax[2].set_ylabel(r"$\mathbb{V}[\nu]$", fontsize=ft)
+    ax[2].tick_params(axis="both", labelsize=ft)
+    plt.savefig("Figure1.png", bbox_inches="tight")
     plt.show()
 
     return theta_test, emupred._info["nugs"].flatten(), phat
 
 
-def Figure2(desobject, theta_test, nugs, phat, method):
+def Figure2(desobject, theta_test, nugs, phat, method, axs):
 
     theta0 = desobject._info["theta0"]
     reps0 = desobject._info["reps0"]
@@ -771,17 +766,14 @@ def Figure2(desobject, theta_test, nugs, phat, method):
         for sp in ax.spines.values():
             sp.set_visible(False)
 
-    fig, host = plt.subplots(figsize=(8, 4))
-    fig.subplots_adjust(right=0.75)
+    par1 = axs.twinx()
+    par2 = axs.twinx()
 
-    par1 = host.twinx()
-    par2 = host.twinx()
-
-    par2.spines["right"].set_position(("axes", 1.2))
+    par2.spines["right"].set_position(("axes", 1.25))
     make_patch_spines_invisible(par2)
     par2.spines["right"].set_visible(True)
 
-    p1 = host.scatter(
+    p1 = axs.scatter(
         theta0.flatten(),
         reps0.flatten(),
         color="black",
@@ -801,21 +793,21 @@ def Figure2(desobject, theta_test, nugs, phat, method):
         theta_test, phat, "r", linestyle="dotted", label="Likelihood", linewidth=2.5
     )
 
-    host.set_xlim(-0.1, 1.1)
-    host.set_ylim(0.8 * np.min(reps0.flatten()), 1.1 * np.max(reps0.flatten()))
+    axs.set_xlim(-0.1, 1.1)
+    axs.set_ylim(0.8 * np.min(reps0.flatten()), 1.1 * np.max(reps0.flatten()))
     par1.set_ylim(0.8 * np.min(nugs), 1.1 * np.max(nugs))
     par2.set_ylim(-0.1, 1.1 * np.max(phat))
 
-    host.set_xlabel(r"$\theta$", fontsize=ft)
-    host.set_ylabel(r"$a_i$", fontsize=ft)
+    axs.set_xlabel(r"$\theta$", fontsize=ft)
+    axs.set_ylabel(r"$a_i$", fontsize=ft)
     par1.set_ylabel("Variance", fontsize=ft)
     par2.set_ylabel("Likelihood", fontsize=ft)
-    host.tick_params(axis="both", labelsize=ft)
+    axs.tick_params(axis="both", labelsize=ft)
     par1.tick_params(axis="both", labelsize=ft)
     par2.tick_params(axis="both", labelsize=ft)
     lines = [p1, p2, p3]
 
-    host.legend(
+    axs.legend(
         lines,
         [l.get_label() for l in lines],
         loc="center",
@@ -823,5 +815,4 @@ def Figure2(desobject, theta_test, nugs, phat, method):
         ncol=3,
         prop={"size": ft},
     )
-    plt.savefig("Figure2" + method + ".png", bbox_inches="tight")
-    plt.show()
+
