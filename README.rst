@@ -30,6 +30,9 @@ refining data collection to enhance the efficiency and effectiveness of uncertai
 
 This code is tested with Python 3.9, 3.10, and 3.11 and requires pip.
 
+In the following, we provide the instructions to replicate examples from the paper titled 'Batch sequential
+experimental design for calibration of stochastic simulation models.'
+
 Set up 
 ~~~~~~
 
@@ -46,7 +49,7 @@ with 'apt install python3.9-venv'
 
 3) Use the following command to create a virtual environment::
 
-    python3 -m venv venv/  
+    python -m venv venv/  
     source venv/bin/activate  
  
 We note that creating a virtual environment is not a required step. However, we tested this
@@ -57,41 +60,46 @@ Installation
 
 To install the PUQ package:
 
-1) Go to the directory of the source code (if a user has not done so yet).
+1) Navigate to the source code directory where ``setup.py`` is located
 
-2) Use the following command to install the required packages::
+2) Use the following commands to ensure that the environment has the latest tools for package management and distribution::
+
+    python -m ensurepip --upgrade
+    python -m pip install --upgrade setuptools
+        
+3) Use the following command to install the required packages::
 
     pip install -r requirements.txt
+    
+4) Use to following command to install the wheel package::
 
-3) From the command line, use the following command to install PUQ::
+    pip install --upgrade setuptools wheel 
+
+5) From the command line, use the following command to install PUQ::
 
     pip install -e .
 
 Once installed, a user should see ``build/`` directory created.
 
  
-Testing
-~~~~~~~
+Examples
+~~~~~~~~
 
-The test suite requires the pytest_ and pytest-cov_ packages, which can be installed via ``pip install pytest pytest-cov``.
-
-The test suite can be run from the ``tests/`` directory of the source distribution by running::
-
-./run-tests.sh
+We provide examples in the `examples </examples>`_
+directory to illustrate the basic usage of PUQ. 
 
 
-Documentation
-~~~~~~~~~~~~~
 
-The documentation is stored in ``docs/`` and is compiled with the Sphinx Python
-documentation generator. It is written in the reStructuredText format. These
-files are hosted at `Read the Docs <http://PUQ.readthedocs.io>`_.
+Running each script should not take more than 60 sec. See the figures (png files) saved under ``examples/`` directory.
 
-To compile the documentation, from the directory of the source code, run the following command :: 
+  
+Final comments
+~~~~~~~~~~~~~~
 
- sphinx-build -M html docs docs
+Type ``deactivate`` from the command line to deactivate the virtual environment if created.
 
-The HTML files are then stored in ``docs/html``
+Type ``pip uninstall PUQ`` from the command line to uninstall the package.
+
 
 
 **Citation:**
@@ -109,22 +117,6 @@ The HTML files are then stored in ``docs/html``
      url         = {https://github.com/parallelUQ/PUQ}
    }
 
-Examples
-~~~~~~~~
-
-We provide examples in the `examples </examples>`_
-directory to illustrate the basic usage of PUQ. 
-
-These examples replicate some results presented in our papers. 
-`README` file within the directory provides further instructions.
-
-  
-Final comments
-~~~~~~~~~~~~~~
-
-Type ``deactivate`` from the command line to deactivate the virtual environment if created.
-
-Type ``pip uninstall PUQ`` from the command line to uninstall the package.
 
 
 .. _NumPy: http://www.numpy.org
