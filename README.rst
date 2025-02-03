@@ -33,6 +33,8 @@ This code is tested with Python 3.9, 3.10, and 3.11 and requires pip.
 In the following, we provide the instructions to replicate examples from the paper titled 'Batch sequential
 experimental design for calibration of stochastic simulation models.'
 
+This code is publicly availeble `PUQ Github Repo <https://github.com/parallelUQ/PUQ/tree/dev/batch_sequential?tab=readme-ov-file>`_ 
+
 Set up 
 ~~~~~~
 
