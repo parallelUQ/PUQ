@@ -95,13 +95,18 @@ To replicate Figures~1--3, respectively:
 
 1) Go to the examples/ directory.
 
-2) Execute the followings from the command line:
+2) Execute the followings from the command line::
 
     python Figure1_2.py
     python Figure3.py
 
 Running each script should not take more than 60 sec. See the figures (png files) saved under examples/ directory.
 
+Instructions for running the prominent empirical results:
+
+1) Go to the examples/ directory.
+
+2) Execute the following from the command line::
 
 
 

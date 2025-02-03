@@ -124,6 +124,15 @@ def lineplot(df, examples, batches, metric="TV", ci=None, label=None):
                 ncol=1,
                 fontsize=ft - 5,
             )
+        if example in ["unimodal"] and le == 1:
+            lgd = axs.legend(
+                loc="upper center",
+                bbox_to_anchor=(1.2, 0.8),
+                fancybox=True,
+                shadow=True,
+                ncol=1,
+                fontsize=ft - 5,
+            )
         else:
             axs.legend([], [], frameon=False)
         axs.set_yscale("log")
