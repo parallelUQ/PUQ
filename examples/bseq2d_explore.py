@@ -7,7 +7,24 @@ from utilities import test_data_gen, twoD, heatmap
 import pandas as pd
 from smt.sampling_methods import LHS
 import time
+
 args = parse_arguments()
+
+
+def create_entry(desobj, fname, method, s, b, w):
+    return [
+        {
+            "MAD": MAD,
+            "t": t,
+            "rep": s,
+            "batch": b,
+            "worker": w,
+            "method": method,
+            "example": fname,
+        }
+        for t, MAD in enumerate(desobj._info["TViter"])
+    ]
+
 
 # # # # #
 args.minibatch = 8
@@ -25,6 +42,10 @@ rho = 1 / 2
 batch = args.minibatch
 maxiter = 256
 dfl, dfr = [], []
+
+# Inputs to designer
+pcset = {"standardize": True, "latent": False}
+desset = {"is_exploit": True, "is_explore": True, "nL": 200, "impute_str": "update"}
 
 if __name__ == "__main__":
     design_start = time.time()
@@ -54,99 +75,54 @@ if __name__ == "__main__":
         for i in range(0, n0 * rep0):
             f0[:, i] = cls_func.sim_f(theta0[i, :], persis_info=persis_info)
 
+        base_args = {
+            "prior": prior_func,
+            "data_test": test_data,
+            "max_iter": maxiter,
+            "nworkers": workers,
+            "batch_size": batch,
+            "des_init": {"seed": s, "theta": theta0, "f": f0},
+            "alloc_settings": {
+                "use_Ki": True,
+                "rho": rho,
+                "theta": None,
+                "a0": None,
+                "gen": False,
+            },
+            "pc_settings": pcset,
+            "des_settings": desset,
+        }
+
+        methods = ["ivar", "imse"]
+
+        args_list = []
+        for method in methods:
+            args_ = base_args.copy()
+            args_["alloc_settings"] = args_["alloc_settings"].copy()
+            args_["alloc_settings"]["method"] = method
+            args_list.append(args_)
+
         al_ivar = designer(
             data_cls=cls_func,
             method="p_sto_bseq",
             acquisition="seivar",
-            args={
-                "prior": prior_func,
-                "data_test": test_data,
-                "max_iter": maxiter,
-                "nworkers": workers,
-                "batch_size": batch,
-                "des_init": {"seed": s, "theta": theta0, "f": f0},
-                "alloc_settings": {
-                    "method": "ivar",
-                    "use_Ki": True,
-                    "rho": rho,
-                    "theta": None,
-                    "a0": None,
-                    "gen": False,
-                },
-                "pc_settings": {"standardize": True, "latent": False},
-                "des_settings": {
-                    "is_exploit": True,
-                    "is_explore": True,
-                    "nL": 200,
-                    "impute_str": "update",
-                },
-            },
+            args=args_list[0],
         )
 
         save_output(al_ivar, cls_func.data_name, "ivar", workers, batch, s)
         twoD(al_ivar, Xpl, Ypl, p_test, nmesh)
-
-        dfl.extend(
-            [
-                {
-                    "MAD": MAD,
-                    "t": t,
-                    "rep": s,
-                    "batch": batch,
-                    "worker": workers,
-                    "method": "ivar",
-                    "example": args.funcname,
-                }
-                for t, MAD in enumerate(al_ivar._info["TViter"])
-            ]
-        )
+        dfl.extend(create_entry(al_ivar, args.funcname, "ivar", s, batch, workers))
 
         al_imse = designer(
             data_cls=cls_func,
             method="p_sto_bseq",
             acquisition="simse",
-            args={
-                "prior": prior_func,
-                "data_test": test_data,
-                "max_iter": maxiter,
-                "nworkers": workers,
-                "batch_size": batch,
-                "des_init": {"seed": s, "theta": theta0, "f": f0},
-                "alloc_settings": {
-                    "method": "imse",
-                    "use_Ki": True,
-                    "rho": rho,
-                    "theta": None,
-                    "a0": None,
-                    "gen": False,
-                },
-                "pc_settings": {"standardize": True, "latent": False},
-                "des_settings": {
-                    "is_exploit": True,
-                    "is_explore": True,
-                    "nL": 200,
-                    "impute_str": "update",
-                },
-            },
+            args=args_list[1],
         )
 
         save_output(al_imse, cls_func.data_name, "imse", workers, batch, s)
         twoD(al_imse, Xpl, Ypl, p_test, nmesh)
-
-        dfl.extend(
-            [
-                {
-                    "MAD": MAD,
-                    "t": t,
-                    "rep": s,
-                    "batch": batch,
-                    "worker": workers,
-                    "method": "imse",
-                    "example": args.funcname,
-                }
-                for t, MAD in enumerate(al_imse._info["TViter"])
-            ]
-        )
+        dfl.extend(create_entry(al_imse, args.funcname, "imse", s, batch, workers))
 
         rholhs = 1 / 4
         sampling = LHS(xlimits=cls_func.thetalimits, random_state=int(s))
@@ -171,79 +147,31 @@ if __name__ == "__main__":
                     "a0": None,
                     "gen": False,
                 },
-                "pc_settings": {"standardize": True, "latent": False},
+                "pc_settings": pcset,
                 "des_settings": {"is_exploit": True, "is_explore": True},
             },
         )
 
         save_output(al_unif, cls_func.data_name, "unif", workers, batch, s)
         twoD(al_unif, Xpl, Ypl, p_test, nmesh)
-
-        dfl.extend(
-            [
-                {
-                    "MAD": MAD,
-                    "t": t,
-                    "rep": s,
-                    "batch": batch,
-                    "worker": workers,
-                    "method": "unif",
-                    "example": args.funcname,
-                }
-                for t, MAD in enumerate(al_unif._info["TViter"])
-            ]
-        )
+        dfl.extend(create_entry(al_unif, args.funcname, "unif", s, batch, workers))
 
         al_var = designer(
             data_cls=cls_func,
             method="p_sto_bseq",
             acquisition="var",
-            args={
-                "prior": prior_func,
-                "data_test": test_data,
-                "max_iter": maxiter,
-                "nworkers": workers,
-                "batch_size": batch,
-                "des_init": {"seed": s, "theta": theta0, "f": f0},
-                "alloc_settings": {
-                    "method": "ivar",
-                    "use_Ki": True,
-                    "rho": rho,
-                    "theta": None,
-                    "a0": None,
-                    "gen": False,
-                },
-                "pc_settings": {"standardize": True, "latent": False},
-                "des_settings": {
-                    "is_exploit": True,
-                    "is_explore": True,
-                    "nL": 200,
-                    "impute_str": "update",
-                },
-            },
+            args=args_list[0],
         )
 
         save_output(al_var, cls_func.data_name, "var", workers, batch, s)
         twoD(al_var, Xpl, Ypl, p_test, nmesh)
+        dfl.extend(create_entry(al_var, args.funcname, "var", s, batch, workers))
 
-        dfl.extend(
-            [
-                {
-                    "MAD": MAD,
-                    "t": t,
-                    "rep": s,
-                    "batch": batch,
-                    "worker": workers,
-                    "method": "var",
-                    "example": args.funcname,
-                }
-                for t, MAD in enumerate(al_var._info["TViter"])
-            ]
-        )
     design_end = time.time()
     print("Elapsed time: " + str(round(design_end - design_start, 2)))
 
 
 from summary import lineplot
+
 df = pd.DataFrame(dfl)
 lineplot(df, examples=[args.funcname], batches=[batch])

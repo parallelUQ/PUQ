@@ -100,17 +100,20 @@ To replicate Figures~1--3, respectively:
     python Figure1_2.py
     python Figure3.py
 
-Running each script should not take more than 60 sec. See the figures (png files) saved under examples/ directory.
+Running each script should not take more than 60 sec. See the Figure1.png, Figure2.png, and Figure3.png saved under examples/ directory.
 
 Instructions for running the prominent empirical results:
+
+The following describes how to generate results equivalent to those presented in 
+the top-left corner of Figure~6 for batch size b=8 with the unimodal function.
 
 1) Go to the examples/ directory.
 
 2) Execute the following from the command line::
 
+    python Figure6_unimodal8.py
 
-
-Running each script should not take more than 60 sec. See the figures (png files) saved under ``examples/`` directory.
+Running this script takes about 2hrs. See the Figure6.png saved under ``examples/`` directory.
 
   
 Final comments
