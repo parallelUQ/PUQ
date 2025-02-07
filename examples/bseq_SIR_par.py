@@ -18,7 +18,7 @@ rep0 = 2
 nmesh = 50
 rho = 1 / 2
 maxiter = 256
-total_reps = 1
+total_reps = 30
 
 # # Create test data
 nt = nmesh**2
@@ -94,34 +94,44 @@ if __name__ == "__main__":
             f0 = np.zeros((cls_func.d, n0 * rep0))
             for i in range(0, n0 * rep0):
                 f0[:, i] = cls_func.sim_f(theta0[i, :], persis_info=persis_info)
+            
+            base_args = {
+                "prior": prior_func,
+                "data_test": test_data,
+                "max_iter": maxiter,
+                "nworkers": workers,
+                "batch_size": batch,
+                "des_init": {"seed": s, "theta": theta0, "f": f0},
+                "alloc_settings": {
+                    "use_Ki": True,
+                    "rho": rho,
+                    "theta": None,
+                    "a0": None,
+                    "gen": False,
+                },
+                "pc_settings": {"standardize": True, "latent": False},
+                "des_settings": {
+                    "is_exploit": True,
+                    "is_explore": True,
+                    "nL": 200,
+                    "impute_str": "update",
+                },
+            }
+            
+            methods = ["ivar", "imse"]
 
+            args_list = []
+            for method in methods:
+                args_ = base_args.copy()
+                args_["alloc_settings"] = args_["alloc_settings"].copy()
+                args_["alloc_settings"]["method"] = method
+                args_list.append(args_)
+                
             al_ivar = designer(
                 data_cls=cls_func,
                 method="p_sto_bseq",
                 acquisition="seivar",
-                args={
-                    "prior": prior_func,
-                    "data_test": test_data,
-                    "max_iter": maxiter,
-                    "nworkers": workers,
-                    "batch_size": batch,
-                    "des_init": {"seed": s, "theta": theta0, "f": f0},
-                    "alloc_settings": {
-                        "method": "ivar",
-                        "use_Ki": True,
-                        "rho": rho,
-                        "theta": None,
-                        "a0": None,
-                        "gen": False,
-                    },
-                    "pc_settings": {"standardize": True, "latent": False},
-                    "des_settings": {
-                        "is_exploit": True,
-                        "is_explore": True,
-                        "nL": 200,
-                        "impute_str": "update",
-                    },
-                },
+                args=args_list[0],
             )
 
             save_output(al_ivar, cls_func.data_name, "ivar", workers, batch, s, sd)
@@ -130,29 +140,7 @@ if __name__ == "__main__":
                 data_cls=cls_func,
                 method="p_sto_bseq",
                 acquisition="simse",
-                args={
-                    "prior": prior_func,
-                    "data_test": test_data,
-                    "max_iter": maxiter,
-                    "nworkers": workers,
-                    "batch_size": batch,
-                    "des_init": {"seed": s, "theta": theta0, "f": f0},
-                    "alloc_settings": {
-                        "method": "imse",
-                        "use_Ki": True,
-                        "rho": rho,
-                        "theta": None,
-                        "a0": None,
-                        "gen": False,
-                    },
-                    "pc_settings": {"standardize": True, "latent": False},
-                    "des_settings": {
-                        "is_exploit": True,
-                        "is_explore": True,
-                        "nL": 200,
-                        "impute_str": "update",
-                    },
-                },
+                args=args_list[1],
             )
 
             save_output(al_imse, cls_func.data_name, "imse", workers, batch, s, sd)
@@ -191,34 +179,12 @@ if __name__ == "__main__":
                 data_cls=cls_func,
                 method="p_sto_bseq",
                 acquisition="var",
-                args={
-                    "prior": prior_func,
-                    "data_test": test_data,
-                    "max_iter": maxiter,
-                    "nworkers": workers,
-                    "batch_size": batch,
-                    "des_init": {"seed": s, "theta": theta0, "f": f0},
-                    "alloc_settings": {
-                        "method": "ivar",
-                        "use_Ki": True,
-                        "rho": rho,
-                        "theta": None,
-                        "a0": None,
-                        "gen": False,
-                    },
-                    "pc_settings": {"standardize": True, "latent": False},
-                    "des_settings": {
-                        "is_exploit": True,
-                        "is_explore": True,
-                        "nL": 200,
-                        "impute_str": "update",
-                    },
-                },
+                args=args_list[0],
             )
 
             save_output(al_var, cls_func.data_name, "var", workers, batch, s, sd)
 
-        Parallel(n_jobs=10)(
+        Parallel(n_jobs=5)(
             delayed(OneRep)(rep_no, batch, workers) for rep_no in range(total_reps)
         )
     design_end = time.time()

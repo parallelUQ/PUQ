@@ -377,9 +377,10 @@ def SIR2D(example, batch, method, r, ids=None, ee=None, folderpath=None):
     ]
     path = folderpath + ids + "_" + example + "_" + ee + "/" + str(batch) + "/"
     yellow_cmap = ListedColormap(yellow_colors, name="yellow")
-    m_list = ["ivar", "var", "imse"]
+
     theta_list, rep_list = [], []
-    for m in m_list:
+    for m in method:
+        print(m)
         desobj = read_output(path, example, m, batch + 1, batch, r)
         theta_m = desobj._info["theta0"]
         reps_m = desobj._info["reps0"]
@@ -461,21 +462,22 @@ def SIR2D(example, batch, method, r, ids=None, ee=None, folderpath=None):
         ax[i].set_xticks([0, 0.5, 1])  # Custom tick locations for x-axis
         ax[i].set_xlabel(r"$\theta_1$", fontsize=ft)
         ax[i].tick_params(axis="both", labelsize=ft)
+    
     plt.savefig('Figure12_rev.png', bbox_inches='tight')
     plt.show()
 
 
-def SIRfuncevals(example, batch, r, ids, ee, initial, folderpath):
+def SIRfuncevals(example, batch, method, r, ids, ee, initial, folderpath):
     from sir_funcs import SIR
     
-    m_list = ["ivar", "var", "imse"]
     theta_list = []
     labs = ["Susceptible", "Infected", "Recovered"]
     ft = 18
     lw = 3
     path = folderpath + ids + "_" + example + "_" + ee + "/" + str(batch) + "/"
 
-    for m in m_list:
+    for m in method:
+        print(m)
         desobj = read_output(path, example, m, batch + 1, batch, r)
         thetas_m = desobj._info["theta"][initial:,]
         theta_list.append(thetas_m)

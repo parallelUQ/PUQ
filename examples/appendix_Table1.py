@@ -21,10 +21,11 @@ examples = ['SIR', 'SEIRDS']
 total_reps = 30
 r_SS = []
 
+rng = 111
 if __name__ == "__main__":
     for example in examples:
         if example == 'SIR':
-            n0 = 100
+            n0 = 200
             rep0 = 50
             nmesh = 50
             nt = nmesh**2
@@ -40,7 +41,7 @@ if __name__ == "__main__":
             f_test = np.zeros((nt, cls_func.d))
             f_var = np.zeros((nt, cls_func.d))
             
-            persis_info = {'rand_stream': np.random.default_rng(100)}
+            persis_info = {'rand_stream': np.random.default_rng(rng)}
             for thid, th in enumerate(theta_test):
                 IrIdRD          = cls_func.sim_f(thetas=th, return_all=True, repl=nrep, persis_info=persis_info)
                 f_test[thid, :] = np.mean(IrIdRD, axis=0)
@@ -59,14 +60,14 @@ if __name__ == "__main__":
             nrep = 1000
         
             cls_func = eval('SEIRDS')()
-            sampling = LHS(xlimits=cls_func.thetalimits, random_state=100)
+            sampling = LHS(xlimits=cls_func.thetalimits, random_state=rng)
             theta_test = sampling(nt)
   
             d = cls_func.d
             f_test = np.zeros((nt, d))
             f_var = np.zeros((nt, d))
         
-            persis_info = {'rand_stream': np.random.default_rng(100)}
+            persis_info = {'rand_stream': np.random.default_rng(rng)}
             for thid, th in enumerate(theta_test):
                 IrIdRD          = cls_func.sim_f(thetas=th, return_all=True, repl=nrep, persis_info=persis_info)
                 f_test[thid, :] = np.mean(IrIdRD, axis=0)
@@ -130,42 +131,13 @@ if __name__ == "__main__":
 
             for i in range(0, cls_func.d):
                 
-                res = fhat[i, :] - f_test[:, i]
-                resnug = emupred._info['nugs'][i, :] - f_var[:, i]
-                
                 res_p = (f_test[:, i] - fhat[i, :])/(f_test[:, i])
                 resnug_p = (f_var[:, i] - emupred._info['nugs'][i, :])/(f_var[:, i])
-                
-                res_w = winsorize(res, limits=(0, 0))
-                resnug_w = winsorize(resnug, limits=(0, 0.01))
-                
-                res_pw = winsorize(res_p, limits=(0, 0))
-                resnug_pw = winsorize(resnug_p, limits=(0, 0.05))
-                
-                r2 = 1 - sum(res**2)/sum((f_test[:, i] - np.mean(f_test[:, i]))**2)
-                r2nugs = 1 - sum(resnug**2)/sum((f_var[:, i] - np.mean(f_var[:, i]))**2)
-                
-                r2w = 1 - sum(res_w**2)/sum((f_test[:, i] - np.mean(f_test[:, i]))**2)
-                r2nugsw = 1 - sum(resnug_w**2)/sum((f_var[:, i] - np.mean(f_var[:, i]))**2)
-                
-                r2rob = 1 - np.median(np.abs(res))/np.median(np.abs(f_test[:, i] - np.median(f_test[:, i])))
-                r2nugsrob = 1 - np.median(np.abs(resnug))/np.median(np.abs(f_var[:, i] - np.mean(f_var[:, i])))
-                
-                mad = np.mean(np.abs(res))
-                madnugs = np.mean(np.abs(resnug))
-                
+
                 mape = np.mean(np.abs(res_p))
                 mapenugs = np.mean(np.abs(resnug_p))
-                
-                mapew = np.mean(np.abs(res_pw))
-                mapenugsw = np.mean(np.abs(resnug_pw))
-                
-                dfl.append({"r2": r2, "r2nugs": r2nugs, 
-                            "r2rob": r2rob, "r2nugsrob": r2nugsrob, 
-                            "r2w": r2w, "r2nugsw": r2nugsw, 
-                            "mad": mad, "madnugs": madnugs, 
-                            "mape": mape, "mapenugs": mapenugs,
-                            "mapew": mapew, "mapenugsw": mapenugsw,
+
+                dfl.append({"mape": mape, "mapenugs": mapenugs,
                             "function": example, "j": i+1, "rep": s})
             
             return dfl
@@ -183,47 +155,11 @@ if __name__ == "__main__":
             for rs__ in rs_: # dimension
                 dfl.append(rs__)
         
-    ft = 20
+
     df = pd.DataFrame(dfl)
-    fig, ax = plt.subplots(1, 1, figsize=(8, 6))
     
-    # Create a continuous cubehelix colormap
-    cmap = sns.cubehelix_palette(as_cmap=True)
+    print(100*np.round(df[df['function'] == 'SIR'][['mape', 'j']].groupby(['j']).median(), 2))
+    print(100*np.round(df[df['function'] == 'SEIRDS'][['mape', 'j']].groupby(['j']).median(), 2))
     
-    # Extract unique hue levels
-    unique_hues = df['j'].unique()
-    n_hues = len(unique_hues)
-    
-    # Sample colors around the middle of the colormap (values between 0.4 and 0.6)
-    middle_range = np.linspace(0.1, 0.9, n_hues)
-    discrete_colors = [cmap(value) for value in middle_range]
-    
-    # Create a mapping of hue levels to sampled colors
-    palette = dict(zip(unique_hues, discrete_colors))
-    
-    sns.boxplot(x='function', y='mape', hue='j', data=df, ax=ax, showfliers=False, palette=palette)
-    ax.set_xlabel("Example", fontsize=ft)
-    ax.set_ylabel(r'$r^2$ (Emulator mean)', fontsize=ft)
-    ax.tick_params(axis="both", labelsize=ft)
-    lgd = ax.legend(loc = 'lower center', bbox_to_anchor = (0.5, -0.4),
-              fancybox = True, shadow = True, ncol = 3, fontsize=ft-5, title="j")
-    lgd.get_title().set_fontsize(ft-5)
-    #ax.set_ylim(0.75, 1.1)
-    plt.show()
-    
-    fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-    sns.boxplot(x='function', y='mapenugsw', hue='j', data=df, ax=ax, showfliers=False, palette=palette)
-    ax.set_xlabel("Example", fontsize=ft)
-    ax.set_ylabel(r'$r^2$ (Intrinsic noise)', fontsize=ft)
-    ax.tick_params(axis="both", labelsize=ft)
-    lgd = ax.legend(loc = 'lower center', bbox_to_anchor = (0.5, -0.4),
-              fancybox = True, shadow = True, ncol = 3, fontsize=ft-5, title="j")
-    #ax.set_ylim(0.75, 1.1)
-    lgd.get_title().set_fontsize(ft-5)
-    plt.show()
-    
-    print(np.round(df[df['function'] == 'SIR'][['mapew', 'j']].groupby(['j']).median(), 2))
-    print(np.round(df[df['function'] == 'SEIRDS'][['mapew', 'j']].groupby(['j']).median(), 2))
-    
-    print(np.round(df[df['function'] == 'SIR'][['mapenugsw', 'j']].groupby(['j']).median(), 2))
-    print(np.round(df[df['function'] == 'SEIRDS'][['mapenugsw', 'j']].groupby(['j']).median(), 2))
+    print(100*np.round(df[df['function'] == 'SIR'][['mapenugs', 'j']].groupby(['j']).median(), 2))
+    print(100*np.round(df[df['function'] == 'SEIRDS'][['mapenugs', 'j']].groupby(['j']).median(), 2))

@@ -12,7 +12,8 @@ args = parse_arguments()
 
 
 def create_entry(desobj, fname, method, s, b, w):
-    return [
+
+    r1 = [
         {
             "MAD": MAD,
             "t": t,
@@ -24,7 +25,21 @@ def create_entry(desobj, fname, method, s, b, w):
         }
         for t, MAD in enumerate(desobj._info["TViter"])
     ]
-
+    
+    r2 = [
+        {
+            "MAD": MAD,
+            "t": t,
+            "rep": s,
+            "batch": b,
+            "worker": w,
+            "method": method,
+            "example": fname,
+        }
+        for t, MAD in enumerate(desobj._info["TV"])
+    ]
+    
+    return r1, r2
 
 # # # # #
 args.minibatch = 8
@@ -41,7 +56,7 @@ nmesh = 50
 rho = 1 / 2
 batch = args.minibatch
 maxiter = 256
-dfl, dfr = [], []
+dfl1, dfl2 = [], []
 
 # Inputs to designer
 pcset = {"standardize": True, "latent": False}
@@ -108,7 +123,9 @@ if __name__ == "__main__":
         )
 
         save_output(al_ivar, cls_func.data_name, "ivar", workers, batch, s)
-        dfl.extend(create_entry(al_ivar, args.funcname, "ivar", s, batch, workers))
+        e1, e2 = create_entry(al_ivar, args.funcname, "ivar", s, batch, workers)
+        dfl1.extend(e1)
+        dfl2.extend(e2)
 
         al_imse = designer(
             data_cls=cls_func,
@@ -118,7 +135,9 @@ if __name__ == "__main__":
         )
 
         save_output(al_imse, cls_func.data_name, "imse", workers, batch, s)
-        dfl.extend(create_entry(al_imse, args.funcname, "imse", s, batch, workers))
+        e1, e2 = create_entry(al_imse, args.funcname, "imse", s, batch, workers)
+        dfl1.extend(e1)
+        dfl2.extend(e2)
 
         rholhs = 1 / 4
         sampling = LHS(xlimits=cls_func.thetalimits, random_state=int(s))
@@ -149,7 +168,9 @@ if __name__ == "__main__":
         )
 
         save_output(al_unif, cls_func.data_name, "unif", workers, batch, s)
-        dfl.extend(create_entry(al_unif, args.funcname, "unif", s, batch, workers))
+        e1, e2 = create_entry(al_unif, args.funcname, "unif", s, batch, workers)
+        dfl1.extend(e1)
+        dfl2.extend(e2)
 
         al_var = designer(
             data_cls=cls_func,
@@ -159,7 +180,9 @@ if __name__ == "__main__":
         )
 
         save_output(al_var, cls_func.data_name, "var", workers, batch, s)
-        dfl.extend(create_entry(al_var, args.funcname, "var", s, batch, workers))
+        e1, e2 = create_entry(al_var, args.funcname, "var", s, batch, workers)
+        dfl1.extend(e1)
+        dfl2.extend(e2)
 
     design_end = time.time()
     print("Elapsed time: " + str(round(design_end - design_start, 2)))
@@ -167,5 +190,8 @@ if __name__ == "__main__":
 
 from summary import lineplot
 
-df = pd.DataFrame(dfl)
+df = pd.DataFrame(dfl1)
+lineplot(df, examples=[args.funcname], batches=[batch])
+
+df = pd.DataFrame(dfl2)
 lineplot(df, examples=[args.funcname], batches=[batch])
