@@ -12,19 +12,20 @@ import os
 cd = os.getcwd() 
     
 Figure6 = True
-Table2 = False
-Figure8 = False
+Table2 = True
+Figure8 = True
 exploresynth = True
 
 if exploresynth:
     from summary import read_data, lineplot, exp_ratio, interval_score
-    # # # Observe boxplots
+
     examples = ['unimodal', 'banana', 'bimodal']
     ids = ['3', '1', '2']
-
+    
     ntotal = [256, 256, 256]
     n0 = [30, 30, 30]
     batches = [8, 16, 32, 64]
+
     methods = ['ivar', 'imse', 'unif', 'var']
 
     df, dfexpl = read_data(rep0=[0, 0, 0], 
@@ -43,11 +44,16 @@ if exploresynth:
 
     
     if Figure8:
-        exp_ratio(dfexpl, examples, methods, batches, ntotals=ntotal)
+        exp_ratio(dfexpl, 
+                  examples, 
+                  ['ivar', 'var', 'imse'], 
+                  batches, 
+                  ntotals=ntotal, 
+                  label="Figure8_rev.png")
             
     if Table2:
         interval_score(examples=examples, 
-                        methods=methods,
+                        methods=['ivar', 'var', 'imse', 'unif'],
                         batches=batches, 
                         rep0=[0, 0, 0], 
                         repf=[30, 30, 30], 
@@ -69,9 +75,10 @@ if exploresynth:
                                 initial=n0)
         
         lineplot(df, examples, batches, metric='iter', label="Figure6b_rev.png")
-        
-Figure10, Figure11, Figure12, Figure13, FigureE3, Table4 = True, False, False, False, False, False
-epimodel = True
+
+    
+Figure10, Figure11, Figure12, Figure13, FigureE3, Table4 = True, True, True, True, True, True
+epimodel = False
 
 if epimodel: 
 
@@ -124,13 +131,20 @@ if epimodel:
             lineplot(df, examples, batches, metric='iter', label="Figure10b_rev.png")
         
         if Figure12:
-            SIR2D('SIR', 16, "var", 4, ids="4", ee="explore", folderpath=cd + "/")
-        
+            SIR2D(example='SIR', 
+                  batch=16, 
+                  method=["ivar", "var", "imse"], 
+                  r=4, 
+                  ids="4", 
+                  ee="explore", 
+                  folderpath=cd + "/")
+
         if Figure13:            
-            # b = 16, r = 1
+            # b = 16, r = 4
             SIRfuncevals(example='SIR', 
                           batch=16, 
-                          r=1, 
+                          method=["ivar", "var", "imse"], 
+                          r=4, 
                           ids='4', 
                           ee="explore", 
                           initial=30, 
@@ -147,7 +161,7 @@ if epimodel:
             
         if Table4:
             interval_score_SIR(examples=examples, 
-                            methods=methods,
+                            methods=["ivar", "var", "imse"],
                             batches=batches, 
                             rep0=[0, 0], 
                             repf=[30, 30], 

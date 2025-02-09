@@ -190,8 +190,9 @@ if __name__ == "__main__":
 
 from summary import lineplot
 
+df = pd.DataFrame(dfl2)
+lineplot(df, examples=[args.funcname], batches=[batch])
+
 df = pd.DataFrame(dfl1)
 lineplot(df, examples=[args.funcname], batches=[batch])
 
-df = pd.DataFrame(dfl2)
-lineplot(df, examples=[args.funcname], batches=[batch])
