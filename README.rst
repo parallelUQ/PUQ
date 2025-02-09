@@ -105,7 +105,7 @@ Running each script should not take more than 60 sec. See the Figure1.png, Figur
 Instructions for running the prominent empirical results:
 
 The following describes how to generate results equivalent to those presented in 
-the top-left corner of Figure~6 for batch size b=8 with the unimodal function.
+the left panel of Figure~6 for batch size b=8 with the unimodal function.
 
 1) Go to the examples/ directory.
 

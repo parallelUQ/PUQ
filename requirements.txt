@@ -1,6 +1,6 @@
-numpy==1.25.2
+numpy==1.26.4
 scipy==1.12.0
 seaborn==0.13.2
 libensemble==0.9.1
 dill==0.3.6
-smt==1.1.0
+smt==2.9.0
