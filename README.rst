@@ -28,7 +28,7 @@ Dependencies
 PUQ is a Python package that employs novel experimental design techniques with intelligent selection criteria, 
 refining data collection to enhance the efficiency and effectiveness of uncertainty quantification.
 
-This code is tested with Python 3.9, 3.10, and 3.11 and requires pip.
+This code is tested with Python 3.9, 3.10, 3.11, and 3.12 and requires pip.
 
 In the following, we provide the instructions to replicate examples from the paper titled 'Batch sequential
 experimental design for calibration of stochastic simulation models.'
@@ -100,7 +100,7 @@ To replicate Figures~1--3, respectively:
     python Figure1_2.py
     python Figure3.py
 
-Running each script should not take more than 60 sec. See the Figure1.png, Figure2.png, and Figure3.png saved under examples/ directory.
+Running each script should not take more than 60 sec. See the Figure1.png, Figure2.png, and Figure3.png saved under ``examples/`` directory.
 
 Instructions for running the prominent empirical results:
 
@@ -113,7 +113,7 @@ the left panel of Figure~6 for batch size b=8 with the unimodal function.
 
     python Figure6_unimodal8.py
 
-Running this script takes about 2hrs. See the Figure6.png saved under ``examples/`` directory.
+Running this script takes about 2hrs. See the Figure6a.png and Figure6b.png saved under ``examples/`` directory.
 
   
 Final comments

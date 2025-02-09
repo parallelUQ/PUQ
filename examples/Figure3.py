@@ -188,7 +188,6 @@ if __name__ == "__main__":
 
             print("Adding point:", np.round(ctheta, 2))
 
-            # emu = build_emulator(x=x, theta=theta0, f=f0[None, :], pcset=pc_settings)
             from PUQ.surrogatemethods.pcHetGP import update
 
             update(emu._info, x=x, X0new=cu, mult=reps)
