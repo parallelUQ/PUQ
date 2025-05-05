@@ -79,7 +79,7 @@ To install the PUQ package:
 
 5) From the command line, use the following command to install PUQ::
 
-    pip install -e .
+    pip install .
 
 Once installed, a user should see ``build/`` directory created.
 
