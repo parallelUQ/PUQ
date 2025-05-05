@@ -124,7 +124,6 @@ Type ``deactivate`` from the command line to deactivate the virtual environment 
 Type ``pip uninstall PUQ`` from the command line to uninstall the package.
 
 
-
 **Citation:**
 
 - Please use the following to cite PUQ in a publication:
