@@ -113,7 +113,10 @@ the left panel of Figure~6 for batch size b=8 with the unimodal function.
 
     python Figure6_unimodal8.py
 
-Running this script takes about 2hrs. See the Figure6a.png and Figure6b.png saved under ``examples/`` directory.
+Running this script takes between 2.3 and 2.4 hours on a MacBook Pro with macOS Monterey, 
+a 2.6 GHz Intel processor, and 16 GB of RAM.
+
+See the Figure6a.png and Figure6b.png saved under ``examples/`` directory.
 
   
 Final comments
