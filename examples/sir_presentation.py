@@ -13,7 +13,7 @@ cls_func = eval("SIR")()
 
 persis_info = {"rand_stream": np.random.default_rng(100)}
 
-ths = [np.array([0.2, 0.2]), np.array([0.4, 0.4])]
+ths = [np.array([0.2, 0.2]), np.array([0.8, 0.8])]
 
 for th in ths:
     nrep = 500
