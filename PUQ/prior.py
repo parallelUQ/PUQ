@@ -9,61 +9,78 @@ class prior_uniform:
         self.p = len(a)
 
     def rnd(self, n, seed=None):
-        if seed == None:
-            pass
-        else:
-            np.random.seed(seed)
+        # if seed == None:
+        #     pass
+        # else:
+        #     np.random.seed(seed)
         thlist = []
         for i in range(self.p):
-            thlist.append(sps.uniform.rvs(self.a[i], self.b[i] - self.a[i], size=n))
+            thlist.append(seed.uniform(self.a[i], self.b[i], size=n))
+            #thlist.append(sps.uniform.rvs(self.a[i], self.b[i] - self.a[i], size=n))
         return np.array(thlist).T
 
-    def pdf(self, theta):
-        ncnd = theta.shape[0]
-        thlist = np.ones(ncnd)
-        for i in range(self.p):
-            thlist *= sps.uniform.pdf(theta[:, i], self.a[i], self.b[i] - self.a[i])
-        return np.array(thlist).T
+# class prior_uniform:
+#     def __init__(self, a, b):
+#         self.a = a
+#         self.b = b
+#         self.p = len(a)
+
+#     def rnd(self, n, seed=None):
+#         if seed == None:
+#             pass
+#         else:
+#             np.random.seed(seed)
+#         thlist = []
+#         for i in range(self.p):
+#             thlist.append(sps.uniform.rvs(self.a[i], self.b[i] - self.a[i], size=n))
+#         return np.array(thlist).T
+
+#     def pdf(self, theta):
+#         ncnd = theta.shape[0]
+#         thlist = np.ones(ncnd)
+#         for i in range(self.p):
+#             thlist *= sps.uniform.pdf(theta[:, i], self.a[i], self.b[i] - self.a[i])
+#         return np.array(thlist).T
 
 
-class prior_truncnorm:
-    def __init__(self, a, b, loc, scale):
-        self.a = a
-        self.b = b
-        self.loc = loc
-        self.scale = scale
-        self.p = len(a)
+# class prior_truncnorm:
+#     def __init__(self, a, b, loc, scale):
+#         self.a = a
+#         self.b = b
+#         self.loc = loc
+#         self.scale = scale
+#         self.p = len(a)
 
-    def rnd(self, n, seed=None):
-        if seed == None:
-            pass
-        else:
-            np.random.seed(seed)
-        thlist = []
-        for i in range(self.p):
-            thlist.append(
-                sps.truncnorm.rvs(
-                    a=self.a[i],
-                    b=self.b[i],
-                    loc=self.loc[i],
-                    scale=self.scale[i],
-                    size=n,
-                )
-            )
-        return np.array(thlist).T
+#     def rnd(self, n, seed=None):
+#         if seed == None:
+#             pass
+#         else:
+#             np.random.seed(seed)
+#         thlist = []
+#         for i in range(self.p):
+#             thlist.append(
+#                 sps.truncnorm.rvs(
+#                     a=self.a[i],
+#                     b=self.b[i],
+#                     loc=self.loc[i],
+#                     scale=self.scale[i],
+#                     size=n,
+#                 )
+#             )
+#         return np.array(thlist).T
 
-    def pdf(self, theta):
-        ncnd = theta.shape[0]
-        thlist = np.ones(ncnd)
-        for i in range(self.p):
-            thlist *= sps.truncnorm.pdf(
-                theta[:, i],
-                a=self.a[i],
-                b=self.b[i],
-                loc=self.loc[i],
-                scale=self.scale[i],
-            )
-        return np.array(thlist).T
+#     def pdf(self, theta):
+#         ncnd = theta.shape[0]
+#         thlist = np.ones(ncnd)
+#         for i in range(self.p):
+#             thlist *= sps.truncnorm.pdf(
+#                 theta[:, i],
+#                 a=self.a[i],
+#                 b=self.b[i],
+#                 loc=self.loc[i],
+#                 scale=self.scale[i],
+#             )
+#         return np.array(thlist).T
 
     # if seed == None:
     #    pass
