@@ -112,8 +112,6 @@ def fit(fitinfo,
         fitinfo['theta'] = H['thetas']
 
     f_c     = np.concatenate((des_init.get('f'), fitinfo['f'].T), axis=1)
-    print(des_init.get('theta').shape)
-    print(fitinfo['theta'].shape)
     t_c     = np.concatenate((des_init.get('theta'), fitinfo['theta']), axis=0)
     
     emu, TV = newiteration(t_c, f_c, data_cls.x, pc_settings, data_test, data_cls.obsvar, data_cls.real_data)
@@ -136,7 +134,6 @@ def fit(fitinfo,
 
 def newiteration(theta, fevals, x, pc_settings, test_data, obsvar, obs):
 
-    print("hay")
     thetatest, ptest, ftest, priortest = None, None, None, None
     if test_data is not None:
         thetatest, ptest, ftest, priortest = (
@@ -148,7 +145,6 @@ def newiteration(theta, fevals, x, pc_settings, test_data, obsvar, obs):
         
     emu = build_emulator(x, theta, fevals, pc_settings) 
     
-    print("kkk")
     d = len(x)
     obsvar3d = obsvar.reshape(1, d, d) 
     
@@ -160,8 +156,6 @@ def newiteration(theta, fevals, x, pc_settings, test_data, obsvar, obs):
     N = St + obsvar3d
     phat = multiple_pdfs(obs, mu, N)
     
-    print("hay")
-
     # Obtain the accuracy on the test set
     if ptest is not None:
         TV = np.mean(np.abs(ptest - phat))
@@ -328,16 +322,11 @@ def gen_f(H, persis_info, gen_specs, libE_info):
                 update_model   = False
 
             if first_iter:
-                
-                                
-                print("hey")
-                
+
                 start_emu = time.time()
                 emu, TV = newiteration(theta_init, f_init, x, pc_settings, test_data, Sigma, y)
                 end_emu = time.time()
                 TVs.append(TV)
-                
-                print("hey")
 
                 n_init = n_workers - 1
                 if theta_add is None:
