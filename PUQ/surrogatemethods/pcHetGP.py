@@ -71,8 +71,8 @@ def fit(
             # print("On site surrogate")
             fi = fs[i, :][None, :]
         emu = emulator(
-            x=np.array([[i]]),
-            theta=theta,
+            x=theta,
+            theta=np.array([[i]]),
             f=fi,
             method="hetGP",
             args={
@@ -121,8 +121,8 @@ def predict(predinfo, fitinfo, x, theta, thetaprime, **kwargs):
         predict_hetGP(
             predinfo=predinfo_hetGP,
             fitinfo=info,
-            x=np.array([[i]]),
-            theta=theta,
+            x=theta,
+            theta=np.array([[i]]),
             thetaprime=thetaprime,
         )
 

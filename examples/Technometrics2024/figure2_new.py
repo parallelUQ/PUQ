@@ -2,7 +2,7 @@ import scipy.stats as sps
 import numpy as np
 import matplotlib.pyplot as plt
 from PUQ.surrogate import emulator
-from PUQ.posterior import posterior
+from PUQ.posterior import multiple_pdfs, compute_postvar
 
 
 class sinlinear:
@@ -56,19 +56,49 @@ if __name__ == "__main__":
                                      "checkHom": True, "penalty": True, "trace": 0, "return.matrices": True, 
                                      "return.hom": False, "factr": 1e9}})
 
-    post = posterior(data_cls=cls_sinlin, emulator=emu)
-
     # Generate test data
     thetatest = np.arange(-10, 10, 0.0025)[:, None]
     ftest = cls_sinlin.function(thetatest)
     ptest = sps.norm.pdf(cls_sinlin.real_data, ftest, np.sqrt(cls_sinlin.obsvar))
+    
+    # predict at mesh
+    nm, d = thetatest.shape[0], cls_sinlin.d
+    pr_test = emu.predict(theta=thetatest, thetaprime=thetatest)
+    mu, Sn = pr_test._info["mean"], pr_test._info["S"]
+    muT = mu.reshape(nm, d)
+    S = Sn.transpose(2, 0, 1)
+    Sigma3d = cls_sinlin.obsvar.reshape(1, cls_sinlin.d, cls_sinlin.d)
+    N = S + Sigma3d
+    M = S + 0.5*Sigma3d
+    posttesthat = multiple_pdfs(cls_sinlin.real_data, muT, N)
+    
+    diags = np.diag(cls_sinlin.obsvar[cls_sinlin.x, cls_sinlin.x.T])
+    coef = (2**cls_sinlin.d) * (np.sqrt(np.pi) ** cls_sinlin.d) * np.sqrt(np.prod(diags))
+    posttestvar = compute_postvar(cls_sinlin.real_data, 
+                                  muT, 
+                                  N, 
+                                  M, 
+                                  coef)
+
+
+    # predict at mesh
+    nm, d = theta.shape[0], cls_sinlin.d
+    pr_test = emu.predict(theta=theta, thetaprime=theta)
+    mu, Sn = pr_test._info["mean"], pr_test._info["S"]
+    muT = mu.reshape(nm, d)
+    S = Sn.transpose(2, 0, 1)
+    Sigma3d = cls_sinlin.obsvar.reshape(1, cls_sinlin.d, cls_sinlin.d)
+    N = S + Sigma3d
+    posttrhat = multiple_pdfs(cls_sinlin.real_data, muT, N)
+        
+    # post = posterior(data_cls=cls_sinlin, emulator=emu)
 
     # Predict via the emulator
     emupred_test = emu.predict(x=cls_sinlin.x, theta=thetatest)
     emupred_tr = emu.predict(x=cls_sinlin.x, theta=theta)
 
-    posttesthat, posttestvar = post.predict(thetatest)
-    posttrhat, posttrvar = post.predict(theta)
+    # posttesthat, posttestvar = post.predict(thetatest)
+    # posttrhat, posttrvar = post.predict(theta)
 
     # Figure 2 (a)
     ft = 20

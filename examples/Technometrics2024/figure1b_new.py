@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import scipy.stats as sps
 from PUQ.designmethods.utils import parse_arguments
 from PUQ.prior import prior_dist
-from PUQ.designmethods.sequential_deterministic import sequential_design
+from PUQ.designmethods.sequential_md_deterministic import sequential_design
 from smt.sampling_methods import LHS
 from test_funcs_new import unimodal
 

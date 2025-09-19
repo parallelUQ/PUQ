@@ -1,5 +1,5 @@
 from PUQ.surrogate import emulator
-from PUQ.surrogatemethods.hetGP import predict as predict_hetGP
+from PUQ.surrogatemethods.homGP import predict as predict_homGP
 import numpy as np
 from PUQ.surrogatemethods.covariances import cov_gen
 from scipy.linalg import cholesky, inv
@@ -71,8 +71,8 @@ def fit(
             # print("On site surrogate")
             fi = fs[i, :][None, :]
         emu = emulator(
-            x=np.array([[i]]),
-            theta=theta,
+            x=theta,
+            theta=np.array([[i]]),
             f=fi,
             method="homGP",
             args={
@@ -115,14 +115,15 @@ def predict(predinfo, fitinfo, x, theta, thetaprime, **kwargs):
     if thetaprime is not None:
         npr = thetaprime.shape[0]
         covmat_pc = np.full((numGPs, n, npr), np.nan)
+
     for i in range(0, numGPs):
         predinfo_hetGP = {}
         info = fitinfo["emulist"][i]
-        predict_hetGP(
+        predict_homGP(
             predinfo=predinfo_hetGP,
             fitinfo=info,
-            x=np.array([[i]]),
-            theta=theta,
+            x=theta,
+            theta=np.array([[i]]),
             thetaprime=thetaprime,
         )
 

@@ -1,6 +1,6 @@
 import numpy as np
 from PUQ.designmethods.support import multiple_pdfs, multiple_determinants
-from PUQ.designmethods.gen_funcs.acquisition_deterministic import ivar, var, imse, rnd, exp
+from PUQ.designmethods.gen_funcs.acquisition_md_deterministic import ivar, var, imse, rnd, exp
 import time
 from PUQ.surrogate import emulator
 
