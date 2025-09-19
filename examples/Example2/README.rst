@@ -20,4 +20,7 @@ To replicate the figures below, respectively:
 Running this script should not take more than 60 sec. See the figures (png files) saved under the directory.
 
 
-![Illustration of PUQ with the example](https://github.com/parallelUQ/PUQ/tree/dev/PUQ_with_hetGPy/examples/Example2/ex2.png)
+.. image:: ex2.png
+   :alt: Illustration of PUQ with the example
+   :align: center
+   :width: 600
