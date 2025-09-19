@@ -90,7 +90,8 @@ def fit(fitinfo,
 
     persis_info = add_unique_random_streams({}, nworkers + 1)
     for perid, per in enumerate(persis_info):
-        persis_info[perid]['rand_stream'] = np.random.default_rng(des_init.get('seed')*(nworkers + 1) + perid)
+        #persis_info[perid]['rand_stream'] = np.random.default_rng(des_init.get('seed')*(nworkers + 1) + perid)
+        persis_info[perid]['x'] = np.random.default_rng(des_init.get('seed')*(nworkers + 1) + perid)
         #persis_info[perid]['rand_stream'] = np.random.default_rng(perid)
 
     # Currently just allow gen to exit if mse goes below threshold value
