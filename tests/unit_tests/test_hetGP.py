@@ -78,5 +78,22 @@ def test_predict():
     assert np.allclose(test_preds._info['nugs'],preds['nugs'])
     assert np.allclose(test_preds._info['covmat'],preds['cov'])
 
+def test_predict_nugs_only():
+
+    reference_model = hetGP()
+    reference_model.mle(X,Y.flatten())
+
+
+    test_model = emulator(x=X,theta=np.array([0]),f=Y,method='hetGP')
+    test_model.fit()
+
+    # test predictions
+    preds = reference_model.predict(Xgrid,xprime=Xgrid,nugs_only=True)
+
+    test_preds = test_model.predict(x=Xgrid,thetaprime=Xgrid,args=dict(nugs_only=True))
+    for key in ['mean','var','covmat']:
+        assert test_preds._info.get(key) is None
+    assert np.allclose(test_preds._info['nugs'],preds['nugs'])
+
 if __name__ == "__main__":
-    test_predict()
+    test_predict_nugs_only()
