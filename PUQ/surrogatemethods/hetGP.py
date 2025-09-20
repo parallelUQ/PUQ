@@ -170,12 +170,19 @@ def predict(predinfo, fitinfo, x, theta, thetaprime=None,rep_no=None, **kwargs):
     if GP is None:
         # use wrapper class to instantiate trained GP
         GP = hetGPWrapper(fitinfo=fitinfo)
+    
+    # handle kws
+    kws = {}
+    eligible_keys = ['nugs_only','interval','interval_lower','interval_upper']
+    for key in eligible_keys:
+        if key in kwargs.keys():
+            kws[key] = kwargs.get('nugs_only')
 
 
-    preds = GP.predict(x=x,xprime=thetaprime)
+    preds = GP.predict(x=x,xprime=thetaprime,**kws)
     # ensure naming consistency
-    predinfo['mean']   = preds['mean']
-    predinfo['var']    = preds['sd2']
-    predinfo['nugs']   = preds['nugs']
-    predinfo['covmat'] = preds['cov']
+    predinfo['mean']   = preds.get('mean')
+    predinfo['var']    = preds.get('sd2')
+    predinfo['nugs']   = preds.get('nugs')
+    predinfo['covmat'] = preds.get('cov')
     return
