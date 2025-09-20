@@ -20,16 +20,8 @@ setup(
     install_requires=[
         "pandas",
         "matplotlib",
-        "libensemble==1.4.2",
-        "torch",
         "scikit-learn",
         "smt",
-    ],
-    ext_modules=[
-        Extension(
-            "PUQ.surrogatesupport.matern_covmat",
-            sources=["PUQ/surrogatesupport/matern_covmat.pyx"],
-        ),
     ],
     include_dirs=[numpy.get_include()],
 )
