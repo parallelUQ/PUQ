@@ -2,9 +2,9 @@ name: CI Papers
 
 on:
   push:
-    branches: [ "main", "develop"]
+    branches: [ "dev/PUQ_with_hetGPy"]
   pull_request:
-    branches: [ "main", "develop"]
+    branches: [ "dev/PUQ_with_hetGPy"]
 
 jobs:
   run-full-tests:
@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
     - uses: actions/checkout@v2
@@ -28,11 +28,7 @@ jobs:
         pip install -r requirements.txt
         pip install -e .
     - name: Test with pytest on main branch (an example from Technometrics paper)
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+      if: github.ref == 'refs/heads/dev/PUQ_with_hetGPy'
       run: |
-        python ./examples/Technometrics2024/figure1b.py
-
-    - name: Test with pytest on main branch (an example from IJOC paper)
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
-      run: |
-        python ./examples/IJOC2024+/ci_example.py -funcname "holder"        
+        python ./examples/Example1/example.py
+     
