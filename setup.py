@@ -1,5 +1,5 @@
 import setuptools
-from setuptools import setup, Extension
+from setuptools import setup
 import numpy
 
 
@@ -17,11 +17,5 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.6",
-    install_requires=[
-        "pandas",
-        "matplotlib",
-        "scikit-learn",
-        "smt",
-    ],
     include_dirs=[numpy.get_include()],
 )
