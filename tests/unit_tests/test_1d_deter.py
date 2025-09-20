@@ -1,4 +1,4 @@
-'''Tests whether the emulator with homGP gives the same result as just using homGP'''
+'''Tests whether the we obtain a design for a one-dimensional deterministic simulation model'''
 
 import sys
 sys.path.append('./')
@@ -68,11 +68,11 @@ def test_build_design():
                                "seed":1,
                                "integral":"importance"})
 
-    assert des_obj.zs.shape == (40, 2)
-    assert des_obj.fs.shape == (40, 1)
+    assert des_obj.zs.shape == (n0 + nmax, 2)
+    assert des_obj.fs.shape == (n0 + nmax, 1)
 
 
 
 if __name__ == "__main__":
-    test_fit()
+    test_build_design()
 
