@@ -25,6 +25,7 @@ jobs:
       run: |
         python -m ensurepip --upgrade
         python -m pip install --upgrade pip setuptools wheel
+        pip install numpy scipy
         pip install -r requirements.txt
         pip install -e . --use-pep517
     - name: Test with pytest on main branch (an example from Technometrics paper)
