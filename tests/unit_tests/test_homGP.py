@@ -54,7 +54,6 @@ def test_predict():
     assert np.allclose(test_preds._info['nugs'],preds['nugs'])
     assert np.allclose(test_preds._info['covmat'],preds['cov'])
 
-
 def test_predict_nugs_only():
 
     reference_model = homGP()
@@ -94,6 +93,30 @@ def test_matern():
     assert test_model._info['beta0'] == reference_model['beta0']
 
 
+def test_homGP_update_kriging_believer():
+    reference_model = homGP()
+    reference_model.mle(X,Y.flatten())
+
+    Xnew = X.mean().reshape(-1,1)
+    Ypred = reference_model.predict(Xnew)['mean']
+    reference_model.predict(Xnew,Ypred)
+    reference_model_checkpoint = reference_model.copy()
+    reference_model.update(Xnew,Ypred,maxit=0)
+    
+    test_model = emulator(x=X,theta=np.array([0]),f=Y,
+                          method='homGP')
+    test_model.fit()
+    test_model.update(Xnew)
+
+    assert test_model._info['ll']    == reference_model['ll']
+    assert test_model._info['theta'] == reference_model['theta']
+    assert test_model._info['g']     == reference_model['g']
+    assert test_model._info['beta0'] == reference_model['beta0']
+
+
+#def test_homGP_update_()
+
+
 if __name__ == "__main__":
-    test_predict_nugs_only()
+    test_homGP_update_kriging_believer()
 
