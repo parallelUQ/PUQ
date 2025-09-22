@@ -160,7 +160,7 @@ class hetGPWrapper(hetGP):
 
         # model hyperparameters
         for key in keys_to_transfer:
-            self[key] = fitinfo[key]   
+            setattr(self,key,fitinfo[key])   
 
 def predict(predinfo, fitinfo, x, theta, thetaprime=None,rep_no=None, **kwargs):
     r'''
