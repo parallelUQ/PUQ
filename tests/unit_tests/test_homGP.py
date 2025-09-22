@@ -100,7 +100,6 @@ def test_homGP_update_kriging_believer():
     Xnew = X.mean().reshape(-1,1)
     Ypred = reference_model.predict(Xnew)['mean']
     reference_model.predict(Xnew,Ypred)
-    reference_model_checkpoint = reference_model.copy()
     reference_model.update(Xnew,Ypred,maxit=0)
     
     test_model = emulator(x=X,theta=np.array([0]),f=Y,
@@ -113,10 +112,26 @@ def test_homGP_update_kriging_believer():
     assert test_model._info['g']     == reference_model['g']
     assert test_model._info['beta0'] == reference_model['beta0']
 
+def test_homGP_update():
+    reference_model = homGP()
+    reference_model.mle(X,Y.flatten())
 
-#def test_homGP_update_()
+    Xnew = X.mean().reshape(-1,1)
+    Ypred = reference_model.predict(Xnew)['mean']
+    reference_model.predict(Xnew,Ypred)
+    reference_model.update(Xnew,Ypred)
+    
+    test_model = emulator(x=X,theta=np.array([0]),f=Y,
+                          method='homGP')
+    test_model.fit()
+    test_model.update(x=Xnew,Y=Ypred)
+
+    assert test_model._info['ll']    == reference_model['ll']
+    assert test_model._info['theta'] == reference_model['theta']
+    assert test_model._info['g']     == reference_model['g']
+    assert test_model._info['beta0'] == reference_model['beta0']
 
 
 if __name__ == "__main__":
-    test_homGP_update_kriging_believer()
+    test_homGP_update()
 
