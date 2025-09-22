@@ -82,6 +82,7 @@ def fit(fitinfo, x, theta, f, lower=None, upper=None,
     for key in model.__dict__.keys():
         fitinfo[key] = model.get(key) 
     fitinfo['is_homGP'] = True
+    del model
     return
 
 
@@ -119,7 +120,34 @@ def predict(predinfo, fitinfo, x, theta, thetaprime=None, **kwargs):
     predinfo['var']    = preds.get('sd2')
     predinfo['nugs']   = preds.get('nugs')
     predinfo['covmat'] = preds.get('cov')
+    del GP
 
-def update(fitinfo, x):
+def update(fitinfo, x,Y = None,**kwargs):
+    r'''
+    Update function for homGP
 
+    Parameters
+    ----------
+    fitinfo: dictionary that contains the fit information for a hetgpy.homGP object
+    x: array of new design locations
+    Y: new response. If None, then 
+    kwargs: key-value pairs that get passed to hetgpy.homGP.update. Must be one of:
+    '''
+    # validate kwargs
+    valid_kws = ('ginit','lower','upper',
+                 'noiseControl','settings','known','maxit')
+    for kw in kwargs.keys():
+        if kw not in valid_kws:
+            raise ValueError(f"{kw} not found, must be one of {valid_kws}")
+    GP = homGPWrapper(fitinfo)
+    if Y is None:
+        maxit = 0 # impute mean response and do not update hyperparams
+        Y = GP.predict(x)['mean']
+    else:
+        maxit = kwargs.get('maxit',100)
+    kwargs['maxit'] = maxit
+    GP.update(Xnew=x,Znew=Y,**kwargs)
+    for key in GP.__dict__.keys():
+        fitinfo[key] = GP.get(key)
+    del GP
     return
