@@ -99,7 +99,6 @@ def test_homGP_update_kriging_believer():
 
     Xnew = X.mean().reshape(-1,1)
     Ypred = reference_model.predict(Xnew)['mean']
-    reference_model.predict(Xnew,Ypred)
     reference_model.update(Xnew,Ypred,maxit=0)
     
     test_model = emulator(x=X,theta=np.array([0]),f=Y,
@@ -118,7 +117,6 @@ def test_homGP_update():
 
     Xnew = X.mean().reshape(-1,1)
     Ypred = reference_model.predict(Xnew)['mean']
-    reference_model.predict(Xnew,Ypred)
     reference_model.update(Xnew,Ypred)
     
     test_model = emulator(x=X,theta=np.array([0]),f=Y,
