@@ -156,7 +156,8 @@ def update(fitinfo, x,Y = None,**kwargs):
     fitinfo: dictionary that contains the fit information for a hetgpy.homGP object
     x: array of new design locations
     Y: new response. If None, then 
-    kwargs: key-value pairs that get passed to hetgpy.homGP.update. Must be one of:
+    kwargs: key-value pairs that get passed to hetgpy.hetGP.update. 
+        Must be one of: ginit, lower, upper, noiseControl, settings, known, maxit, method
     '''
     # validate kwargs
     valid_kws = ('ginit','lower','upper',
