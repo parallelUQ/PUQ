@@ -108,29 +108,9 @@ def fit(fitinfo, x, theta, f,
             eps=eps,
             covtype=covtype
     )
-    fitinfo['ll']   = model.get('ll')
-    fitinfo['Delta'] = model.get('Delta')
-    fitinfo['theta'] = model.get('theta')
-    fitinfo['g'] = model.get('g')  
-    fitinfo['k_theta_g'] = model.get('k_theta_g') 
-    fitinfo['theta_g'] = model.get('theta_g')  
-    fitinfo['nmean'] = model.get('nmean')
-    fitinfo['Lambda'] = model.get('Lambda')
-    fitinfo['logN'] = model.get('logN')
-    fitinfo['nu_hat_var'] = model.get('nu_hat_var')
-    fitinfo['nu_hat'] = model.get('nu_hat')
-    fitinfo['Kgi']    = model.get('Kgi')
-    fitinfo['SiNK']   = model.get('SiNK')
-    fitinfo['Ki'] = model.get('Ki') 
-    fitinfo['X0'] = model.get('X0')
-    fitinfo['Z0'] = model.get('Z0')
-    fitinfo['Z']  = model.get('Z')
-    fitinfo['mult'] = model.get('mult')
-    fitinfo['covtype'] = model.get('covtype')
-    fitinfo['beta0'] = model.get('beta0')
-    fitinfo['eps'] = model.get('eps')
-    fitinfo['trendtype'] = model.get('trendtype')
-    fitinfo['is_homGP'] = model.get('is_homGP')
+    for key in model.__dict__.keys():
+        fitinfo[key] = model.get(key) 
+    fitinfo['is_homGP'] = False
     return
     
 class hetGPWrapper(hetGP):
@@ -140,26 +120,7 @@ class hetGPWrapper(hetGP):
 
     '''
     def __init__(self,fitinfo):
-        
-        keys_to_transfer = [
-            'X0','Z0','Z', # data
-            'covtype',     # kernel
-            'theta', 'g', 'beta0','trendtype', # hyperparameters
-            'Lambda', 'Delta', # latent noise
-            'theta_g','k_theta_g', # noise hyperparameters
-            'nu_hat_var', # noise variance
-            'Kgi', # noise covariance inverse
-            'SiNK',
-            'nmean',
-            'logN', 
-            'g', # nugget
-            'Ki', # inverse covariance matrix
-            'eps', # for numeric stability
-            'nu_hat' # output from maximum likelihood
-        ]
-
-        # model hyperparameters
-        for key in keys_to_transfer:
+        for key in fitinfo.keys():
             setattr(self,key,fitinfo[key])   
 
 def predict(predinfo, fitinfo, x, theta, thetaprime=None,rep_no=None, **kwargs):

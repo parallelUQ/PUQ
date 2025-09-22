@@ -79,20 +79,8 @@ def fit(fitinfo, x, theta, f, lower=None, upper=None,
                      eps=eps,
                      settings=settings)
     
-    fitinfo['theta'] = model['theta']
-    fitinfo['g'] = model['g']  
-    fitinfo['nu_hat'] = model['nu_hat']
-    fitinfo['Ki'] = model['Ki']  
-    fitinfo['X0'] = model['X0']
-    fitinfo['Z0'] = model['Z0']
-    fitinfo['Z']  = model['Z']
-    fitinfo['mult'] = model['mult']
-    fitinfo['beta0'] = model['beta0']
-    fitinfo['ll'] = model['ll']
-    fitinfo['covtype'] = model['covtype']
-    fitinfo['nu_hat']  = model['nu_hat']    
-    fitinfo['trendtype'] = model['trendtype']  
-    fitinfo['eps'] = model['eps']  
+    for key in model.__dict__.keys():
+        fitinfo[key] = model.get(key) 
     fitinfo['is_homGP'] = True
     return
 
@@ -104,18 +92,8 @@ class homGPWrapper(homGP):
 
     '''
     def __init__(self,fitinfo):
-        
-        keys_to_transfer = [
-            'X0','Z0','Z', # data
-            'covtype',     # kernel
-            'theta', 'g', 'beta0','trendtype', # hyperparameters
-            'Ki', # inverse covariance matrix
-            'eps', # for numeric stability
-            'nu_hat' # output from maximum likelihood
-        ]
-
         # model hyperparameters
-        for key in keys_to_transfer:
+        for key in fitinfo.keys():
             setattr(self,key,fitinfo[key])
 
 
@@ -141,3 +119,7 @@ def predict(predinfo, fitinfo, x, theta, thetaprime=None, **kwargs):
     predinfo['var']    = preds.get('sd2')
     predinfo['nugs']   = preds.get('nugs')
     predinfo['covmat'] = preds.get('cov')
+
+def update(fitinfo, x):
+
+    return
