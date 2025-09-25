@@ -339,6 +339,9 @@ class emulator(object):
         info = {}
         self.method.predict(info, self._info, x, theta, thetaprime, **argstemp)
         return prediction(info, self)
+    def update(self,x=None,Y=None,**kwargs):
+
+        self.method.update(self._info,x=x,Y=Y,**kwargs)
 
     def acquisition(self, x=None, theta1=None, theta2=None):
         return self.method.acquisition(self._info, x, theta1, theta2)

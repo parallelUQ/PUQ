@@ -108,29 +108,9 @@ def fit(fitinfo, x, theta, f,
             eps=eps,
             covtype=covtype
     )
-    fitinfo['ll']   = model.get('ll')
-    fitinfo['Delta'] = model.get('Delta')
-    fitinfo['theta'] = model.get('theta')
-    fitinfo['g'] = model.get('g')  
-    fitinfo['k_theta_g'] = model.get('k_theta_g') 
-    fitinfo['theta_g'] = model.get('theta_g')  
-    fitinfo['nmean'] = model.get('nmean')
-    fitinfo['Lambda'] = model.get('Lambda')
-    fitinfo['logN'] = model.get('logN')
-    fitinfo['nu_hat_var'] = model.get('nu_hat_var')
-    fitinfo['nu_hat'] = model.get('nu_hat')
-    fitinfo['Kgi']    = model.get('Kgi')
-    fitinfo['SiNK']   = model.get('SiNK')
-    fitinfo['Ki'] = model.get('Ki') 
-    fitinfo['X0'] = model.get('X0')
-    fitinfo['Z0'] = model.get('Z0')
-    fitinfo['Z']  = model.get('Z')
-    fitinfo['mult'] = model.get('mult')
-    fitinfo['covtype'] = model.get('covtype')
-    fitinfo['beta0'] = model.get('beta0')
-    fitinfo['eps'] = model.get('eps')
-    fitinfo['trendtype'] = model.get('trendtype')
-    fitinfo['is_homGP'] = model.get('is_homGP')
+    for key in model.__dict__.keys():
+        fitinfo[key] = model.get(key) 
+    fitinfo['is_homGP'] = False
     return
     
 class hetGPWrapper(hetGP):
@@ -140,27 +120,8 @@ class hetGPWrapper(hetGP):
 
     '''
     def __init__(self,fitinfo):
-        
-        keys_to_transfer = [
-            'X0','Z0','Z', # data
-            'covtype',     # kernel
-            'theta', 'g', 'beta0','trendtype', # hyperparameters
-            'Lambda', 'Delta', # latent noise
-            'theta_g','k_theta_g', # noise hyperparameters
-            'nu_hat_var', # noise variance
-            'Kgi', # noise covariance inverse
-            'SiNK',
-            'nmean',
-            'logN', 
-            'g', # nugget
-            'Ki', # inverse covariance matrix
-            'eps', # for numeric stability
-            'nu_hat' # output from maximum likelihood
-        ]
-
-        # model hyperparameters
-        for key in keys_to_transfer:
-            self[key] = fitinfo[key]   
+        for key in fitinfo.keys():
+            setattr(self,key,fitinfo[key])   
 
 def predict(predinfo, fitinfo, x, theta, thetaprime=None,rep_no=None, **kwargs):
     r'''
@@ -185,4 +146,34 @@ def predict(predinfo, fitinfo, x, theta, thetaprime=None,rep_no=None, **kwargs):
     predinfo['var']    = preds.get('sd2')
     predinfo['nugs']   = preds.get('nugs')
     predinfo['covmat'] = preds.get('cov')
+    return
+def update(fitinfo, x,Y = None,**kwargs):
+    r'''
+    Update function for homGP
+
+    Parameters
+    ----------
+    fitinfo: dictionary that contains the fit information for a hetgpy.homGP object
+    x: array of new design locations
+    Y: new response. If None, then 
+    kwargs: key-value pairs that get passed to hetgpy.hetGP.update. 
+        Must be one of: ginit, lower, upper, noiseControl, settings, known, maxit, method
+    '''
+    # validate kwargs
+    valid_kws = ('ginit','lower','upper',
+                 'noiseControl','settings','known','maxit','method')
+    for kw in kwargs.keys():
+        if kw not in valid_kws:
+            raise ValueError(f"{kw} not found, must be one of {valid_kws}")
+    GP = hetGPWrapper(fitinfo)
+    if Y is None:
+        maxit = 0 # impute mean response and do not update hyperparams
+        Y = GP.predict(x)['mean']
+    else:
+        maxit = kwargs.get('maxit',100)
+    kwargs['maxit'] = maxit
+    GP.update(Xnew=x,Znew=Y,**kwargs)
+    for key in GP.__dict__.keys():
+        fitinfo[key] = GP.get(key)
+    del GP
     return
