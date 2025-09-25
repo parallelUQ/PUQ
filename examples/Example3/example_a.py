@@ -88,5 +88,5 @@ for sid, sm in enumerate(s_mean):
     ax[sid].tick_params(axis="both", which="major", labelsize=ft - 5)
 fig.suptitle("Simulation Time Increases \u2192", fontsize=ft)
 fig.tight_layout()
-plt.savefig("ex3_a.jpg", format="jpeg", bbox_inches="tight", dpi=500)
+plt.savefig("ex3_a.png", format="jpeg", bbox_inches="tight", dpi=500)
 plt.show()

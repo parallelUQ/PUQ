@@ -347,7 +347,8 @@ class ivar(acquisition_function):
 
         if return_pseudo:
             pnew = self.model.predict(x=self.znew)
-            fnew = np.array([pnew["mean"]])[None, :]
+            # fnew = np.array([pnew["mean"]])[None, :]
+            fnew = np.array([pnew._info["mean"]])[None, :]
             self.fnew = fnew
 
         return self
@@ -542,7 +543,8 @@ class lookahead(acquisition_function):
                 alloc_obj.allocatereps()
                 mult_star = alloc_obj.reps
             
-            tab_input = mult_star - self.model.mult
+            # tab_input = mult_star - self.model.mult
+            tab_input = mult_star - self.model._info["mult"]
             tab_input[tab_input < 0] = 0
             
             # import matplotlib.pyplot as plt

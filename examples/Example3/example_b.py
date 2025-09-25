@@ -133,5 +133,5 @@ for vid, var in enumerate(varlist):
     cbar.set_ticks(batches)
 fig.suptitle("Variability in Simulation Time Increases \u2192", fontsize=ft)
 fig.tight_layout()
-plt.savefig("ex3_b.jpg", format="jpeg", bbox_inches="tight", dpi=500)
+plt.savefig("ex3_b.png", format="jpeg", bbox_inches="tight", dpi=500)
 plt.show()
