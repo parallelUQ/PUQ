@@ -26,8 +26,8 @@ class allocate:
         self.trace = trace
         self.func_cls = func_cls
         self.rand_stream = rand_stream
-        self.z = self.model['X0']
-        self.a0 = self.model['mult']
+        self.z = self.model._info['X0'] # self.model['X0']
+        self.a0 = self.model._info['mult']  # self.model['mult']
      
         
 
@@ -87,10 +87,12 @@ class allocate:
         id_col = np.repeat(id_col, repeats=d, axis=0)
 
          # predict at mesh       
-        meshPr = self.model.predict(x=z, xprime=z)
+        # meshPr = self.model.predict(x=z, xprime=z)
+        meshPr = self.model.predict(x=z, thetaprime=z)
         
         # ntot, ntot x ntot, ntot
-        mu, Sn = meshPr["mean"], meshPr["cov"]
+        # mu, Sn = meshPr["mean"], meshPr["cov"]
+        mu, Sn = meshPr._info["mean"], meshPr._info["covmat"]
 
         muT = mu.reshape(n_integ, d)
         S = Sn[id_row[:, None], id_col].reshape(n_integ, d, d)
@@ -122,9 +124,11 @@ class allocate:
         pred_nugs = self.model.predict(x=self.z, args=dict(nugs_only=True)) #nugs_only=True)
         # n x n
         if self.use_Ki:
-            Ki = self.model['Ki']
+            # Ki = self.model['Ki']
+            Ki = self.model._info['Ki']
         else:
-            K = cov_gen(X1=self.z, theta=self.model['theta'], type = self.model['covtype'])
+            # K = cov_gen(X1=self.z, theta=self.model['theta'], type = self.model['covtype'])
+            K = cov_gen(X1=self.z, theta=self.model._info['theta'], type = self.model._info['covtype'])
             Ki = scipy.linalg.pinv(K, rcond=self.eps)
                 
         ids = np.arange(0, len(z), d)
@@ -140,15 +144,18 @@ class allocate:
                 zo = z[ids + j]
                 
                 # n x n_integ
-                kv = cov_gen(X1=self.z, X2=zo, theta=self.model['theta'], type = self.model['covtype'])
+                # kv = cov_gen(X1=self.z, X2=zo, theta=self.model['theta'], type = self.model['covtype'])
+                kv = cov_gen(X1=self.z, X2=zo, theta=self.model._info['theta'], type = self.model._info['covtype'])
 
                 for jp in range(0, d):
                     # n_integ x 1
                     zop = z[ids + jp]
                     
                     # n x n_integ
-                    kvp = cov_gen(X1=self.z, X2=zop, theta=self.model['theta'], type = self.model['covtype'])
-                    Mb[i, :, j, jp] = -pred_nugs["nugs"][i]*np.einsum('ji,jk,ki->i', kv, A, kvp) 
+                    # kvp = cov_gen(X1=self.z, X2=zop, theta=self.model['theta'], type = self.model['covtype'])
+                    kvp = cov_gen(X1=self.z, X2=zop, theta=self.model._info['theta'], type = self.model._info['covtype'])
+                    # Mb[i, :, j, jp] = -pred_nugs["nugs"][i]*np.einsum('ji,jk,ki->i', kv, A, kvp) 
+                    Mb[i, :, j, jp] = -pred_nugs._info['nugs'][i]*np.einsum('ji,jk,ki->i', kv, A, kvp) 
 
         dlogfdai = np.zeros((n, n_integ))
         dloggdai = np.zeros((n, n_integ))
