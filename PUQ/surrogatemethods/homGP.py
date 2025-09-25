@@ -62,8 +62,8 @@ def fit(fitinfo, x, theta, f, lower=None, upper=None,
 
     Returns
     -------
-    fitinfo: dictionary containing fit results
-
+    None, but fitinfo is updated with maximum likelihood estimates for theta and beta0
+    
     '''
     f = f.flatten()
     model = homGP()
