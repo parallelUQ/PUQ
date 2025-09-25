@@ -60,5 +60,13 @@ def predict(predinfo,fitinfo,x,theta,thetaprime,**kws):
 
     return
 
-def update():
+def update(fitinfo, x,Y = None,**kwargs):
+    numGPs = fitinfo['numGPs']
+    for i in range(numGPs):
+        emu = fitinfo['emulist'][i]
+        if Y is not None:
+            Yi = Y[:,i]
+        else:
+            Yi = None
+        emu.update(x=x,Y=Yi,**kwargs)
     return
