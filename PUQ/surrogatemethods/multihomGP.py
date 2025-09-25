@@ -1,8 +1,7 @@
 '''
-Set of functions to fit a GP to each dimension of output data
+Set of functions to fit a homoskedastic GP to each dimension of output data
 '''
 import numpy as np
-from hetgpy import homGP
 from PUQ.surrogate import emulator
 
 def fit(fitinfo, x, theta, f, lower=None, upper=None,
