@@ -3,9 +3,8 @@ This module contains a class that implements the main emulation method.
 """
 import numpy as np
 import importlib
-import copy
 import warnings
-
+import copy, types
 
 class emulator(object):
     def __init__(
@@ -351,6 +350,22 @@ class emulator(object):
         return self.method.computeC(self._info, x, theta1, realdata, realvar)
         
 
+    def __deepcopy__(self, memo):
+        # create a blank instance without calling __init__
+        new = self.__class__.__new__(self.__class__)
+        memo[id(self)] = new
+
+        for k, v in self.__dict__.items():
+            if isinstance(v, types.ModuleType):
+                # leave module references as-is
+                setattr(new, k, v)
+            elif k == "_info":
+                # force deep copy of _info so updates won't affect the original
+                setattr(new, k, copy.deepcopy(v, memo))
+            else:
+                # default deepcopy for everything else
+                setattr(new, k, copy.deepcopy(v, memo))
+        return new
 
     def __optionsset(self, options=None):
         options = copy.deepcopy(options)
