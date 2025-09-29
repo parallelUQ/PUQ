@@ -1,31 +1,8 @@
+'''
+Set of functions to fit a heteroskedastic GP to each dimension of output data
+'''
 import numpy as np
-from hetgpy import hetGP
-
-###############################################################################
-## Heterogeneous GP with all options for the fit
-###############################################################################
-
-## ' log-likelihood in the anisotropic case - one lengthscale by variable
-## ' Model: K = nu2 * (C + Lambda) = nu using all observations using the replicates information
-## ' nu2 is replaced by its plugin estimator in the likelihood
-## ' @param X0 unique designs
-## ' @param Z0 averaged observations
-## ' @param Z replicated observations (sorted with respect to X0)
-## ' @param mult number of replicates at each Xi
-## ' @param Delta vector of nuggets corresponding to each X0i or pXi, that are smoothed to give Lambda
-## ' @param logN should exponentiated variance be used
-## ' @param SiNK should the smoothing come from the SiNK predictor instead of the kriging one
-## ' @param theta scale parameter for the mean process, either one value (isotropic) or a vector (anistropic)
-## ' @param k_theta_g constant used for linking nuggets lengthscale to mean process lengthscale, i.e., theta_g[k] = k_theta_g * theta[k], alternatively theta_g can be used
-## ' @param theta_g either one value (isotropic) or a vector (anistropic), alternative to using k_theta_g
-## ' @param g nugget of the nugget process
-## ' @param pX matrix of pseudo inputs locations of the noise process for Delta (could be replaced by a vector to avoid double loop)
-## ' @param beta0 mean, if not provided, the MLE estimator is used
-## ' @param eps minimal value of elements of Lambda
-## ' @param covtype covariance kernel type
-## ' @param penalty should a penalty term on Delta be used?
-## ' @param hom_ll reference homoskedastic likelihood
-## ' @export
+from PUQ.surrogate import emulator
 
 def fit(fitinfo, x, theta, f, 
         lower=None, 
@@ -52,7 +29,7 @@ def fit(fitinfo, x, theta, f,
             - ``mult`` number of replicates at designs in ``X0``, of length ``len(X0)``
     theta: not used
     f : ndarray_like
-        Z vector of all observations. If using a list with ``X``, ``Z`` has to be ordered with respect to ``X0``, and of length ``sum(mult)``
+        output array for training. One GP is trained for each output column.
     lower,upper : ndarray_like 
         optional bounds for the ``theta`` parameter (see :func: covariance_functions.cov_gen for the exact parameterization).
         In the multivariate case, it is possible to give vectors for bounds (resp. scalars) for anisotropy (resp. isotropy)
@@ -95,87 +72,97 @@ def fit(fitinfo, x, theta, f,
     maxit : int
             maximum number of iterations for `L-BFGS-B` of :func: ``scipy.optimize.minimize`` dedicated to maximum likelihood optimization
     '''
-
-    f = f.flatten()
-    model = hetGP()
-    model.mle(X = x, 
-            Z = f, 
-            known=known,
-            noiseControl=noiseControl, 
-            lower=lower, 
-            upper=upper,
-            maxit=maxit,
-            settings=settings, 
-            init=init, 
-            eps=eps,
-            covtype=covtype
-    )
-    for key in model.__dict__.keys():
-        fitinfo[key] = model.get(key) 
-    fitinfo['is_homGP'] = False
+    numGPs = f.shape[1]
+    emulist = [dict() for x in range(0, numGPs)]
+    for i in range(numGPs):
+        emu = emulator(
+                x=x,
+                theta=np.array([[0]]),
+                f=f[:,i:i+1],
+                method="hetGP",
+                args={
+                    "noiseControl": noiseControl,
+                    "lower": lower,
+                    "upper": upper,
+                    "settings": settings,
+                    "init": init,
+                    "known": known,
+                    "covtype": covtype,
+                    "maxit": maxit,
+                    "eps": eps
+                }
+            )
+        emulist[i] = emu
+    fitinfo["f"] = f
+    fitinfo["emulist"] = emulist
+    fitinfo["numGPs"] = numGPs
     return
-    
-class hetGPWrapper(hetGP):
-    '''
-    A class that converts the information in fitinfo (from the fit and predict methods) to a class so
-    it can be used to make predictions with hetgpy.hetGP
-
-    '''
-    def __init__(self,fitinfo):
-        for key in fitinfo.keys():
-            setattr(self,key,fitinfo[key])   
-
-def predict(predinfo, fitinfo, x, theta, thetaprime=None,rep_no=None, **kwargs):
+def predict(predinfo,fitinfo,x,theta,thetaprime,**kws):
     r'''
-    Wrapper method for hetgpy.hetGP.predict
-    '''
-    GP = fitinfo.get('model')
-    if GP is None:
-        # use wrapper class to instantiate trained GP
-        GP = hetGPWrapper(fitinfo=fitinfo)
-    
-    # handle kws
-    kws = {}
-    eligible_keys = ['nugs_only','interval','interval_lower','interval_upper']
-    for key in eligible_keys:
-        if key in kwargs.keys():
-            kws[key] = kwargs.get('nugs_only')
-
-
-    preds = GP.predict(x=x,xprime=thetaprime,**kws)
-    # ensure naming consistency
-    predinfo['mean']   = preds.get('mean')
-    predinfo['var']    = preds.get('sd2')
-    predinfo['nugs']   = preds.get('nugs')
-    predinfo['covmat'] = preds.get('cov')
-    return
-def update(fitinfo, x,Y = None,**kwargs):
-    r'''
-    Update function for homGP
+    Wrapper method for hetGP.predict
 
     Parameters
     ----------
-    fitinfo: dictionary that contains the fit information for a hetgpy.homGP object
-    x: array of new design locations
-    Y: new response. If None, then 
-    kwargs: key-value pairs that get passed to hetgpy.hetGP.update. 
-        Must be one of: ginit, lower, upper, noiseControl, settings, known, maxit, method
+    predinfo: dict
+        (empty) dictionary that will hold prediction results
+    fitinfo: dict
+        dictionary with hetgpy.hetGP-trained hyperparameters and inverse covariance matrices. fitinfo is converted back into a hetgpy.hetGP object for prediction
+    x: ndarray
+        nxd numpy array for prediction. Must match same number of columns as supplied to `fitinfo["X0"]`
+    theta: ndarray
+        Deprecated, but used to specify output dimension
+    thetaprime: ndarray
+        nxd numpy array for calculating covariance matrix
+    kwargs: dict
+        additional keyword arguments passed to hetgpy.hetGP.predict
+    
+    Returns
+    -------
+    None, but predinfo is populated with `mean`, `variance`,`nugs`, and `covmat` fields. 
+    `mean`, `variance`, and `nugs` are stored as ndarrays, with each column corresponding to the prediction for the ith output column. 
+    `covmat` is stored as a list of matrices with the ith element corresponding to the ith output column
     '''
-    # validate kwargs
-    valid_kws = ('ginit','lower','upper',
-                 'noiseControl','settings','known','maxit','method')
-    for kw in kwargs.keys():
-        if kw not in valid_kws:
-            raise ValueError(f"{kw} not found, must be one of {valid_kws}")
-    GP = hetGPWrapper(fitinfo)
-    if Y is None:
-        maxit = 0 # impute mean response and do not update hyperparams
-        Y = GP.predict(x)['mean']
-    else:
-        maxit = kwargs.get('maxit',100)
-    kwargs['maxit'] = maxit
-    GP.update(Xnew=x,Znew=Y,**kwargs)
-    for key in GP.__dict__.keys():
-        fitinfo[key] = GP.get(key)
-    del GP
+    numGPs = fitinfo['numGPs']
+    emulist = [dict() for x in range(0, numGPs)]
+
+    # instantiate outputs
+    nr, nc = (x.shape[0],numGPs)
+    for key in ('mean','var','nugs'):
+        predinfo[key] = np.zeros(shape=(nr,nc),dtype=float)
+    predinfo['covmat'] = [np.zeros(shape=(nr,nr),dtype=float)
+                          for i in range(numGPs)
+                        ]
+    for i in range(numGPs):
+        preds = fitinfo['emulist'][i].predict(x=x,thetaprime=thetaprime)
+        predinfo['mean'][:,i] = preds._info['mean']
+        predinfo['var'][:,i] = preds._info['var']
+        predinfo['nugs'][:,i] = preds._info['nugs']
+        predinfo['covmat'][i] = preds._info['covmat']
+
+    return
+
+def update(fitinfo, x,Y = None,**kwargs):
+    r'''
+    Update function for hetGP
+
+    Parameters
+    ----------
+    fitinfo: dictionary that contains the fit information for a hetgpy.hetGP object
+    x: array of new design locations
+    Y: new response. If None, then a kriging believer approach is used to impute the predicted mean at the design location
+    kwargs: key-value pairs that get passed to hetgpy.hetGP.update. 
+            Must be one of: ginit, lower, upper, noiseControl, settings, known, maxit
+    
+    Returns
+    -------
+    None, but fitinfo is updated in place and individual emulator are accessed via fitinfo["emulist"]
+    '''
+    numGPs = fitinfo['numGPs']
+    for i in range(numGPs):
+        emu = fitinfo['emulist'][i]
+        if Y is not None:
+            Yi = Y[:,i]
+        else:
+            Yi = None
+        emu.update(x=x,Y=Yi,**kwargs)
     return

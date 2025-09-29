@@ -62,8 +62,8 @@ def fit(fitinfo, x, theta, f, lower=None, upper=None,
 
     Returns
     -------
-    fitinfo: dictionary containing fit results
-
+    None, but fitinfo is updated with maximum likelihood estimates
+    
     '''
     f = f.flatten()
     model = homGP()
@@ -101,6 +101,25 @@ class homGPWrapper(homGP):
 def predict(predinfo, fitinfo, x, theta, thetaprime=None, **kwargs):
     r'''
     Wrapper method for hetgpy.homGP.predict
+
+    Parameters
+    ----------
+    predinfo: dict
+        (empty) dictionary that will hold prediction results
+    fitinfo: dict
+        dictionary with hetgpy.homGP-trained hyperparameters and inverse covariance matrices. fitinfo is converted back into a hetgpy.homGP object for prediction
+    x: ndarray
+        nxd numpy array for prediction. Must match same number of columns as supplied to `fitinfo["X0"]`
+    theta: ndarray
+        Deprecated, but used to specify output dimension
+    thetaprime: ndarray
+        nxd numpy array for calculating covariance matrix
+    kwargs: dict
+        additional keyword arguments passed to hetgpy.homGP.predict
+    
+    Returns
+    -------
+    None, but predinfo is populated with `mean`, `variance`, and `covmat` fields
     '''
     GP = fitinfo.get('model')
     if GP is None:
@@ -130,9 +149,13 @@ def update(fitinfo, x,Y = None,**kwargs):
     ----------
     fitinfo: dictionary that contains the fit information for a hetgpy.homGP object
     x: array of new design locations
-    Y: new response. If None, then 
+    Y: new response. If None, then a kriging believer approach is used to impute the predicted mean at the design location
     kwargs: key-value pairs that get passed to hetgpy.homGP.update. 
             Must be one of: ginit, lower, upper, noiseControl, settings, known, maxit
+    
+    Returns
+    -------
+    None, but fitinfo is updated in place
     '''
     # validate kwargs
     valid_kws = ('ginit','lower','upper',
