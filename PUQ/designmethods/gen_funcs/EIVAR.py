@@ -42,7 +42,7 @@ def eivar(
 
     liar = np.mean(fevals_c)
 
-    print(fevals_c.shape)
+    # print(fevals_c.shape)
 
     for i in range(n):
         clist = prior_func.rnd(candsize, None)
