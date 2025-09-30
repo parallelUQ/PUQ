@@ -1,6 +1,6 @@
 import numpy as np
 from PUQ.designmethods.support import multiple_pdfs, multiple_determinants
-from PUQ.designmethods.gen_funcs.acquisition_md_deterministic import ivar, var, imse, rnd, exp
+from PUQ.designmethods.gen_funcs.acquisition_md_deterministic_old import ivar, var, imse, rnd, exp
 import time
 from PUQ.surrogate import emulator
 
@@ -31,25 +31,23 @@ class sequential_design:
         H = []
         timel = []
         metric_sum = {}
-        
-        md = np.arange(f0.shape[1]).reshape(f0.shape[1], 1)
+        print(T)
         for t in range(0, T):
             # print(f"t: {t}") if self.trace else None
             print(t)
             tic = time.time()
 
-            model = emulator(x=z0,  
-                             theta=md, 
-                             f=f0,                
-                             method="multihomGP",
-                             args={'lower':None, 'upper':None,
-                                   'noiseControl':{'k_theta_g_bounds': (1, 100), 'g_max': 1e2, 'g_bounds': (1e-6, 1)}, 
-                                   'init':{}, 
-                                   'known':{}, 
-                                    'settings':{"linkThetas": 'joint', "logN": True, "initStrategy": 'residuals', 
-                                              "checkHom": True, "penalty": True, "trace": 0, "return.matrices": True, 
-                                              "return.hom": False, "factr": 1e9}})
-                 
+            model = emulator(x=self.cls_func.x, 
+                           theta=z0, 
+                           f=f0,                
+                           method="pcHomGP",
+                           args={'lower':None, 'upper':None,
+                                  'noiseControl':{'k_theta_g_bounds': (1, 100), 'g_max': 1e2, 'g_bounds': (1e-6, 1)}, 
+                                  'init':{}, 
+                                  'known':{}, 
+                                   'settings':{"linkThetas": 'joint', "logN": True, "initStrategy": 'residuals', 
+                                             "checkHom": True, "penalty": True, "trace": 0, "return.matrices": True, 
+                                             "return.hom": False, "factr": 1e9}})
 
             toc = time.time()
             timel.append(toc - tic)
@@ -97,7 +95,7 @@ class sequential_design:
         nm, d = self.test["theta"].shape[0], self.cls_func.d
 
         # predict at mesh
-        pr = model.predict(x=self.test["theta"], thetaprime=self.test["theta"])
+        pr = model.predict(theta=self.test["theta"], thetaprime=self.test["theta"])
         
         # ntot, ntot x ntot, ntot
         mu, Sn = pr._info["mean"], pr._info["S"]

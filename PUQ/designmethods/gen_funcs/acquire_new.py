@@ -9,17 +9,21 @@ from PUQ.designmethods.gen_funcs.batch_acquisition_funcs_support import (
     multiple_determinants,
     multiple_pdfs,
 )
-from PUQ.surrogatemethods.pcHetGP import update
+# from PUQ.surrogatemethods.pcHetGP import update
 
 
 def get_pred(cL, emu, x, ttest, reps):
 
-    cP = emu.predict(x=x, theta=cL)
-    var_cand = cP._info["var_o"] + cP._info["nugs_o"] / reps
+    # cP = emu.predict(x=x, theta=cL)
+    # var_cand = cP._info["var_o"] + cP._info["nugs_o"] / reps
+    cP = emu.predict(x=cL)
+    var_cand = cP._info["var"] + cP._info["nugs"] / reps
 
-    testP = emu.predict(x=x, theta=ttest, thetaprime=cL)
-    mu, S, cov = testP._info["mean"], testP._info["S"], testP._info["cov_o"]
-
+    # testP = emu.predict(x=x, theta=ttest, thetaprime=cL)
+    testP = emu.predict(x=ttest, thetaprime=cL)
+    # mu, S, cov = testP._info["mean"], testP._info["S"], testP._info["cov_o"]
+    mu, S, cov = testP._info["mean"], testP._info["S"], testP._info["covmat"]
+    
     mut = mu.T
     St = np.transpose(S, (2, 0, 1))
 
@@ -44,7 +48,8 @@ def impute_strategy(ct, x, fE, tE, emu, liar, des_obj):
     pc_settings = des_obj.pc_settings
 
     if impute_str == "update":
-        update(emu._info, x=x, X0new=ct, mult=rep)
+        # update(emu._info, x=x, X0new=ct, mult=rep)
+        emu.update(x=ct)
         fE, tE = impute(
             ct=ct, x=x, fE=fE, tE=tE, reps=rep, emu=emu, rnd_str=rand_stream
         )
@@ -139,25 +144,30 @@ class acquire:
         liar = np.mean(fE, axis=1)
 
         tnew = []
+        
+        q, d = self.emu._info['numGPs'], mu.shape[1]
         for i in range(self.bnew):
-            G = emu._info["G"]
-            B = emu._info["B"]
-            GB = G @ B
-            BTG = B.T @ G
+            # G = emu._info["G"]
+            # B = emu._info["B"]
+            # GB = G @ B
+            # BTG = B.T @ G
 
-            d = G.shape[0]
-            q = B.shape[1]
+            # d = G.shape[0]
+            # q = B.shape[1]
 
-            tau = np.zeros((nm, q, q, nL))
+            # tau = np.zeros((nm, q, q, nL))
             phi = np.zeros((nm, d, d, nL))
 
             coef = 1 / ((2**d) * (np.sqrt(np.pi) ** d))
 
             for j in range(0, q):
-                tau[:, j, j, :] = cov[j, :, :] ** 2 / cvar[j, :]
+                phi[:, j, j, :] = cov[j, :, :] ** 2 / cvar[j, :]
+            
+            # for j in range(0, q):
+            #     tau[:, j, j, :] = cov[j, :, :] ** 2 / cvar[j, :]
 
-            for k in range(0, nL):
-                phi[:, :, :, k] = GB @ tau[:, :, :, k] @ BTG
+            # for k in range(0, nL):
+            #     phi[:, :, :, k] = GB @ tau[:, :, :, k] @ BTG
 
             vals = []
             for k in range(0, nL):

@@ -36,7 +36,8 @@ class allocate:
         
         if alloc_settings.get('theta') is None:
             if alloc_settings.get('gen') is False:
-                self.theta = self.emu._info['emulist'][0]['X0']
+                # self.theta = self.emu._info['emulist'][0]['X0']
+                self.theta = self.emu._info['emulist'][0]._info["X0"]
             else:
                 self.theta = prior.rnd(100, None)
                 self.theta = np.concatenate((self.emu._info['emulist'][0]['X0'], self.theta), axis=0)
@@ -45,7 +46,8 @@ class allocate:
 
         if alloc_settings.get('a0') is None:
             if alloc_settings.get('gen') is False:
-                self.a0 = self.emu._info['emulist'][0]['mult']
+                # self.a0 = self.emu._info['emulist'][0]['mult']
+                self.a0 = self.emu._info['emulist'][0]._info['mult']
             else:
                 self.a0 = np.concatenate((self.emu['emulist']._info[0]['mult'], np.repeat(0, 100)))
         else:
@@ -141,8 +143,11 @@ class allocate:
         n_integ = self.theta_mesh.shape[0]
         n = self.theta.shape[0]
 
-        pred_nugs = self.emu.predict(x=self.x, theta=self.theta, thetaprime=None)
-        pred_mesh = self.emu.predict(x=self.x, theta=self.theta_mesh, thetaprime=None)
+        # pred_nugs = self.emu.predict(x=self.x, theta=self.theta, thetaprime=None)
+        # pred_mesh = self.emu.predict(x=self.x, theta=self.theta_mesh, thetaprime=None)
+        
+        pred_nugs = self.emu.predict(x=self.theta, thetaprime=None)
+        pred_mesh = self.emu.predict(x=self.theta_mesh, thetaprime=None)
         
         obsvar3d = self.obsvar.reshape(1, d, d) 
         # ntest x d
@@ -170,13 +175,13 @@ class allocate:
         hNb = np.matmul(h, Nbinv)
         hN = np.matmul(h, Ninv)
 
-        # d x d
-        G = self.emu._info['G']
-        # d x q
-        B = self.emu._info['B']
-        # d x q
-        GB = G @ B
-        BTG = B.T @ G
+        # # d x d
+        # G = self.emu._info['G']
+        # # d x q
+        # B = self.emu._info['B']
+        # # d x q
+        # GB = G @ B
+        # BTG = B.T @ G
 
         coef = (1/((2**d)*(np.sqrt(np.pi)**d)*np.sqrt(det(self.obsvar))))
   
@@ -187,7 +192,8 @@ class allocate:
             J = np.zeros((n, n))
             J[i, i] = 1
             for j in range(0, q):
-                emuinfo = self.emu._info['emulist'][j]
+                # emuinfo = self.emu._info['emulist'][j]
+                emuinfo = self.emu._info['emulist'][j]._info
                 K_s = cov_gen(X1=self.theta, X2=self.theta_mesh, theta=emuinfo['theta'])
                 
                 if self.use_Ki:
@@ -200,14 +206,16 @@ class allocate:
                 if emuinfo['is_homGP']:
                     Mb[i, :, j, j] = -(emuinfo['g']*emuinfo['nu_hat'])*np.einsum('ji,jk,ki->i', K_s, A, K_s) 
                 else:
-                    Mb[i, :, j, j] = -(pred_nugs._info['nugs_o'][j, i])*np.einsum('ji,jk,ki->i', K_s, A, K_s) 
+                    # Mb[i, :, j, j] = -(pred_nugs._info['nugs_o'][j, i])*np.einsum('ji,jk,ki->i', K_s, A, K_s) 
+                    Mb[i, :, j, j] = -(pred_nugs._info['nugs'][j, i])*np.einsum('ji,jk,ki->i', K_s, A, K_s) 
 
         dlogfdai = np.zeros((n, n_integ))
         dloggdai = np.zeros((n, n_integ))
         C = np.zeros((n, 1))
         for i in range(0, n):
 
-            M = GB @ Mb[i, :, :, :] @ BTG
+            #M = GB @ Mb[i, :, :, :] @ BTG
+            M = Mb[i, :, :, :]
             part1f = -0.5 * np.trace(np.matmul(Nbinv, M), axis1=1, axis2=2)
             part2f = 0.5 * (np.matmul(np.matmul(hNb, M), np.transpose(hNb, (0, 2, 1))))
             part1g = -0.5 * np.trace(np.matmul(Ninv, M), axis1=1, axis2=2)

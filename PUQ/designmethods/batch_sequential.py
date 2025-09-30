@@ -70,7 +70,9 @@ class batch_sequential_design:
         
         iter_explore, iter_exploit = 0, 0
         is_explore, is_exploit = des_settings.get('is_explore'), des_settings.get('is_exploit')
-
+        
+        print("max_iter")
+        print(max_iter)
         for iteration in range(max_iter):
         
             emu, TV = self.newiteration(t_c, f_c, self.x, pc_settings, test_data, self.Sigma, self.y)
@@ -108,9 +110,11 @@ class batch_sequential_design:
             print(t_c.shape)
             
 
-
+        unique_rows, counts = np.unique(t_c, axis=0, return_counts=True)
         self.f = f_c
         self.theta = t_c
+        self.theta0 = unique_rows
+        self.rep0 = counts
 
 
     def newiteration(self, theta, fevals, x, pc_settings, test_data, obsvar, obs):
@@ -130,7 +134,11 @@ class batch_sequential_design:
         obsvar3d = obsvar.reshape(1, d, d) 
         
         # ntest x d
-        pred = emu.predict(x=x, theta=thetatest)
+        # pred = emu.predict(x=x, theta=thetatest)
+        print("ttte")
+        print(thetatest.shape)
+        pred = emu.predict(x=thetatest)
+        print("dblkdb")
         mu = pred.mean().T 
         S = pred._info['S'] 
         St = np.transpose(S, (2, 0, 1))
@@ -185,6 +193,12 @@ class batch_sequential_design:
         
             r_exploit = allocate_obj.reps
             theta_exploit = allocate_obj.theta
+            import matplotlib.pyplot as plt
+            plt.scatter(theta_exploit[:,0], theta_exploit[:,1])
+            for (x, y, label) in zip(theta_exploit[:, 0], theta_exploit[:, 1], r_exploit):
+                plt.annotate(str(label), (x, y), xytext=(5, 5), textcoords="offset points")
+
+            plt.show()
             
         emu._info = emu_original_info       
     

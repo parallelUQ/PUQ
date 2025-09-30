@@ -8,7 +8,8 @@ def impute(ct, x, fE, tE, reps, emu, rnd_str):
         
     # NEW PART
     if fE.shape[0] > 1:
-        cpred = emu.predict(x=x, theta=ct)
+        # cpred = emu.predict(x=x, theta=ct)
+        cpred = emu.predict(x=ct)
         cm = cpred.mean()
         cS = cpred._info['S']
         cR = cpred._info['R']
@@ -19,9 +20,11 @@ def impute(ct, x, fE, tE, reps, emu, rnd_str):
         tE = np.concatenate([tE, np.repeat(ct, reps, axis=0)])
         fE = np.concatenate([fE, fnoise.T], axis=1)
     else:
-        cpred = emu.predict(x=x, theta=ct)
+        # cpred = emu.predict(x=x, theta=ct)
+        cpred = emu.predict(x=ct)
         cm = cpred.mean()
-        cv = cpred._info['var_noisy']
+        # cv = cpred._info['var_noisy']
+        cv = cpred._info['var'] + cpred._info['nugs']
         fnoise = rnd_str.normal(loc=cm.flatten(), 
                                   scale=np.sqrt(cv.flatten()), 
                                   size=reps)
@@ -46,10 +49,25 @@ def impute_CL(ct, x, fE, tE, reps, liar):
 def build_emulator(x, theta, f, pcset):
     
     print(theta.shape)
-    emu = emulator(x=x, 
-                   theta=theta, 
+    # emu = emulator(x=x, 
+    #                theta=theta, 
+    #                f=f,                
+    #                method="pcHetGP",
+    #                args={'lower':None, 'upper':None,
+    #                       'noiseControl':{'k_theta_g_bounds': (1, 100), 'g_max': 1e2, 'g_bounds': (1e-6, 1)}, 
+    #                       'init':{}, 
+    #                       'known':{}, 
+    #                        'settings':{"linkThetas": 'joint', "logN": True, "initStrategy": 'residuals', 
+    #                                  "checkHom": True, "penalty": True, "trace": 0, "return.matrices": True, 
+    #                                  "return.hom": False, "factr": 1e9},
+    #                        'pc_settings':pcset})
+    print(f.shape)
+    d = f.shape[0]
+    md = np.arange(d).reshape(d, 1)
+    emu = emulator(x=theta, 
+                   theta=md, 
                    f=f,                
-                   method="pcHetGP",
+                   method="multihetGP",
                    args={'lower':None, 'upper':None,
                           'noiseControl':{'k_theta_g_bounds': (1, 100), 'g_max': 1e2, 'g_bounds': (1e-6, 1)}, 
                           'init':{}, 
@@ -58,11 +76,13 @@ def build_emulator(x, theta, f, pcset):
                                      "checkHom": True, "penalty": True, "trace": 0, "return.matrices": True, 
                                      "return.hom": False, "factr": 1e9},
                            'pc_settings':pcset})
+    
     return emu
 
 def compute_ivar(emu, ttest, x, obs, obsvar):
     
-    testP = emu.predict(x=x, theta=ttest)
+    # testP = emu.predict(x=x, theta=ttest)
+    testP = emu.predict(x=ttest)
     d = len(x)
     obsvar3d = obsvar.reshape(1, d, d) 
     
