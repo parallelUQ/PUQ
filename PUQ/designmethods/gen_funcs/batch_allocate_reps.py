@@ -1,7 +1,7 @@
 import numpy as np
 import scipy
 from numpy.linalg import cholesky, inv, det
-from PUQ.surrogatemethods.covariances import cov_gen
+from hetgpy.covariance_functions import cov_gen
 from PUQ.designmethods.gen_funcs.batch_acquisition_funcs_support import (
     multiple_pdfs,
     build_emulator,
@@ -186,6 +186,7 @@ class allocate:
         coef = (1/((2**d)*(np.sqrt(np.pi)**d)*np.sqrt(det(self.obsvar))))
   
         q = len(self.emu._info['emulist'])
+        COVTYPE = self.emu._info['emulist'][0]._info["covtype"]
         Mb = np.zeros((n, n_integ, q, q))
 
         for i in range(0, n):
@@ -194,12 +195,12 @@ class allocate:
             for j in range(0, q):
                 # emuinfo = self.emu._info['emulist'][j]
                 emuinfo = self.emu._info['emulist'][j]._info
-                K_s = cov_gen(X1=self.theta, X2=self.theta_mesh, theta=emuinfo['theta'])
+                K_s = cov_gen(X1=self.theta, X2=self.theta_mesh, theta=emuinfo['theta'], type=COVTYPE)
                 
                 if self.use_Ki:
                     Ki = emuinfo['Ki']
                 else:
-                    K = cov_gen(X1=self.theta, theta=emuinfo['theta'])
+                    K = cov_gen(X1=self.theta, theta=emuinfo['theta'], type=COVTYPE)
                     Ki = scipy.linalg.pinv(K, rcond=self.eps)
   
                 A = Ki@J@Ki
