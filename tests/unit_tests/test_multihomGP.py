@@ -57,11 +57,11 @@ def test_predict():
         GP = GPlist[i]
         for em_key, GP_key in em2GPkey.items():
 
-            assert np.allclose(preds._info[em_key][:,i],GP[GP_key])
+            assert np.allclose(preds._info[em_key][i,:],GP[GP_key])
     
     # test cov and covmat
     for i in range(len(GPlist)):
-        assert np.allclose(preds._info['covmat'][i],GPlist[i]['cov'])
+        assert np.allclose(preds._info['covmat'][i,:,:],GPlist[i]['cov'])
 
     return
 
@@ -106,7 +106,7 @@ def test_update():
     GPlist_initial = deepcopy(GPlist)
     Xnew = X.mean(axis=0).reshape(-1,X.shape[1])
     mpreds = multiGP.predict(x=Xnew)
-    Ynew = mpreds._info['mean']
+    Ynew = mpreds._info['mean'].T
     multiGP.update(x=Xnew,Y=Ynew)
     em_keys = ['ll','theta','beta0']
     for GP in GPlist:

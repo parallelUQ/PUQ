@@ -93,7 +93,8 @@ def fit(fitinfo, x, theta, f,
                 }
             )
         emulist[i] = emu
-    fitinfo["f"] = f
+    fitinfo["f"] = f.T
+    fitinfo["theta"] = x
     fitinfo["emulist"] = emulist
     fitinfo["numGPs"] = numGPs
     return
@@ -128,17 +129,29 @@ def predict(predinfo,fitinfo,x,theta,thetaprime,**kws):
     # instantiate outputs
     nr, nc = (x.shape[0],numGPs)
     for key in ('mean','var','nugs'):
-        predinfo[key] = np.zeros(shape=(nr,nc),dtype=float)
-    predinfo['covmat'] = [np.zeros(shape=(nr,nr),dtype=float)
-                          for i in range(numGPs)
-                        ]
+        predinfo[key] = np.zeros(shape=(nc,nr),dtype=float)
+
+    if thetaprime is None:
+        predinfo['covmat'] = np.zeros(shape=(nc,nr,nr),dtype=float)
+    else:
+        predinfo['covmat'] = np.zeros(shape=(nc,nr,thetaprime.shape[0]),dtype=float) 
+                         
     for i in range(numGPs):
         preds = fitinfo['emulist'][i].predict(x=x,thetaprime=thetaprime)
-        predinfo['mean'][:,i] = preds._info['mean']
-        predinfo['var'][:,i] = preds._info['var']
-        predinfo['nugs'][:,i] = preds._info['nugs']
-        predinfo['covmat'][i] = preds._info['covmat']
+        predinfo['mean'][i,:] = preds._info['mean']
+        predinfo['var'][i,:] = preds._info['var']
+        predinfo['nugs'][i,:] = preds._info['nugs']
+        predinfo['covmat'][i,:,:] = preds._info['covmat']
 
+
+    predinfo["S"] = np.full((numGPs, numGPs, x.shape[0]), np.nan)
+    predinfo["R"] = np.full((numGPs, numGPs, x.shape[0]), np.nan)
+    for i in range(0, x.shape[0]):
+        C = np.diag(predinfo['var'][:,i])
+        R = np.diag(predinfo['nugs'][:,i])
+        predinfo["S"][:, :, i] = C
+        predinfo["R"][:, :, i] = R
+        
     return
 
 def update(fitinfo, x,Y = None,**kwargs):

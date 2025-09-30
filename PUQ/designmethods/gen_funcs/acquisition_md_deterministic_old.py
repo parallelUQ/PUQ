@@ -12,10 +12,10 @@ def generate_neighborhood(acq):
 
 def get_pred(cL, emu, x, ttest, reps):
 
-    cP = emu.predict(x=cL)
-    var_cand = cP._info["var"] + cP._info["nugs"] / reps
-    testP = emu.predict(x=ttest, thetaprime=cL)
-    mu, S, cov = testP._info["mean"], testP._info["S"], testP._info["covmat"]
+    cP = emu.predict(x=x, theta=cL)
+    var_cand = cP._info["var_o"] + cP._info["nugs_o"] / reps
+    testP = emu.predict(x=x, theta=ttest, thetaprime=cL)
+    mu, S, cov = testP._info["mean"], testP._info["S"], testP._info["cov_o"]
     mut = mu.T
     St = np.transpose(S, (2, 0, 1))
 
@@ -52,7 +52,7 @@ class acquisition_function:
     def gen_pred(self, model, x, t, return_id=False, return_flat=False):
 
         # predict at mesh
-        meshPr = model.predict(x=t, thetaprime=t)
+        meshPr = model.predict(theta=t, thetaprime=t)
         
         # ntot, ntot x ntot, ntot
         mu, Sn, sd2 = meshPr._info["mean"], meshPr._info["S"], meshPr._info["var"]
@@ -267,14 +267,24 @@ class ivar(acquisition_function):
   
         V1 = S + self.Sigma3d
 
-        q, d = self.model._info['numGPs'], mu.shape[1]
+        G = self.model._info["G"]
+        B = self.model._info["B"]
+        GB = G @ B
+        BTG = B.T @ G
 
+        d = G.shape[0]
+        q = B.shape[1]
+
+        tau = np.zeros((nm, q, q, nL))
         phi = np.zeros((nm, d, d, nL))
 
         coef = 1 / ((2**d) * (np.sqrt(np.pi) ** d))
 
         for j in range(0, q):
-            phi[:, j, j, :] = cov[j, :, :] ** 2 / cvar[j, :]
+            tau[:, j, j, :] = cov[j, :, :] ** 2 / cvar[j, :]
+
+        for k in range(0, nL):
+            phi[:, :, :, k] = GB @ tau[:, :, :, k] @ BTG
 
         for k in range(0, self.nL):
             # C1: nm x d x d
