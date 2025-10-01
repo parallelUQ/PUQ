@@ -1,52 +1,28 @@
 import numpy as np
 from PUQ.prior import prior_dist
-# from PUQ.utils import parse_arguments, save_output
-from PUQ.design import designer
 from test_funcs import bimodal, banana, unimodal
 from utilities import test_data_gen, twoD, heatmap
-import pandas as pd
 from smt.sampling_methods import LHS
 import time
 from PUQ.designmethods.batch_sequential import batch_sequential_design
-# args = parse_arguments()
-
-class Args:
-    pass
-
-args = Args()
-
-
-def create_entry(desobj, fname, method, s, b, w):
-    return [
-        {
-            "MAD": MAD,
-            "t": t,
-            "rep": s,
-            "batch": b,
-            "worker": w,
-            "method": method,
-            "example": fname,
-        }
-        for t, MAD in enumerate(desobj._info["TViter"])
-    ]
 
 
 # # # # #
-args.minibatch = 8
-args.funcname = "bimodal"
-args.seedmin = 0
-args.seedmax = 1
+batch = 8
+workers = batch + 1
+funcname = "banana"
+smin = 0
+smax = 1
 
 # # # # #
 
-workers = args.minibatch + 1
+
 n0 = 15
 rep0 = 2
 nmesh = 50
 rho = 1 / 2
-batch = args.minibatch
 maxiter = 20
-dfl, dfr = [], []
+
 
 # Inputs to designer
 pcset = {"standardize": True, "latent": False}
@@ -54,9 +30,9 @@ desset = {"is_exploit": True, "is_explore": True, "nL": 200, "impute_str": "upda
 
 if __name__ == "__main__":
     design_start = time.time()
-    for s in np.arange(args.seedmin, args.seedmax):
+    for s in np.arange(smin, smax):
 
-        cls_func = eval(args.funcname)()
+        cls_func = eval(funcname)()
         cls_func.realdata(seed=s)
 
         theta_test, p_test, f_test, Xpl, Ypl = test_data_gen(cls_func, nmesh)
@@ -146,5 +122,3 @@ if __name__ == "__main__":
         ax.tick_params(axis="both", labelsize=16)
     plt.show()
     
-        # save_output(al_ivar, cls_func.data_name, "ivar", workers, batch, s)
-        # twoD(des_obj, Xpl, Ypl, p_test, nmesh)

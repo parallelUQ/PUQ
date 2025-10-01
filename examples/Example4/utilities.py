@@ -635,41 +635,55 @@ def Figure1(f, theta, x, obsvar, real_data, theta_test, f_test, p_test, cls_func
     # theta = seqobject._info['theta'][0:ninit,:]
     # f = seqobject._info['f'][:, 0:ninit]
 
-    emu = emulator(
-        x=x,
-        theta=theta,
-        f=f,
-        method="pcHetGP",
-        args={
-            "lower": None,
-            "upper": None,
-            "noiseControl": {
-                "k_theta_g_bounds": (1, 100),
-                "g_max": 1e2,
-                "g_bounds": (1e-6, 1),
-            },
-            "init": {},
-            "known": {},
-            "settings": {
-                "linkThetas": "joint",
-                "logN": True,
-                "initStrategy": "residuals",
-                "checkHom": True,
-                "penalty": True,
-                "trace": 0,
-                "return.matrices": True,
-                "return.hom": False,
-                "factr": 1e9,
-            },
-            "pc_settings": pc_settings,
-        },
-    )
+    # emu = emulator(
+    #     x=x,
+    #     theta=theta,
+    #     f=f,
+    #     method="pcHetGP",
+    #     args={
+    #         "lower": None,
+    #         "upper": None,
+    #         "noiseControl": {
+    #             "k_theta_g_bounds": (1, 100),
+    #             "g_max": 1e2,
+    #             "g_bounds": (1e-6, 1),
+    #         },
+    #         "init": {},
+    #         "known": {},
+    #         "settings": {
+    #             "linkThetas": "joint",
+    #             "logN": True,
+    #             "initStrategy": "residuals",
+    #             "checkHom": True,
+    #             "penalty": True,
+    #             "trace": 0,
+    #             "return.matrices": True,
+    #             "return.hom": False,
+    #             "factr": 1e9,
+    #         },
+    #         "pc_settings": pc_settings,
+    #     },
+    # )
+    
+    d = f.shape[0]
+    md = np.arange(d).reshape(d, 1)
+    emu = emulator(x=theta, 
+                   theta=md, 
+                   f=f,                
+                   method="multihetGP",
+                   args={'lower':None, 'upper':None,
+                          'noiseControl':{'k_theta_g_bounds': (1, 100), 'g_max': 1e2, 'g_bounds': (1e-6, 1)}, 
+                          'init':{}, 
+                          'known':{}, 
+                           'settings':{"linkThetas": 'joint', "logN": True, "initStrategy": 'residuals', 
+                                     "checkHom": True, "penalty": True, "trace": 0, "return.matrices": True, 
+                                     "return.hom": False, "factr": 1e9}})
 
-    emupred = emu.predict(x=x, theta=theta_test)
+    emupred = emu.predict(x=theta_test)
 
     mean = emupred.mean()
     var = emupred.var()
-    var_noisy = emupred._info["var_noisy"]
+    var_noisy = emupred._info["var"] + emupred._info["nugs"]
 
     # Probability corresponding to the quantile (e.g., 0.025 for the lower bound)
     quantile = 0.025
@@ -755,8 +769,8 @@ def Figure1(f, theta, x, obsvar, real_data, theta_test, f_test, p_test, cls_func
 
 def Figure2(desobject, theta_test, nugs, phat, method, axs):
 
-    theta0 = desobject._info["theta0"]
-    reps0 = desobject._info["reps0"]
+    theta0 = desobject.theta0
+    reps0 = desobject.rep0
 
     ft = 15
 

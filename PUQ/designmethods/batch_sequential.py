@@ -99,16 +99,11 @@ class batch_sequential_design:
             fevals = Parallel(n_jobs=b)(
                 delayed(self.cls_func.sim_f)(theta[i], persis_info[i]) for i in range(b)
             )
-            print(fevals)
+      
             fevals = np.array(fevals).T
-            print("here 2")
 
             f_c = np.concatenate((f_c, fevals), axis=1)
             t_c = np.concatenate((t_c, theta), axis=0)
-            
-            print(f_c[:, -4:])
-            print(t_c.shape)
-            
 
         unique_rows, counts = np.unique(t_c, axis=0, return_counts=True)
         self.f = f_c
@@ -135,10 +130,8 @@ class batch_sequential_design:
         
         # ntest x d
         # pred = emu.predict(x=x, theta=thetatest)
-        print("ttte")
-        print(thetatest.shape)
         pred = emu.predict(x=thetatest)
-        print("dblkdb")
+
         mu = pred.mean().T 
         S = pred._info['S'] 
         St = np.transpose(S, (2, 0, 1))
@@ -193,12 +186,12 @@ class batch_sequential_design:
         
             r_exploit = allocate_obj.reps
             theta_exploit = allocate_obj.theta
-            import matplotlib.pyplot as plt
-            plt.scatter(theta_exploit[:,0], theta_exploit[:,1])
-            for (x, y, label) in zip(theta_exploit[:, 0], theta_exploit[:, 1], r_exploit):
-                plt.annotate(str(label), (x, y), xytext=(5, 5), textcoords="offset points")
+            # import matplotlib.pyplot as plt
+            # plt.scatter(theta_exploit[:,0], theta_exploit[:,1])
+            # for (x, y, label) in zip(theta_exploit[:, 0], theta_exploit[:, 1], r_exploit):
+            #     plt.annotate(str(label), (x, y), xytext=(5, 5), textcoords="offset points")
 
-            plt.show()
+            # plt.show()
             
         emu._info = emu_original_info       
     
