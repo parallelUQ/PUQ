@@ -8,7 +8,7 @@ from PUQ.designmethods.gen_funcs.batch_acquisition_funcs_support import (
 from joblib import Parallel, delayed
 import copy
 
-class batch_sequential_design:
+class sequential_design:
     def __init__(self, cls_func, trace=True):
         self.cls_func = cls_func
         self.trace = trace

@@ -4,7 +4,7 @@ from test_funcs import bimodal, banana, unimodal
 from utilities import test_data_gen, twoD, heatmap
 from smt.sampling_methods import LHS
 import time
-from PUQ.designmethods.batch_sequential import batch_sequential_design
+from PUQ.designmethods.sequential_md_stochastic import sequential_design
 
 
 # # # # #
@@ -83,7 +83,7 @@ if __name__ == "__main__":
             args_["alloc_settings"]["method"] = method
             args_list.append(args_)
 
-        des_obj = batch_sequential_design(cls_func)
+        des_obj = sequential_design(cls_func)
         des_obj.build_design(t0=theta0, f0=f0, af="seivar", args=args_list[0])
         
 

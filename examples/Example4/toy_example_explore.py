@@ -20,7 +20,7 @@ smax = 4  # 14
 # # # # #
 
 n0 = 6
-rep0 = 5
+rep0 = 10
 nmesh = 50
 batch = 15
 reps = 5
@@ -69,10 +69,10 @@ if __name__ == "__main__":
         # plt.scatter(theta0, f0)
         # plt.show()
 
-        #fig, ax = plt.subplots(2, 3, figsize=(15, 7), constrained_layout=True)
+        fig, ax = plt.subplots(2, 3, figsize=(15, 7), constrained_layout=True)
 
         emu = build_emulator(x=x, theta=theta0, f=f0[None, :], pcset=pc_settings)
-        for i in range(1):
+        for i in range(3):
             print(i)
             ft = 18
             cL = np.linspace(
@@ -83,8 +83,8 @@ if __name__ == "__main__":
                 cL=cL, emu=emu, x=x, ttest=theta_test, reps=reps
             )
             
-            plt.plot(theta_test, mu)
-            plt.show()
+            # plt.plot(theta_test, mu)
+            # plt.show()
             
             V1 = S + obsvar3d
             V2 = S + 0.5 * obsvar3d
@@ -131,23 +131,11 @@ if __name__ == "__main__":
             minacq = np.min(vals)
             cu = cL[idc, :].reshape((1, p))
 
-            # ax[0, i].plot(cL, vals, color="blue")
-            # ax[0, i].set_xlabel(r"$\theta$", fontsize=ft)
-            # ax[0, i].set_ylabel("IVAR", fontsize=ft)
-            # ax[0, i].tick_params(axis="both", labelsize=ft)
-            # ax[0, i].scatter(cu, minacq, color="green", marker="*", s=200)
-
-            ctheta = np.repeat(cu, reps, axis=0)
-            cpred = emu.predict(x=x, theta=ctheta)
-
-            cmean = cpred.mean()
-            cnoise = cpred._info["var"] + cpred._info["nugs"]
-            fnoise = persis_info["rand_stream"].normal(
-                loc=cmean[0], scale=np.sqrt(cnoise[0]), size=reps
-            )
-
-            theta0 = np.concatenate([theta0, ctheta], axis=0)
-            f0 = np.concatenate([f0, fnoise.flatten()])
+            ax[0, i].plot(cL, vals, color="blue")
+            ax[0, i].set_xlabel(r"$\theta$", fontsize=ft)
+            ax[0, i].set_ylabel("IVAR", fontsize=ft)
+            ax[0, i].tick_params(axis="both", labelsize=ft)
+            ax[0, i].scatter(cu, minacq, color="green", marker="*", s=200)
 
             fc = np.zeros(len(cu))
             pc = np.zeros(len(cu))
@@ -170,37 +158,29 @@ if __name__ == "__main__":
                     tid
                 ] - phat[tid] ** 2
 
-            # ax[1, i].plot(theta_test, p_test, color="red")
-            # ax[1, i].plot(
-            #     theta_test, phat, color="blue", linestyle="dashed", linewidth=2.5
-            # )
-            # ax[1, i].fill_between(
-            #     theta_test.flatten(),
-            #     (phat - np.sqrt(phatvar)).flatten(),
-            #     (phat + np.sqrt(phatvar)).flatten(),
-            #     color="blue",
-            #     alpha=0.1,
-            # )
-            # ax[1, i].set_xlabel(r"$\theta$", fontsize=ft)
-            # ax[1, i].set_ylabel(r"$p(y|\theta)$", fontsize=ft)
-            # ax[1, i].tick_params(axis="both", labelsize=ft)
-            # ax[1, i].scatter(theta0u, p0, color="black", s=100)
-            # ax[1, i].scatter(cu, pc, color="green", marker="*", s=200)
+            ax[1, i].plot(theta_test, p_test, color="red")
+            ax[1, i].plot(
+                theta_test, phat, color="blue", linestyle="dashed", linewidth=2.5
+            )
+            ax[1, i].fill_between(
+                theta_test.flatten(),
+                (phat - np.sqrt(phatvar)).flatten(),
+                (phat + np.sqrt(phatvar)).flatten(),
+                color="blue",
+                alpha=0.1,
+            )
+            ax[1, i].set_xlabel(r"$\theta$", fontsize=ft)
+            ax[1, i].set_ylabel(r"$p(y|\theta)$", fontsize=ft)
+            ax[1, i].tick_params(axis="both", labelsize=ft)
+            ax[1, i].scatter(theta0u, p0, color="black", s=100)
+            ax[1, i].scatter(cu, pc, color="green", marker="*", s=200)
 
             theta0u = np.concatenate([theta0u, cu], axis=0)
             p0 = np.concatenate([p0, pc.flatten()])
 
-            print("Adding point:", np.round(ctheta, 2))
-            print(emu._info["emulist"][0]._info["X0"].shape)
-            print(emu._info["emulist"][0]._info["mult"])
-            # from PUQ.surrogatemethods.pcHetGP import update
-            X0new = np.repeat(cu, rep0)[:, None]
-            pm = emu.predict(x=X0new).mean()
-            emu.update(x=X0new)
-            
-            # update(emu._info, x=x, X0new=cu, mult=reps)
-            
-            print("hey")
+            print("Adding point:", np.round(cu, 2))
 
-        plt.savefig("Figure3.png", bbox_inches="tight")
+            X0new = np.repeat(cu, rep0)[:, None]
+            emu.update(x=X0new)
+        plt.savefig("toy3.png", format="jpeg", bbox_inches="tight", dpi=1000)
         plt.show()

@@ -631,40 +631,6 @@ def Figure1(f, theta, x, obsvar, real_data, theta_test, f_test, p_test, cls_func
     import matplotlib.pyplot as plt
 
     pc_settings = {"standardize": True, "latent": False}
-
-    # theta = seqobject._info['theta'][0:ninit,:]
-    # f = seqobject._info['f'][:, 0:ninit]
-
-    # emu = emulator(
-    #     x=x,
-    #     theta=theta,
-    #     f=f,
-    #     method="pcHetGP",
-    #     args={
-    #         "lower": None,
-    #         "upper": None,
-    #         "noiseControl": {
-    #             "k_theta_g_bounds": (1, 100),
-    #             "g_max": 1e2,
-    #             "g_bounds": (1e-6, 1),
-    #         },
-    #         "init": {},
-    #         "known": {},
-    #         "settings": {
-    #             "linkThetas": "joint",
-    #             "logN": True,
-    #             "initStrategy": "residuals",
-    #             "checkHom": True,
-    #             "penalty": True,
-    #             "trace": 0,
-    #             "return.matrices": True,
-    #             "return.hom": False,
-    #             "factr": 1e9,
-    #         },
-    #         "pc_settings": pc_settings,
-    #     },
-    # )
-    
     d = f.shape[0]
     md = np.arange(d).reshape(d, 1)
     emu = emulator(x=theta, 
@@ -761,7 +727,7 @@ def Figure1(f, theta, x, obsvar, real_data, theta_test, f_test, p_test, cls_func
     ax[2].set_xlabel(r"$\theta$", fontsize=ft)
     ax[2].set_ylabel(r"$\mathbb{V}[\nu]$", fontsize=ft)
     ax[2].tick_params(axis="both", labelsize=ft)
-    plt.savefig("Figure1.png", bbox_inches="tight")
+    plt.savefig("toy1.png", format="jpeg", bbox_inches="tight", dpi=1000)
     plt.show()
 
     return theta_test, emupred._info["nugs"].flatten(), phat
