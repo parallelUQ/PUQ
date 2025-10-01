@@ -131,5 +131,18 @@ def test_hetGP_update():
     assert test_model._info['g']     == reference_model['g']
     assert test_model._info['beta0'] == reference_model['beta0']
 
+
+def test_conversion_to_homGP():
+    # should return homoskedastic GP
+    X = np.linspace(0,1,20).reshape(-1,1)
+    Y = X
+    model = emulator(x=X,theta=np.array([0]),f=Y,
+                          method='hetGP')
+    Xp = np.linspace(X.min(),X.max(),100).reshape(-1,1)
+    preds = model.predict(Xp)
+    assert model._info['is_homGP']
+    assert model._info.get('Delta') is None
+    assert np.unique(preds._info['nugs']).shape[0] == 1
+
 if __name__ == "__main__":
-    test_hetGP_update_kriging_believer()
+    test_conversion_to_homGP()
