@@ -1,50 +1,55 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as sps
+from scipy.stats import qmc
 from PUQ.prior import prior_dist
 from PUQ.designmethods.sequential_md_deterministic import sequential_design
-from smt.sampling_methods import LHS
 from test_func import unimodal
 
 if __name__ == "__main__":
 
-    cls_unimodal = unimodal()
+    cex = unimodal()
 
     # # # Create a mesh for test set # # #
     xpl = np.linspace(
-        cls_unimodal.thetalimits[0][0], cls_unimodal.thetalimits[0][1], 50
+        cex.thetalimits[0][0], cex.thetalimits[0][1], 50
     )
     ypl = np.linspace(
-        cls_unimodal.thetalimits[1][0], cls_unimodal.thetalimits[1][1], 50
+        cex.thetalimits[1][0], cex.thetalimits[1][1], 50
     )
     Xpl, Ypl = np.meshgrid(xpl, ypl)
     thetatest = np.vstack([Xpl.ravel(), Ypl.ravel()]).T
     ftest = np.zeros((thetatest.shape[0], 1))
     for i in range(thetatest.shape[0]):
-        ftest[i, 0] = cls_unimodal.function(thetatest[i,0], thetatest[i,1])
+        ftest[i, 0] = cex.function(thetatest[i,0], thetatest[i,1])
 
     ptest = sps.norm.pdf(
-        cls_unimodal.real_data - ftest, 0, np.sqrt(cls_unimodal.obsvar)
+        cex.real_data - ftest, 0, np.sqrt(cex.obsvar)
     )
 
     test_data = {"theta": thetatest, "f": ftest, "p": ptest, "p_prior": 1}
     # # # # # # # # # # # # # # # # # # # # #
     prior_func = prior_dist(dist="uniform")(
-        a=cls_unimodal.thetalimits[:, 0], b=cls_unimodal.thetalimits[:, 1]
+        a=cex.thetalimits[:, 0], b=cex.thetalimits[:, 1]
     )
     
     # Initial sample
-    n0 = 10
-    s = 1
-    sampling = LHS(xlimits=cls_unimodal.thetalimits, random_state=int(s))
-    t0 = sampling(n0)
+    n0, s = 10, 1
+
+    ndim = cex.thetalimits.shape[0]
+    sampler = qmc.LatinHypercube(d=ndim, seed=s)
+    # Generate samples in [0,1]^d
+    unit_sample = sampler.random(n=n0)
+    # Scale using limits
+    t0 = qmc.scale(unit_sample, cex.thetalimits[:, 0], cex.thetalimits[:, 1])
+
     f0 = np.zeros((t0.shape[0], 1))
     for i in range(t0.shape[0]):
-        f0[i, 0] = cls_unimodal.function(t0[i,0], t0[i,1])
+        f0[i, 0] = cex.function(t0[i,0], t0[i,1])
 
     fig, ax = plt.subplots(1, 3, figsize=(12, 4))
     for i, af in enumerate(["rnd", "var", "ivar"]):
-        des_obj = sequential_design(cls_unimodal)
+        des_obj = sequential_design(cex)
         des_obj.build_design(z0=t0, 
                              f0=f0, 
                              T=50, 

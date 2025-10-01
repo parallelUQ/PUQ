@@ -49,7 +49,9 @@ def impute_strategy(ct, x, fE, tE, emu, liar, des_obj):
 
     if impute_str == "update":
         # update(emu._info, x=x, X0new=ct, mult=rep)
-        emu.update(x=ct)
+        Xnew = np.repeat(ct, rep, axis=0)
+        print(Xnew)
+        emu.update(x=Xnew)
         fE, tE = impute(
             ct=ct, x=x, fE=fE, tE=tE, reps=rep, emu=emu, rnd_str=rand_stream
         )
