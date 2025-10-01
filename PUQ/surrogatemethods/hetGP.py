@@ -1,5 +1,6 @@
 import numpy as np
-from hetgpy import hetGP
+from hetgpy import hetGP, homGP
+from PUQ.surrogatemethods.homGP import GPWrapper
 
 ###############################################################################
 ## Heterogeneous GP with all options for the fit
@@ -112,18 +113,10 @@ def fit(fitinfo, x, theta, f,
     )
     for key in model.__dict__.keys():
         fitinfo[key] = model.get(key) 
-    fitinfo['is_homGP'] = False
+    fitinfo['is_homGP'] = isinstance(model,homGP)
     return
     
-class hetGPWrapper(hetGP):
-    '''
-    A class that converts the information in fitinfo (from the fit and predict methods) to a class so
-    it can be used to make predictions with hetgpy.hetGP
-
-    '''
-    def __init__(self,fitinfo):
-        for key in fitinfo.keys():
-            setattr(self,key,fitinfo[key])   
+ 
 
 def predict(predinfo, fitinfo, x, theta, thetaprime=None,rep_no=None, **kwargs):
     r'''
@@ -132,14 +125,14 @@ def predict(predinfo, fitinfo, x, theta, thetaprime=None,rep_no=None, **kwargs):
     GP = fitinfo.get('model')
     if GP is None:
         # use wrapper class to instantiate trained GP
-        GP = hetGPWrapper(fitinfo=fitinfo)
+        GP = GPWrapper(fitinfo=fitinfo)
     
     # handle kws
     kws = {}
     eligible_keys = ['nugs_only','interval','interval_lower','interval_upper']
     for key in eligible_keys:
         if key in kwargs.keys():
-            kws[key] = kwargs.get('nugs_only')
+            kws[key] = kwargs.get(key)
 
 
     preds = GP.predict(x=x,xprime=thetaprime,**kws)
@@ -151,11 +144,11 @@ def predict(predinfo, fitinfo, x, theta, thetaprime=None,rep_no=None, **kwargs):
     return
 def update(fitinfo, x,Y = None,**kwargs):
     r'''
-    Update function for homGP
+    Update function for hetGP
 
     Parameters
     ----------
-    fitinfo: dictionary that contains the fit information for a hetgpy.homGP object
+    fitinfo: dictionary that contains the fit information for a hetgpy.hetGP object
     x: array of new design locations
     Y: new response. If None, then 
     kwargs: key-value pairs that get passed to hetgpy.hetGP.update. 
@@ -167,7 +160,7 @@ def update(fitinfo, x,Y = None,**kwargs):
     for kw in kwargs.keys():
         if kw not in valid_kws:
             raise ValueError(f"{kw} not found, must be one of {valid_kws}")
-    GP = hetGPWrapper(fitinfo)
+    GP = GPWrapper(fitinfo)
     if Y is None:
         maxit = 0 # impute mean response and do not update hyperparams
         Y = GP.predict(x)['mean']

@@ -1,5 +1,5 @@
 import numpy as np
-from hetgpy import homGP
+from hetgpy import homGP, hetGP
 from hetgpy.auto_bounds import auto_bounds
 from hetgpy.find_reps import find_reps
 
@@ -87,15 +87,25 @@ def fit(fitinfo, x, theta, f, lower=None, upper=None,
 
 
 class homGPWrapper(homGP):
-    '''
-    A class that converts the information in fitinfo (from the fit and predict methods) to a class so
-    it can be used to make predictions with hetgpy.homGP
-
-    '''
     def __init__(self,fitinfo):
-        # model hyperparameters
         for key in fitinfo.keys():
             setattr(self,key,fitinfo[key])
+class hetGPWrapper(hetGP):
+     def __init__(self,fitinfo):
+        for key in fitinfo.keys():
+            setattr(self,key,fitinfo[key])
+
+def GPWrapper(fitinfo):
+    '''
+    A method that converts the information in fitinfo (from the fit and predict methods) to a class so
+    it can be used to make predictions with hetgpy.homGP or hetgpy.hetGP
+
+    '''
+    if fitinfo['is_homGP']:
+        return homGPWrapper(fitinfo)
+    else:
+        return hetGPWrapper(fitinfo)
+
 
 
 def predict(predinfo, fitinfo, x, theta, thetaprime=None, **kwargs):
@@ -124,7 +134,7 @@ def predict(predinfo, fitinfo, x, theta, thetaprime=None, **kwargs):
     GP = fitinfo.get('model')
     if GP is None:
         # use wrapper class to instantiate trained GP
-        GP = homGPWrapper(fitinfo=fitinfo)
+        GP = GPWrapper(fitinfo=fitinfo)
     # handle kws
     kws = {}
     eligible_keys = ['nugs_only','interval','interval_lower','interval_upper']
@@ -163,7 +173,7 @@ def update(fitinfo, x,Y = None,**kwargs):
     for kw in kwargs.keys():
         if kw not in valid_kws:
             raise ValueError(f"{kw} not found, must be one of {valid_kws}")
-    GP = homGPWrapper(fitinfo)
+    GP = GPWrapper(fitinfo)
     if Y is None:
         maxit = 0 # impute mean response and do not update hyperparams
         Y = GP.predict(x)['mean']
