@@ -1,6 +1,6 @@
 import numpy as np
-from PUQ.designmethods.gen_funcs.batch_allocate_reps import allocate
-from PUQ.designmethods.gen_funcs.acquire_new import acquire
+from PUQ.designmethods.gen_funcs.allocate_reps_md import allocate
+from PUQ.designmethods.gen_funcs.acquisition_md_stochastic import acquire
 from PUQ.designmethods.gen_funcs.batch_acquisition_funcs_support import (
     multiple_pdfs,
     build_emulator,
@@ -33,17 +33,12 @@ class sequential_design:
                      
     def build_design(self, t0, f0, af, args={}):
         # data params
-        # d = data_cls.d
-        # x = data_cls.x
-        # y = data_cls.real_data
-        # Sigma = data_cls.obsvar
 
-        
         b = args["batch_size"]
         max_iter = args["max_iter"]
         alloc_settings = args["alloc_settings"]
-        des_settings = args["des_settings"]
-        pc_settings = args["pc_settings"]
+        des_settings = args.get("des_settings", None)
+        pc_settings = args.get("pc_settings", None)
         test_data = args["data_test"]
         prior_func = args["prior"]
         # explore params
@@ -64,15 +59,9 @@ class sequential_design:
 
         f_c, t_c = f0, t0
         
-        print("here")
-        print(f_c.shape)
-        print(t_c.shape)
-        
         iter_explore, iter_exploit = 0, 0
         is_explore, is_exploit = des_settings.get('is_explore'), des_settings.get('is_exploit')
         
-        print("max_iter")
-        print(max_iter)
         for iteration in range(max_iter):
         
             emu, TV = self.newiteration(t_c, f_c, self.x, pc_settings, test_data, self.Sigma, self.y)
@@ -186,12 +175,7 @@ class sequential_design:
         
             r_exploit = allocate_obj.reps
             theta_exploit = allocate_obj.theta
-            # import matplotlib.pyplot as plt
-            # plt.scatter(theta_exploit[:,0], theta_exploit[:,1])
-            # for (x, y, label) in zip(theta_exploit[:, 0], theta_exploit[:, 1], r_exploit):
-            #     plt.annotate(str(label), (x, y), xytext=(5, 5), textcoords="offset points")
 
-            # plt.show()
             
         emu._info = emu_original_info       
     

@@ -4,8 +4,7 @@ from PUQ.designmethods.support import multiple_pdfs, multiple_determinants
 from hetgpy.covariance_functions import cov_gen
 from hetgpy.IMSE import crit_IMSPE, Wij, IMSPE, allocate_mult
 import emcee
-from PUQ.designmethods.gen_funcs.acquisition_allocate_reps import allocate
-from copy import deepcopy
+from PUQ.designmethods.gen_funcs.allocate_reps_1d import allocate
 import copy
 
 def generate_neighborhood(acq):

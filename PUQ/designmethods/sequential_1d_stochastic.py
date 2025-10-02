@@ -1,9 +1,7 @@
-from hetgpy import hetGP
 import numpy as np
 import matplotlib.pyplot as plt
 from PUQ.designmethods.support import multiple_pdfs, multiple_determinants
 from PUQ.designmethods.gen_funcs.acquisition_1d_stochastic import var, ivar, imse, lookahead
-import time
 from PUQ.surrogate import emulator
 
 class sequential_design:
@@ -35,17 +33,8 @@ class sequential_design:
         timel = []
         metric_sum = {}
         for t in range(0, T):
-            # print(f"t: {t}") if self.trace else None
-            print(t)
-            tic = time.time()
+            print(f"t: {t}") if self.trace else None
 
-            # hetGP
-            # model = hetGP()
-            # model.mle(X=z0, 
-            #           Z=f0, 
-            #           covtype="Gaussian", 
-            #           known={"beta0":np.mean(f0)})
-            
             model = emulator(x=z0,
                              theta=np.array([0]),
                              f=f0,
@@ -53,10 +42,6 @@ class sequential_design:
                              args={"known": {"beta0":np.mean(f0)}})
             model.fit()
 
-
-            toc = time.time()
-            timel.append(toc - tic)
-            print(toc - tic)
             args["seed"] += 1
             
             if test is not None:

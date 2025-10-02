@@ -9,21 +9,10 @@ from PUQ.designmethods.gen_funcs.batch_acquisition_funcs_support import (
     multiple_determinants,
     multiple_pdfs,
 )
-from PUQ.designmethods.gen_funcs.acquire_new import get_pred
+from PUQ.designmethods.gen_funcs.acquisition_md_stochastic import get_pred
 
-
-
-# # # # #
-funcname = "sinf"
-smin = 3  # 13
-smax = 4  # 14
-# # # # #
-
-n0 = 6
-rep0 = 10
-nmesh = 50
-batch = 15
-reps = 5
+funcname, smin, smax = "sinf", 3, 4
+n0, rep0, nmesh, batch, reps = 6, 10, 50, 15, 5
 bnew = int(batch / reps)
 
 if __name__ == "__main__":
@@ -65,13 +54,10 @@ if __name__ == "__main__":
         # Create a candidate list
         nL = 500
         nm = theta_test.shape[0]
-        pc_settings = {"standardize": True, "latent": False}
-        # plt.scatter(theta0, f0)
-        # plt.show()
-
+        
         fig, ax = plt.subplots(2, 3, figsize=(15, 7), constrained_layout=True)
 
-        emu = build_emulator(x=x, theta=theta0, f=f0[None, :], pcset=pc_settings)
+        emu = build_emulator(x=x, theta=theta0, f=f0[None, :], pcset=None)
         for i in range(3):
             print(i)
             ft = 18
