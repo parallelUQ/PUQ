@@ -1,7 +1,7 @@
 Examples
 ~~~~~~~~
 
-This example demonstrates how to use the performance model from Sürer (2025),  
+This example demonstrates how to use the active learning procedure from Sürer (2025),  
 Active Learning for Data-Efficient Calibration of Stochastic Simulation Models.
 
 
@@ -23,3 +23,9 @@ Running this script should not take more than 5 min. See the figures (jpeg files
    :alt: Illustration of PUQ with the example
    :align: center
    :width: 600
+   
+The proposed procedure is illustrated with examples featuring different numbers 
+of posterior modes. Contour lines represent the posterior distribution of the 
+parameters, while the background color indicates the intrinsic noise.
+Cyan markers indicate the points in the initial design, 
+while blue markers denote the acquired points, with numbers showing the replications.
