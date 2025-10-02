@@ -1,7 +1,8 @@
-'''Tests whether the we obtain a design for a one-dimensional deterministic simulation model'''
+"""Tests whether the we obtain a design for a one-dimensional deterministic simulation model"""
 
 import sys
-sys.path.append('./')
+
+sys.path.append("./")
 import numpy as np
 from smt.sampling_methods import LHS
 from PUQ.designmethods.sequential_1d_deterministic import sequential_design
@@ -43,36 +44,36 @@ class sinfunc:
         return self.function(x[0], self.true_theta[0]) + np.random.normal(
             0, np.sqrt(self.sigma2), 1
         )
-    
+
+
 cex = sinfunc()
 dt = len(cex.true_theta)
 x_obs = np.array([0.1, 0.1, 0.3, 0.3, 0.5, 0.5, 0.7, 0.7, 0.9, 0.9])[:, None]
 cex.realdata(x=x_obs, seed=1)
 
-    
+
 # Generate initial sample
 n0, nmax = 10, 30
 sampling = LHS(xlimits=cex.zlim, random_state=1)
 z0 = sampling(n0)
 f0 = np.array([cex.function(z0[i, 0], z0[i, 1]) for i in range(n0)])
 
+
 def test_build_design():
 
     # Generate design
     des_obj = sequential_design(cex)
-    des_obj.build_design(z0=z0, 
-                         f0=f0[:, None], 
-                         T=nmax, 
-                         af="ivar",
-                         args={"nL":200, 
-                               "seed":1,
-                               "integral":"importance"})
+    des_obj.build_design(
+        z0=z0,
+        f0=f0[:, None],
+        T=nmax,
+        af="ivar",
+        args={"nL": 200, "seed": 1, "integral": "importance"},
+    )
 
     assert des_obj.zs.shape == (n0 + nmax, 2)
     assert des_obj.fs.shape == (n0 + nmax, 1)
 
 
-
 if __name__ == "__main__":
     test_build_design()
-
