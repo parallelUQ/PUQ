@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.linalg import inv, det
 
+
 def multiple_pdfs(x, means, covs):
     # Cite: http://gregorygundersen.com/blog/2020/12/12/group-multivariate-normal-pdf/
 

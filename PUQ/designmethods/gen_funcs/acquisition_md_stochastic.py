@@ -9,6 +9,7 @@ from PUQ.designmethods.gen_funcs.batch_acquisition_funcs_support import (
     multiple_determinants,
     multiple_pdfs,
 )
+
 # from PUQ.surrogatemethods.pcHetGP import update
 
 
@@ -23,7 +24,7 @@ def get_pred(cL, emu, x, ttest, reps):
     testP = emu.predict(x=ttest, thetaprime=cL)
     # mu, S, cov = testP._info["mean"], testP._info["S"], testP._info["cov_o"]
     mu, S, cov = testP._info["mean"], testP._info["S"], testP._info["covmat"]
-    
+
     mut = mu.T
     St = np.transpose(S, (2, 0, 1))
 
@@ -146,8 +147,8 @@ class acquire:
         liar = np.mean(fE, axis=1)
 
         tnew = []
-        
-        q, d = self.emu._info['numGPs'], mu.shape[1]
+
+        q, d = self.emu._info["numGPs"], mu.shape[1]
         for i in range(self.bnew):
             # G = emu._info["G"]
             # B = emu._info["B"]
@@ -164,7 +165,7 @@ class acquire:
 
             for j in range(0, q):
                 phi[:, j, j, :] = cov[j, :, :] ** 2 / cvar[j, :]
-            
+
             # for j in range(0, q):
             #     tau[:, j, j, :] = cov[j, :, :] ** 2 / cvar[j, :]
 

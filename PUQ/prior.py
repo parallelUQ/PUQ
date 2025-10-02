@@ -16,8 +16,9 @@ class prior_uniform:
         thlist = []
         for i in range(self.p):
             thlist.append(seed.uniform(self.a[i], self.b[i], size=n))
-            #thlist.append(sps.uniform.rvs(self.a[i], self.b[i] - self.a[i], size=n))
+            # thlist.append(sps.uniform.rvs(self.a[i], self.b[i] - self.a[i], size=n))
         return np.array(thlist).T
+
 
 # class prior_uniform:
 #     def __init__(self, a, b):
@@ -82,34 +83,34 @@ class prior_uniform:
 #             )
 #         return np.array(thlist).T
 
-    # if seed == None:
-    #    pass
-    # else:
-    #    np.random.seed(seed)
-    # sps.truncnorm.rvs(a=-2.5, b=1.5, loc=3, scale=2, size=1000)
-    # 1.5=(6-3)/2, -2.5=(-2-3)/2
-    # 3=(6-3)/1, -5=(-2-3)/1
-    # 6=(6-3)/0.5, -10=(-2-3)/0.5
-    # class prior_norm:
-    #    def rnd(n):
-    #        thlist = []
-    #        for i in range(thetalimits.shape[0]):
-    #            thlist.append(sps.truncnorm.rvs(a=-10, b=2, loc=3, scale=1, size=n))
-    #        return np.array(thlist).T
+# if seed == None:
+#    pass
+# else:
+#    np.random.seed(seed)
+# sps.truncnorm.rvs(a=-2.5, b=1.5, loc=3, scale=2, size=1000)
+# 1.5=(6-3)/2, -2.5=(-2-3)/2
+# 3=(6-3)/1, -5=(-2-3)/1
+# 6=(6-3)/0.5, -10=(-2-3)/0.5
+# class prior_norm:
+#    def rnd(n):
+#        thlist = []
+#        for i in range(thetalimits.shape[0]):
+#            thlist.append(sps.truncnorm.rvs(a=-10, b=2, loc=3, scale=1, size=n))
+#        return np.array(thlist).T
 
-    #    def pdf(thetacnd):
-    #        ncnd   = thetacnd.shape[0]
-    #        thlist = np.ones(ncnd)
-    #        for i in range(thetalimits.shape[0]):
-    #            thlist *= sps.truncnorm.pdf(thetacnd[:, i], a=-10, b=2, loc=3, scale=1)
-    #        return np.array(thlist).T
+#    def pdf(thetacnd):
+#        ncnd   = thetacnd.shape[0]
+#        thlist = np.ones(ncnd)
+#        for i in range(thetalimits.shape[0]):
+#            thlist *= sps.truncnorm.pdf(thetacnd[:, i], a=-10, b=2, loc=3, scale=1)
+#        return np.array(thlist).T
 
-    # if rnd == True:
-    #    thetas = prior_norm.rnd(n)
-    #    return thetas
-    # else:
-    #    thetapdf = prior_norm.pdf(thetacnd)
-    #    return thetapdf
+# if rnd == True:
+#    thetas = prior_norm.rnd(n)
+#    return thetas
+# else:
+#    thetapdf = prior_norm.pdf(thetacnd)
+#    return thetapdf
 
 
 def prior_dist(dist="uniform"):

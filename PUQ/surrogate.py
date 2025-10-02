@@ -1,10 +1,12 @@
 """
 This module contains a class that implements the main emulation method.
 """
+
 import numpy as np
 import importlib
 import warnings
 import copy, types
+
 
 class emulator(object):
     def __init__(
@@ -338,9 +340,10 @@ class emulator(object):
         info = {}
         self.method.predict(info, self._info, x, theta, thetaprime, **argstemp)
         return prediction(info, self)
-    def update(self,x=None,Y=None,**kwargs):
 
-        self.method.update(self._info,x=x,Y=Y,**kwargs)
+    def update(self, x=None, Y=None, **kwargs):
+
+        self.method.update(self._info, x=x, Y=Y, **kwargs)
 
     def acquisition(self, x=None, theta1=None, theta2=None):
         return self.method.acquisition(self._info, x, theta1, theta2)
@@ -348,7 +351,6 @@ class emulator(object):
     def computeC(self, x=None, theta1=None, realdata=None, realvar=None):
 
         return self.method.computeC(self._info, x, theta1, realdata, realvar)
-        
 
     def __deepcopy__(self, memo):
         # create a blank instance without calling __init__

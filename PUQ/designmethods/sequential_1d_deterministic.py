@@ -5,6 +5,7 @@ from PUQ.designmethods.gen_funcs.acquisition_1d_deterministic import var, ivar, 
 import time
 from PUQ.surrogate import emulator
 
+
 class sequential_design:
     def __init__(self, cls_func, trace=False):
         self.cls_func = cls_func
@@ -26,7 +27,7 @@ class sequential_design:
         return self.__dict__.get(key)
 
     def build_design(self, z0, f0, T, af, test=None, args={}):
-        
+
         # if test is not None:
         #     self.test_data_gen(test)
 
@@ -37,19 +38,20 @@ class sequential_design:
             print(f"t: {t}") if self.trace else None
 
             tic = time.time()
-            model = emulator(x=z0,
-                             theta=np.array([0]),
-                             f=f0,
-                             method='homGP',
-                             args={"known": {"beta0":np.mean(f0)}})
+            model = emulator(
+                x=z0,
+                theta=np.array([0]),
+                f=f0,
+                method="homGP",
+                args={"known": {"beta0": np.mean(f0)}},
+            )
             model.fit()
-
 
             toc = time.time()
             timel.append(toc - tic)
 
             args["seed"] += 1
-            
+
             # if test is not None:
             #     metric_sum = self.eval_perf(model, args.get("extra_metric", True))
 
@@ -83,7 +85,7 @@ class sequential_design:
             )
 
         unique_rows, counts = np.unique(z0, axis=0, return_counts=True)
-        
+
         self.xt = unique_rows
         self.reps = counts
         self.fs = f0
@@ -134,7 +136,7 @@ class sequential_design:
         # ntot, ntot x ntot, ntot
         # mu, Sn, nugs = pr["mean"], pr["cov"], pr["nugs"]
         mu, Sn, nugs = pr._info["mean"], pr._info["covmat"], pr._info["nugs"]
-        
+
         muT = mu.reshape(nm, d)
         S = Sn[self.idr, self.idc].reshape(nm, d, d)
 
@@ -149,35 +151,41 @@ class sequential_design:
 
         twopiddet = (2**self.d) * (np.sqrt(np.pi) ** self.d) * np.sqrt(self.detSigma)
         VAR = np.mean(((1 / twopiddet) * f - g**2) * self.wtest)
-        
+
         if extra_metric:
             diff_y = (mu.flatten() - self.ftest.flatten()).reshape(nm, d)
             diff_n = (nugs.flatten() - self.ntest.flatten()).reshape(nm, d)
-        
-     
-            MSEy = np.mean(np.mean(diff_y**2, axis=1).flatten() * self.wtest) 
-            MADy = np.mean(np.mean(np.abs(diff_y), axis=1).flatten() * self.wtest) 
-            
-            MSEn = np.mean(np.mean(diff_n**2, axis=1).flatten() * self.wtest) 
-            MADn = np.mean(np.mean(np.abs(diff_n), axis=1).flatten() * self.wtest) 
-            
+
+            MSEy = np.mean(np.mean(diff_y**2, axis=1).flatten() * self.wtest)
+            MADy = np.mean(np.mean(np.abs(diff_y), axis=1).flatten() * self.wtest)
+
+            MSEn = np.mean(np.mean(diff_n**2, axis=1).flatten() * self.wtest)
+            MADn = np.mean(np.mean(np.abs(diff_n), axis=1).flatten() * self.wtest)
+
             # Weighted absolute differences
             f_w = np.mean(np.abs(diff_y) * self.wtest[:, None], axis=0)
             n_w = np.mean(np.abs(diff_n) * self.wtest[:, None], axis=0)
-            
+
             # Unweighted absolute differences
             f_wh = np.mean(np.abs(diff_y), axis=0)
             n_wh = np.mean(np.abs(diff_n), axis=0)
             summary = {}
             for di in range(d):
                 summary[f"f{di+1}w"] = f_w[di]
-                summary[f"f{di+1}"]  = f_wh[di]
+                summary[f"f{di+1}"] = f_wh[di]
                 summary[f"n{di+1}w"] = n_w[di]
-                summary[f"n{di+1}"]  = n_wh[di]
+                summary[f"n{di+1}"] = n_wh[di]
         else:
             MSEy, MADy, MSEn, MADn, summary = 0, 0, 0, 0, 0
 
-        metric_sum = {"MSE": MSE, "MAD": MAD, "VAR": VAR,
-                     "MSEy": MSEy, "MADy": MADy, "MSEn": MSEn, "MADn": MADn, 
-                     "summary": summary}
+        metric_sum = {
+            "MSE": MSE,
+            "MAD": MAD,
+            "VAR": VAR,
+            "MSEy": MSEy,
+            "MADy": MADy,
+            "MSEn": MSEn,
+            "MADn": MADn,
+            "summary": summary,
+        }
         return metric_sum

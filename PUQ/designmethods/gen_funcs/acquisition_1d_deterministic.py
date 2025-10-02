@@ -5,11 +5,12 @@ from hetgpy.IMSE import crit_IMSPE, Wij, IMSPE, allocate_mult
 import emcee
 from copy import deepcopy
 
+
 def generate_neighborhood(acq):
-    
+
     rand = np.random.default_rng(acq.seed)
     neigh_type = acq.args.get("neighbor", None)
-    
+
     if neigh_type == "LHS":
         N = int(acq.nL)
         sampling = LHS(xlimits=acq.zlim, random_state=int(acq.seed))
@@ -19,38 +20,38 @@ def generate_neighborhood(acq):
 
         sampling = LHS(xlimits=acq.zlim, random_state=int(acq.seed))
         L_explore = sampling(N)
-   
+
         sampling = LHS(xlimits=acq.tlim, random_state=int(acq.seed))
         Lt = sampling(N)
 
         num_options = len(acq.x)
-    
+
         # Distribute the rows as evenly as possible
         counts = np.full(num_options, N // num_options)  # Base count for each row type
         counts[
             rand.choice(num_options, N % num_options, replace=False)
         ] += 1  # Assign extra rows randomly
-    
+
         # Create the array by stacking the chosen rows (Fixed: Explicitly convert to a list)
         Lx = np.vstack(
             [row for i in range(num_options) for row in [acq.x[i]] * counts[i]]
         )
-    
+
         # Shuffle the rows randomly
         rand.shuffle(Lx)
-        
+
         L_exploit = np.concatenate((Lx, Lt), axis=1)
-    
+
         L = np.concatenate((L_explore, L_exploit))
-    
+
     return L
 
 
 class acquisition_function:
     def __init__(self, model, cls_func, args):
-        self.model = model#deepcopy(model) # model.copy()
+        self.model = model  # deepcopy(model) # model.copy()
         self.cls_func = cls_func
-        #self.persis_info = persis_info
+        # self.persis_info = persis_info
         self.args = args
         self.x = self.cls_func.x
         self.d = self.cls_func.d
@@ -71,9 +72,7 @@ class acquisition_function:
 
     def acquire_new(self):
 
-        return eval("self.evaluate")(
-            self.args.get("new", True), return_pseudo=False
-        )
+        return eval("self.evaluate")(self.args.get("new", True), return_pseudo=False)
 
     def gen_pred(self, model, x, t, return_id=False, return_flat=False):
         nm, d = t.shape[0], x.shape[0]
@@ -98,7 +97,7 @@ class acquisition_function:
         # ntot, ntot x ntot, ntot
         # mu, Sn, sd2 = meshPr["mean"], meshPr["cov"], meshPr["sd2"]
         mu, Sn, sd2 = meshPr._info["mean"], meshPr._info["covmat"], meshPr._info["var"]
-        
+
         muT = mu.reshape(nm, d)
         S = Sn[id_row[:, None], id_col].reshape(nm, d, d)
 
@@ -136,7 +135,7 @@ class var(acquisition_function):
         self.seed = args.get("seed", None)
         self.explore = args.get("explore", True)
         self.nL = args.get("nL", 100)
-        
+
         if args.get("integral") == "importance":
             # print("Importance sampling")
             self.epsilon = args.get("epsilon", 10 ** (-10))
@@ -153,7 +152,7 @@ class var(acquisition_function):
         else:
             self.t_ref = args.get("t_grid")
             self.weights = 1
-            
+
     def reference_set(self):
         def log_probability(ctheta):
             if np.any((ctheta < 0) | (ctheta > 1)):
@@ -204,7 +203,6 @@ class var(acquisition_function):
 
         new_input = L[np.argmax(vals), :].reshape(1, self.p)
         return new_input
-
 
 
 class imse(acquisition_function):
@@ -305,7 +303,6 @@ class ivar(acquisition_function):
 
     def evaluate_explore(self, L):
 
-
         nm = self.t_ref.shape[0]
 
         vals = np.zeros(self.nL)
@@ -313,13 +310,17 @@ class ivar(acquisition_function):
         mu, S, z = self.gen_pred(self.model, self.x, self.t_ref)
 
         V1 = S + self.Sigma3d
-        
+
         # predict at candidates
         candPr = self.model.predict(x=L, thetaprime=z)
 
         # nL, nL, nL x ntot
         # candvar, candnugs, candcov = candPr["sd2"], candPr["nugs"], candPr["cov"]
-        candvar, candnugs, candcov = candPr._info["var"], candPr._info["nugs"], candPr._info["covmat"]
+        candvar, candnugs, candcov = (
+            candPr._info["var"],
+            candPr._info["nugs"],
+            candPr._info["covmat"],
+        )
         candtotvat = candvar + candnugs
 
         for k in range(0, self.nL):
@@ -346,4 +347,3 @@ class ivar(acquisition_function):
         new_input = L[np.argmax(vals), :].reshape(1, self.p)
 
         return new_input
-

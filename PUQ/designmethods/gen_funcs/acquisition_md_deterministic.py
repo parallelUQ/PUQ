@@ -4,11 +4,13 @@ from PUQ.designmethods.support import multiple_pdfs, multiple_determinants
 from hetgpy.IMSE import crit_IMSPE
 import emcee
 
+
 def generate_neighborhood(acq):
     N = int(acq.nL)
     sampling = LHS(xlimits=acq.tlim, random_state=acq.seed)
     L = sampling(N)
     return L
+
 
 def get_pred(cL, emu, x, ttest, reps):
 
@@ -24,9 +26,9 @@ def get_pred(cL, emu, x, ttest, reps):
 
 class acquisition_function:
     def __init__(self, model, cls_func, args):
-        self.model = model #deepcopy(model)
+        self.model = model  # deepcopy(model)
         self.cls_func = cls_func
-        #self.persis_info = persis_info
+        # self.persis_info = persis_info
         self.args = args
         self.x = self.cls_func.x
         self.d = self.cls_func.d
@@ -45,15 +47,13 @@ class acquisition_function:
         )
 
     def acquire_new(self):
-        return eval("self.evaluate")(
-            self.args.get("new", True), return_pseudo=False
-        )
+        return eval("self.evaluate")(self.args.get("new", True), return_pseudo=False)
 
     def gen_pred(self, model, x, t, return_id=False, return_flat=False):
 
         # predict at mesh
         meshPr = model.predict(x=t, thetaprime=t)
-        
+
         # ntot, ntot x ntot, ntot
         mu, Sn, sd2 = meshPr._info["mean"], meshPr._info["S"], meshPr._info["var"]
         muT = mu.T
@@ -71,7 +71,7 @@ class acquisition_function:
 
         f = multiple_pdfs(self.y, mu, M)
         g = multiple_pdfs(self.y, mu, N)
-        
+
         vals = (1 / self.twopiddet) * f - g**2
 
         return vals
@@ -91,8 +91,7 @@ class rnd(acquisition_function):
 
     def evaluate(self, new, return_pseudo):
 
-        new_input = self.args["prior"].rnd(1, 
-                                           self.args["rand_stream"])
+        new_input = self.args["prior"].rnd(1, self.args["rand_stream"])
 
         self.znew, self.new = new_input, new
 
@@ -102,7 +101,7 @@ class rnd(acquisition_function):
             self.fnew = fnew
 
         return self
-    
+
 
 class var(acquisition_function):
     def __init__(self, model, cls_func, args):
@@ -128,6 +127,7 @@ class var(acquisition_function):
         vals = self.crit_pvar(model=self.model, x=self.x, t=L)
         new_input = L[np.argmax(vals), :].reshape(1, self.p)
         return new_input
+
 
 class imse(acquisition_function):
     # ASK THIS FUNCTION TO DAVID
@@ -158,6 +158,7 @@ class imse(acquisition_function):
         new_input = L[np.argmin(IMSPE_grid), :].reshape(1, self.cls_func.p)
         return new_input
 
+
 class exp(acquisition_function):
     # ASK THIS FUNCTION TO DAVID
     def __init__(self, model, cls_func, args):
@@ -186,7 +187,7 @@ class exp(acquisition_function):
         IMSPE_grid = np.array([crit_IMSPE(x, model=self.model) for x in L])
         new_input = L[np.argmin(IMSPE_grid), :].reshape(1, self.cls_func.p)
         return new_input
-    
+
 
 class ivar(acquisition_function):
     def __init__(self, model, cls_func, args):
@@ -264,10 +265,10 @@ class ivar(acquisition_function):
         mu, S, cov, cvar = get_pred(
             cL=L, emu=self.model, x=self.x, ttest=self.t_ref, reps=1
         )
-  
+
         V1 = S + self.Sigma3d
 
-        q, d = self.model._info['numGPs'], mu.shape[1]
+        q, d = self.model._info["numGPs"], mu.shape[1]
 
         phi = np.zeros((nm, d, d, nL))
 
@@ -289,8 +290,6 @@ class ivar(acquisition_function):
 
             vals[k] = np.sum(self.weights * part2)
 
-
         new_input = L[np.argmax(vals), :].reshape(1, self.p)
 
         return new_input
-

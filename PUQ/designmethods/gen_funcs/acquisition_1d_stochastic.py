@@ -7,11 +7,12 @@ import emcee
 from PUQ.designmethods.gen_funcs.allocate_reps_1d import allocate
 import copy
 
+
 def generate_neighborhood(acq):
-    
+
     rand = np.random.default_rng(acq.seed)
     neigh_type = acq.args.get("neighbor", None)
-    
+
     if neigh_type == "LHS":
         N = int(acq.nL)
         sampling = LHS(xlimits=acq.zlim, random_state=int(acq.seed))
@@ -21,38 +22,38 @@ def generate_neighborhood(acq):
 
         sampling = LHS(xlimits=acq.zlim, random_state=int(acq.seed))
         L_explore = sampling(N)
-   
+
         sampling = LHS(xlimits=acq.tlim, random_state=int(acq.seed))
         Lt = sampling(N)
 
         num_options = len(acq.x)
-    
+
         # Distribute the rows as evenly as possible
         counts = np.full(num_options, N // num_options)  # Base count for each row type
         counts[
             rand.choice(num_options, N % num_options, replace=False)
         ] += 1  # Assign extra rows randomly
-    
+
         # Create the array by stacking the chosen rows (Fixed: Explicitly convert to a list)
         Lx = np.vstack(
             [row for i in range(num_options) for row in [acq.x[i]] * counts[i]]
         )
-    
+
         # Shuffle the rows randomly
         rand.shuffle(Lx)
-        
+
         L_exploit = np.concatenate((Lx, Lt), axis=1)
-    
+
         L = np.concatenate((L_explore, L_exploit))
-    
+
     return L
 
 
 class acquisition_function:
     def __init__(self, model, cls_func, args):
-        self.model = copy.deepcopy(model)#deepcopy(model) # model.copy()
+        self.model = copy.deepcopy(model)  # deepcopy(model) # model.copy()
         self.cls_func = cls_func
-        #self.persis_info = persis_info
+        # self.persis_info = persis_info
         self.args = args
         self.x = self.cls_func.x
         self.d = self.cls_func.d
@@ -104,7 +105,7 @@ class acquisition_function:
         # ntot, ntot x ntot, ntot
         # mu, Sn, sd2 = meshPr["mean"], meshPr["cov"], meshPr["sd2"]
         mu, Sn, sd2 = meshPr._info["mean"], meshPr._info["covmat"], meshPr._info["var"]
-        
+
         muT = mu.reshape(nm, d)
         S = Sn[id_row[:, None], id_col].reshape(nm, d, d)
 
@@ -142,7 +143,7 @@ class var(acquisition_function):
         self.seed = args.get("seed", None)
         self.explore = args.get("explore", True)
         self.nL = args.get("nL", 100)
-        
+
         if args.get("integral") == "importance":
             # print("Importance sampling")
             self.epsilon = args.get("epsilon", 10 ** (-10))
@@ -159,7 +160,7 @@ class var(acquisition_function):
         else:
             self.t_ref = args.get("t_grid")
             self.weights = 1
-            
+
     def reference_set(self):
         def log_probability(ctheta):
             if np.any((ctheta < 0) | (ctheta > 1)):
@@ -340,7 +341,7 @@ class ivar(acquisition_function):
             L = generate_neighborhood(self)
             new_input = self.evaluate_explore(L)
         else:
-            L = self.model._info["X0"] # self.model["X0"]
+            L = self.model._info["X0"]  # self.model["X0"]
             new_input = self.evaluate_exploit(L)
 
         self.znew, self.new = new_input, new
@@ -355,7 +356,6 @@ class ivar(acquisition_function):
 
     def evaluate_explore(self, L):
 
-
         nm = self.t_ref.shape[0]
 
         vals = np.zeros(self.nL)
@@ -363,16 +363,20 @@ class ivar(acquisition_function):
         mu, S, z = self.gen_pred(self.model, self.x, self.t_ref)
 
         V1 = S + self.Sigma3d
-        
+
         # for i in np.arange(S.shape[0]):
         #     print(np.diag(S[i, :, :]))
-   
+
         # predict at candidates
         candPr = self.model.predict(x=L, thetaprime=z)
 
         # nL, nL, nL x ntot
         # candvar, candnugs, candcov = candPr["sd2"], candPr["nugs"], candPr["cov"]
-        candvar, candnugs, candcov = candPr._info["var"], candPr._info["nugs"], candPr._info["covmat"]
+        candvar, candnugs, candcov = (
+            candPr._info["var"],
+            candPr._info["nugs"],
+            candPr._info["covmat"],
+        )
         candtotvat = candvar + candnugs
 
         for k in range(0, self.nL):
@@ -417,10 +421,16 @@ class ivar(acquisition_function):
         # Ki, mult = self.model.Ki, self.model.mult
         Ki, mult = self.model._info["Ki"], self.model._info["mult"]
 
-        candPr = self.model.predict(x=self.model._info["X0"]) # self.model.predict(x=self.model["X0"])
+        candPr = self.model.predict(
+            x=self.model._info["X0"]
+        )  # self.model.predict(x=self.model["X0"])
         # candmean, candvar, candnugs = candPr["mean"], candPr["sd2"], candPr["nugs"]
-        candmean, candvar, candnugs = candPr._info["mean"], candPr._info["var"], candPr._info["nugs"]
-        smean = self.model._info["Z0"] # self.model["Z0"]
+        candmean, candvar, candnugs = (
+            candPr._info["mean"],
+            candPr._info["var"],
+            candPr._info["nugs"],
+        )
+        smean = self.model._info["Z0"]  # self.model["Z0"]
 
         # compute B
         # if self.model.get("Lambda") is None:
@@ -437,7 +447,10 @@ class ivar(acquisition_function):
 
         # ntot x ntr
         kx = cov_gen(
-            X1=z, X2=self.model._info["X0"], theta=self.model._info["theta"], type=self.model._info["covtype"]
+            X1=z,
+            X2=self.model._info["X0"],
+            theta=self.model._info["theta"],
+            type=self.model._info["covtype"],
         )
 
         # coefficients to be used
@@ -480,7 +493,7 @@ class ivar(acquisition_function):
             part2 = c2 * (1 / np.sqrt(dets1)) * part2
 
             vals[k] = np.sum(self.weights * (part1 - part2))
-            
+
         # print(np.argmin(vals))
         new_input = L[np.argmin(vals), :].reshape(1, self.p)
 
@@ -499,14 +512,15 @@ class lookahead(acquisition_function):
         self.method = args.get("method", "ivar")
         self.nL = args.get("nL", 100)
         self.t_grid = args.get("t_grid", None)
-        
 
     def determine_h(self):
         horizon = self.args.get("horizon", None)
         # print(horizon)
         if horizon.get("method") == "target":
             if horizon.get("previous_ratio") is None:
-                horizon["previous_ratio"] = len(self.model._info["Z0"]) / len(self.model._info["Z"])
+                horizon["previous_ratio"] = len(self.model._info["Z0"]) / len(
+                    self.model._info["Z"]
+                )
                 self.h = horizon.get("h0")
             else:
                 target = horizon.get("target_ratio")
@@ -525,7 +539,9 @@ class lookahead(acquisition_function):
                 else:
                     self.h = current_horizon
 
-                horizon["previous_ratio"] = len(self.model._info["Z0"]) / len(self.model._info["Z"])
+                horizon["previous_ratio"] = len(self.model._info["Z0"]) / len(
+                    self.model._info["Z"]
+                )
                 horizon["h0"] = self.h
 
         elif horizon.get("method") == "adaptive":
@@ -534,21 +550,21 @@ class lookahead(acquisition_function):
             if self.method == "imse":
                 mult_star = allocate_mult(model=self.model, N=budget).astype(int)
 
-
-
             else:
-                alloc_obj = allocate(budget, 
-                                     self.model, 
-                                     self.cls_func, 
-                                     {"theta":self.t_ref, "weight":self.weights})
+                alloc_obj = allocate(
+                    budget,
+                    self.model,
+                    self.cls_func,
+                    {"theta": self.t_ref, "weight": self.weights},
+                )
 
                 alloc_obj.allocatereps()
                 mult_star = alloc_obj.reps
-            
+
             # tab_input = mult_star - self.model.mult
             tab_input = mult_star - self.model._info["mult"]
             tab_input[tab_input < 0] = 0
-            
+
             # import matplotlib.pyplot as plt
             # for label, x_count, y_count in zip(tab_input, self.model.X0[:, 1], self.model.X0[:, 2]):
             #     col = "blue"
@@ -561,7 +577,7 @@ class lookahead(acquisition_function):
             #         color=col
             #     )
             # plt.show()
-            
+
             rand = np.random.default_rng(self.seed)
             u, counts = np.unique(tab_input, return_counts=True)
             self.h = rand.choice(u, p=counts / counts.sum())
@@ -596,7 +612,7 @@ class lookahead(acquisition_function):
         self.t_ref, self.weights = getattr(acq_obj, "t_ref", None), getattr(
             acq_obj, "weights", None
         )
-        
+
         # define horizon
         self.determine_h()
 
@@ -679,14 +695,14 @@ class lookahead(acquisition_function):
             cls_func=self.cls_func,
             args=self.args,
         )
-        
+
         self.t_ref, self.weights = getattr(acq_obj, "t_ref", None), getattr(
             acq_obj, "weights", None
         )
-        
+
         # define horizon
         self.determine_h()
-  
+
         acq_obj.evaluate(new=True, return_pseudo=True)
         z_A, f_A = acq_obj.znew, acq_obj.fnew
         path_A = [{"par": z_A, "new": True}]
@@ -697,12 +713,12 @@ class lookahead(acquisition_function):
         else:
             # acq_obj.model.update(Xnew=z_A, Znew=f_A, maxit=0)
             acq_obj.model.update(x=z_A, Y=f_A, maxit=0)
-            model_A = copy.deepcopy(acq_obj.model) # acq_obj.model.copy()
+            model_A = copy.deepcopy(acq_obj.model)  # acq_obj.model.copy()
             IVAR_A1 = self.crit_eval(model_A)
 
             if self.h > 0:
 
-                acq_obj.model = copy.deepcopy(model_A) # model_A.copy()
+                acq_obj.model = copy.deepcopy(model_A)  # model_A.copy()
                 for i in range(0, self.h):
                     acq_obj.evaluate(new=False, return_pseudo=True)
                     path_A.append({"par": acq_obj.znew, "new": False})
@@ -713,11 +729,11 @@ class lookahead(acquisition_function):
                 designs.append({"input": z_A, "path": path_A, "value": IVAR_A})
 
             if self.h == 0:
-                acq_obj.model = copy.deepcopy(self.model) # self.model.copy()
+                acq_obj.model = copy.deepcopy(self.model)  # self.model.copy()
                 acq_obj.evaluate(new=False, return_pseudo=True)
                 z_B = acq_obj.znew
                 acq_obj.model.update(x=z_B, Y=acq_obj.fnew, maxit=0)
-                model_B = copy.deepcopy(acq_obj.model) # acq_obj.model.copy()
+                model_B = copy.deepcopy(acq_obj.model)  # acq_obj.model.copy()
                 IVAR_B1 = self.crit_eval(model_B)
 
                 if IVAR_A1 < IVAR_B1:
@@ -728,10 +744,10 @@ class lookahead(acquisition_function):
                     return
 
             else:
-                newmodelB = copy.deepcopy(self.model) # self.model.copy()
+                newmodelB = copy.deepcopy(self.model)  # self.model.copy()
                 for i in range(self.h):
                     # Choose a new replicate
-                    acq_obj.model = copy.deepcopy(newmodelB) # newmodelB.copy()
+                    acq_obj.model = copy.deepcopy(newmodelB)  # newmodelB.copy()
                     acq_obj.evaluate(new=False, return_pseudo=True)
                     acq_obj.model.update(x=acq_obj.znew, Y=acq_obj.fnew, maxit=0)
 
@@ -740,7 +756,7 @@ class lookahead(acquisition_function):
                         path_B = []
 
                     path_B.append({"par": acq_obj.znew, "new": False})
-                    newmodelB = copy.deepcopy(acq_obj.model) # acq_obj.model.copy()
+                    newmodelB = copy.deepcopy(acq_obj.model)  # acq_obj.model.copy()
 
                     # Choose a new design
                     acq_obj.evaluate(new=True, return_pseudo=True)
@@ -750,9 +766,7 @@ class lookahead(acquisition_function):
                     for j in range(i, self.h - 1):
                         # Remaining replicates
                         acq_obj.evaluate(new=False, return_pseudo=True)
-                        acq_obj.model.update(
-                            x=acq_obj.znew, Y=acq_obj.fnew, maxit=0
-                        )
+                        acq_obj.model.update(x=acq_obj.znew, Y=acq_obj.fnew, maxit=0)
                         path_C.append({"par": acq_obj.znew, "new": False})
 
                     IVAR_C = self.crit_eval(acq_obj.model)
