@@ -6,7 +6,7 @@ import time
 from PUQ.surrogate import emulator
 
 class sequential_design:
-    def __init__(self, cls_func, trace=True):
+    def __init__(self, cls_func, trace=False):
         self.cls_func = cls_func
         self.trace = trace
         self.y = self.cls_func.real_data
@@ -34,10 +34,8 @@ class sequential_design:
         timel = []
         metric_sum = {}
         for t in range(0, T):
-            # print(f"t: {t}") if self.trace else None
-            print(t)
-            print(z0.shape)
-            print(f0.shape)
+            print(f"t: {t}") if self.trace else None
+
             tic = time.time()
             model = emulator(x=z0,
                              theta=np.array([0]),
@@ -49,7 +47,7 @@ class sequential_design:
 
             toc = time.time()
             timel.append(toc - tic)
-            print(toc - tic)
+
             args["seed"] += 1
             
             # if test is not None:

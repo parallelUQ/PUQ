@@ -24,3 +24,9 @@ Running this script should not take more than 60 sec. See the figures (png files
    :alt: Illustration of PUQ with the example
    :align: center
    :width: 600
+   
+
+The left panel shows simulation model outputs across design inputs (x) at four 
+different parameter values. Black dots represent field data observed at five 
+equally spaced design inputs. The right panel displays the points acquired 
+using the proposed acquisition function.

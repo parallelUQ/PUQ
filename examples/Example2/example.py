@@ -1,7 +1,7 @@
 import numpy as np
 from ptest_funcs import sinfunc
 import matplotlib.pyplot as plt
-from smt.sampling_methods import LHS
+from scipy.stats import qmc
 from PUQ.designmethods.sequential_1d_deterministic import sequential_design
 
 
@@ -43,8 +43,9 @@ if __name__ == "__main__":
     
     # Generate initial sample
     n0, nmax = 10, 30
-    sampling = LHS(xlimits=cex.zlim, random_state=int(s))
-    z0 = sampling(n0)
+    ndim = cex.zlim.shape[0]
+    sampler = qmc.LatinHypercube(d=ndim, seed=s)
+    z0 = sampler.random(n=n0)
     f0 = np.array([cex.function(z0[i, 0], z0[i, 1]) for i in range(n0)])
 
     # Generate design
