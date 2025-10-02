@@ -43,17 +43,14 @@ if __name__ == "__main__":
 
     # Fit an emulator
     # emu = emulator(cls_sinlin.x, theta, f, method="PCGP")
-    
-    emu = emulator(x=theta, 
-                   theta=cls_sinlin.x, 
-                   f=f,                
-                   method="multihomGP")
+
+    emu = emulator(x=theta, theta=cls_sinlin.x, f=f, method="multihomGP")
 
     # Generate test data
     thetatest = np.arange(-10, 10, 0.0025)[:, None]
     ftest = cls_sinlin.function(thetatest)
     ptest = sps.norm.pdf(cls_sinlin.real_data, ftest, np.sqrt(cls_sinlin.obsvar))
-    
+
     # predict at mesh
     nm, d = thetatest.shape[0], cls_sinlin.d
     pr_test = emu.predict(x=thetatest, thetaprime=thetatest)
@@ -62,17 +59,14 @@ if __name__ == "__main__":
     S = Sn.transpose(2, 0, 1)
     Sigma3d = cls_sinlin.obsvar.reshape(1, cls_sinlin.d, cls_sinlin.d)
     N = S + Sigma3d
-    M = S + 0.5*Sigma3d
+    M = S + 0.5 * Sigma3d
     posttesthat = multiple_pdfs(cls_sinlin.real_data, muT, N)
-    
-    diags = np.diag(cls_sinlin.obsvar[cls_sinlin.x, cls_sinlin.x.T])
-    coef = (2**cls_sinlin.d) * (np.sqrt(np.pi) ** cls_sinlin.d) * np.sqrt(np.prod(diags))
-    posttestvar = compute_postvar(cls_sinlin.real_data, 
-                                  muT, 
-                                  N, 
-                                  M, 
-                                  coef)
 
+    diags = np.diag(cls_sinlin.obsvar[cls_sinlin.x, cls_sinlin.x.T])
+    coef = (
+        (2**cls_sinlin.d) * (np.sqrt(np.pi) ** cls_sinlin.d) * np.sqrt(np.prod(diags))
+    )
+    posttestvar = compute_postvar(cls_sinlin.real_data, muT, N, M, coef)
 
     # predict at mesh
     nm, d = theta.shape[0], cls_sinlin.d
@@ -83,7 +77,7 @@ if __name__ == "__main__":
     Sigma3d = cls_sinlin.obsvar.reshape(1, cls_sinlin.d, cls_sinlin.d)
     N = S + Sigma3d
     posttrhat = multiple_pdfs(cls_sinlin.real_data, muT, N)
-        
+
     # Predict via the emulator
     emupred_test = emu.predict(x=thetatest)
     emupred_tr = emu.predict(x=theta)
@@ -129,11 +123,8 @@ if __name__ == "__main__":
 
     # Figure 2 (c)
     # Fit an emulator for posterior
-    emu = emulator(theta=cls_sinlin.x, 
-                   x=theta, 
-                   f=ptr,                
-                   method="multihomGP")
-    
+    emu = emulator(theta=cls_sinlin.x, x=theta, f=ptr, method="multihomGP")
+
     emupred_test = emu.predict(x=thetatest)
     emumean_test = emupred_test.mean()
     emumean_var = emupred_test.var()

@@ -27,7 +27,6 @@ class unimodal:
         return f
 
 
-
 class banana:
     def __init__(self):
         self.data_name = "banana"
@@ -46,7 +45,6 @@ class banana:
     def function(self, theta1, theta2):
         f = np.array([theta1, theta2 + 0.03 * theta1**2])
         return f
-
 
 
 class unidentifiable:
@@ -69,7 +67,6 @@ class unidentifiable:
         return f
 
 
-
 class bimodal:
     def __init__(self):
         self.data_name = "bimodal"
@@ -88,7 +85,6 @@ class bimodal:
     def function(self, theta1, theta2):
         f = np.array([theta2 - theta1**2, theta2 - theta1])
         return f
-
 
 
 def create_test_data(al_test, cls_func):

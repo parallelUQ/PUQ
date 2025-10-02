@@ -8,11 +8,12 @@ Created on Wed Feb 12 13:13:23 2025
 import numpy as np
 import scipy
 
+
 class sinfunc:
     def __init__(self):
         self.data_name = "sinfunc"
         self.zlim = np.array([[0, 1], [0, 1]])
-        self.theta_true = np.array([0.5]) # np.array([np.pi / 5])
+        self.theta_true = np.array([0.5])  # np.array([np.pi / 5])
         self.real_data = None
         self.out = [("f", float)]
         self.d = 1
@@ -38,7 +39,9 @@ class sinfunc:
         self.d = len(x)
         self.obsvar = np.diag(np.repeat(self.sigma2, self.d))
 
-        M = np.array([self.function(x, self.theta_true) for x in self.x], dtype=float).reshape(1, self.d)
+        M = np.array(
+            [self.function(x, self.theta_true) for x in self.x], dtype=float
+        ).reshape(1, self.d)
         if seed is not None:
             rand_stream = np.random.default_rng(seed)
             R = rand_stream.normal(0, np.sqrt(self.sigma2), size=(1, self.d))
@@ -48,8 +51,8 @@ class sinfunc:
 
     def noise(self, x, theta):
         alpha = 10
-        min_value = 0.01#0.05
-        max_value = 0.1#0.3
+        min_value = 0.01  # 0.05
+        max_value = 0.1  # 0.3
 
         weight = 1 / (1 + np.exp(-alpha * (x - 0.5)))  # Sigmoid transition
         value = min_value + (max_value - min_value) * weight  # Scale between 0.1 and 10
@@ -134,7 +137,7 @@ class bimodalx:
     def noise(self, x, t1, t2):
         cov = np.array([[0.05, 0], [0, 0.05]])
         var = scipy.stats.multivariate_normal(mean=[0.85, 0.85], cov=cov)
-        return 0.1*var.pdf(np.array([t1, t2]))
+        return 0.1 * var.pdf(np.array([t1, t2]))
 
     def realdata(self, x, seed):
         self.x = x
@@ -147,6 +150,7 @@ class bimodalx:
             self.real_data = M + R
         else:
             self.real_data = M
+
 
 class braninx:
     def __init__(self):
@@ -213,7 +217,7 @@ class pritam:
         self.p = 3
         self.real_data = None
         self.dx = 2
-        self.sigma2 = 10 #0.5**2
+        self.sigma2 = 10  # 0.5**2
         self.dx = 2
         self.dt = 1
 
@@ -232,18 +236,19 @@ class pritam:
         self.x = x
         self.d = len(x)
         self.obsvar = np.diag(np.repeat(self.sigma2, self.d))
-        M = np.array([self.function(x[0], x[1], self.theta_true) for x in self.x], dtype=float).reshape(1, self.d)
+        M = np.array(
+            [self.function(x[0], x[1], self.theta_true) for x in self.x], dtype=float
+        ).reshape(1, self.d)
         if seed is not None:
             rand_stream = np.random.default_rng(seed)
             R = rand_stream.normal(0, np.sqrt(self.sigma2), size=(1, self.d))
             self.real_data = M + R
         else:
             self.real_data = M
-    
+
     def noise(self, x1, x2, t1):
         # return 5
 
         cov = np.array([[0.1, 0], [0, 0.1]])
         var = scipy.stats.multivariate_normal(mean=[0.5, 0.5], cov=cov)
-        return (15*t1)*var.pdf(np.array([x1, x2]))
-
+        return (15 * t1) * var.pdf(np.array([x1, x2]))

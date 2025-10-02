@@ -4,6 +4,7 @@ from utils import heatmap, heatmap_pritam
 import matplotlib.pyplot as plt
 import sys
 
+
 def sample_from_posterior(cls_data, seed):
     import emcee
     import scipy.stats as sps
@@ -20,11 +21,14 @@ def sample_from_posterior(cls_data, seed):
             return -np.inf
         else:
             if cls_data.dx == 1:
-                feval = np.array([cls_data.function(x, *ctheta) for x in cls_data.x]).squeeze()
+                feval = np.array(
+                    [cls_data.function(x, *ctheta) for x in cls_data.x]
+                ).squeeze()
             elif cls_data.dx == 2:
-                feval = np.array([cls_data.function(x[0], x[1], *ctheta) for x in cls_data.x]).squeeze()
-            
-            
+                feval = np.array(
+                    [cls_data.function(x[0], x[1], *ctheta) for x in cls_data.x]
+                ).squeeze()
+
             rnd = sps.multivariate_normal(mean=feval, cov=cls_data.obsvar)
             pvar = rnd.pdf(cls_data.real_data) + sys.float_info.epsilon
             return np.log(pvar)
@@ -41,6 +45,7 @@ def sample_from_posterior(cls_data, seed):
         return samples
 
     return sample(cls_data.dt, nwalkers, seed)
+
 
 def test_data_gen(cls_data, sample=False):
 
@@ -70,14 +75,15 @@ def test_data_gen(cls_data, sample=False):
         f_s = np.zeros((t_s.shape[0], 1))
         n_s = np.zeros((t_s.shape[0], 1))
         for t_id, t in enumerate(t_s):
-            f_s[t_id, 0] = np.array([cls_data.function(x, t[0], t[1]) for x in cls_data.x])
+            f_s[t_id, 0] = np.array(
+                [cls_data.function(x, t[0], t[1]) for x in cls_data.x]
+            )
             n_s[t_id, 0] = np.array([cls_data.noise(x, t[0], t[1]) for x in cls_data.x])
             rnd = sps.multivariate_normal(mean=f_s[t_id, 0], cov=cls_data.obsvar)
             p_s[t_id, 0] = rnd.pdf(cls_data.real_data)
-        
+
         p_se = p_s + sys.float_info.epsilon
         w_s = (((1 / p_se)) / np.sum((1 / p_se))).flatten()
-
 
         # heatmap(Xpl, Ypl, ng, fg, pg, t_s)
 
@@ -102,8 +108,6 @@ def test_data_gen_pri(cls_data, sample=False):
         ]
     )
 
-
-
     heatmap_pritam(cls_data)
 
     # (ntot, d)
@@ -118,19 +122,21 @@ def test_data_gen_pri(cls_data, sample=False):
 
     if sample:
         t_s = sample_from_posterior(cls_data, 1234)
-        #t_s = np.linspace(0, 1, 900)[:, None]
+        # t_s = np.linspace(0, 1, 900)[:, None]
         p_s = np.zeros((t_s.shape[0], 1))
         f_s = np.zeros((t_s.shape[0] * cls_data.x.shape[0], 1))
         n_s = np.zeros((t_s.shape[0] * cls_data.x.shape[0], 1))
 
         for t_id, t in enumerate(t_s):
             feval = np.array([cls_data.function(x[0], x[1], t) for x in cls_data.x])
-            f_s[t_id*4 : (t_id + 1)*4, 0] = feval.flatten()
-            n_s[t_id*4 : (t_id + 1)*4, 0] = np.array([cls_data.noise(x[0], x[1], t) for x in cls_data.x]).flatten()
+            f_s[t_id * 4 : (t_id + 1) * 4, 0] = feval.flatten()
+            n_s[t_id * 4 : (t_id + 1) * 4, 0] = np.array(
+                [cls_data.noise(x[0], x[1], t) for x in cls_data.x]
+            ).flatten()
 
             rnd = sps.multivariate_normal(mean=feval.flatten(), cov=cls_data.obsvar)
             p_s[t_id, 0] = rnd.pdf(cls_data.real_data)
-        
+
         p_se = p_s + sys.float_info.epsilon
         w_s = (((1 / p_se)) / np.sum((1 / p_se))).flatten()
 

@@ -79,9 +79,10 @@ if __name__ == "__main__":
 
         des_obj = sequential_design(cls_func)
         des_obj.build_design(t0=theta0, f0=f0, af="seivar", args=args_list[0])
-        
+
         theta = des_obj["theta0"]
         reps = des_obj["rep0"]
 
-        twodpaper(cls_func, Xpl, Ypl, p_test, theta, reps, thetainit=theta0, name="fig1")
-
+        twodpaper(
+            cls_func, Xpl, Ypl, p_test, theta, reps, thetainit=theta0, name="fig1"
+        )

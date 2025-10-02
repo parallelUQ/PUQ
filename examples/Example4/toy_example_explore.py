@@ -54,7 +54,7 @@ if __name__ == "__main__":
         # Create a candidate list
         nL = 500
         nm = theta_test.shape[0]
-        
+
         fig, ax = plt.subplots(2, 3, figsize=(15, 7), constrained_layout=True)
 
         emu = build_emulator(x=x, theta=theta0, f=f0[None, :], pcset=None)
@@ -68,10 +68,10 @@ if __name__ == "__main__":
             mu, S, cov, cvar = get_pred(
                 cL=cL, emu=emu, x=x, ttest=theta_test, reps=reps
             )
-            
+
             # plt.plot(theta_test, mu)
             # plt.show()
-            
+
             V1 = S + obsvar3d
             V2 = S + 0.5 * obsvar3d
 

@@ -633,17 +633,34 @@ def Figure1(f, theta, x, obsvar, real_data, theta_test, f_test, p_test, cls_func
     pc_settings = {"standardize": True, "latent": False}
     d = f.shape[0]
     md = np.arange(d).reshape(d, 1)
-    emu = emulator(x=theta, 
-                   theta=md, 
-                   f=f,                
-                   method="multihetGP",
-                   args={'lower':None, 'upper':None,
-                          'noiseControl':{'k_theta_g_bounds': (1, 100), 'g_max': 1e2, 'g_bounds': (1e-6, 1)}, 
-                          'init':{}, 
-                          'known':{}, 
-                           'settings':{"linkThetas": 'joint', "logN": True, "initStrategy": 'residuals', 
-                                     "checkHom": True, "penalty": True, "trace": 0, "return.matrices": True, 
-                                     "return.hom": False, "factr": 1e9}})
+    emu = emulator(
+        x=theta,
+        theta=md,
+        f=f,
+        method="multihetGP",
+        args={
+            "lower": None,
+            "upper": None,
+            "noiseControl": {
+                "k_theta_g_bounds": (1, 100),
+                "g_max": 1e2,
+                "g_bounds": (1e-6, 1),
+            },
+            "init": {},
+            "known": {},
+            "settings": {
+                "linkThetas": "joint",
+                "logN": True,
+                "initStrategy": "residuals",
+                "checkHom": True,
+                "penalty": True,
+                "trace": 0,
+                "return.matrices": True,
+                "return.hom": False,
+                "factr": 1e9,
+            },
+        },
+    )
 
     emupred = emu.predict(x=theta_test)
 
@@ -690,7 +707,6 @@ def Figure1(f, theta, x, obsvar, real_data, theta_test, f_test, p_test, cls_func
     ax[0].set_ylabel(r"$\zeta(\theta)$", fontsize=ft)
     ax[0].tick_params(axis="both", labelsize=ft)
 
-
     phat = np.zeros(theta_test.shape[0])
     phatvar = np.zeros(theta_test.shape[0])
     pvar1 = np.zeros(theta_test.shape[0])
@@ -723,7 +739,9 @@ def Figure1(f, theta, x, obsvar, real_data, theta_test, f_test, p_test, cls_func
         linestyle="dashed",
         linewidth=2.5,
     )
-    ax[2].plot(theta_test.flatten(), cls_func.noise(theta_test).flatten(), color="black")
+    ax[2].plot(
+        theta_test.flatten(), cls_func.noise(theta_test).flatten(), color="black"
+    )
     ax[2].set_xlabel(r"$\theta$", fontsize=ft)
     ax[2].set_ylabel(r"$\mathbb{V}[\nu]$", fontsize=ft)
     ax[2].tick_params(axis="both", labelsize=ft)
@@ -795,4 +813,3 @@ def Figure2(desobject, theta_test, nugs, phat, method, axs):
         ncol=3,
         prop={"size": ft},
     )
-

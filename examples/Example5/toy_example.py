@@ -8,7 +8,7 @@ from utils import toy_example, visual_xt
 maxiter = 50
 new = False
 seedmin, seedmax = 2, 3
-#seedmin, seedmax = 1, 2
+# seedmin, seedmax = 1, 2
 dfl = []
 
 if __name__ == "__main__":
@@ -40,10 +40,10 @@ if __name__ == "__main__":
                 for f in feval
             ]
         )[:, None]
-        
+
         # Set random stream for initial design
         persis_info = {"rand_stream": np.random.default_rng(s)}
-        
+
         # Visualize
         toy_example(cls_data, Xpl, Ypl, fg, ng, persis_info)
 
@@ -65,7 +65,6 @@ if __name__ == "__main__":
             z0 = np.repeat(z0u, rep0, axis=0)
             f0 = np.array([cls_data.sim_f(z, persis_info=persis_info) for z in z0])
 
-
         test = {
             "f": fg,
             "theta": tg,
@@ -73,7 +72,7 @@ if __name__ == "__main__":
             "p": pg,
             "noise": ng,
             "p_prior": 1,
-            "w": 1
+            "w": 1,
         }
 
         # Methods to iterate over
