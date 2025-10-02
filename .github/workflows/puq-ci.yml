@@ -5,9 +5,9 @@ name: PUQ CI
 
 on:
   push:
-    branches: ["dev/PUQ_with_hetGPy"]
+    branches: ["main", "develop"]
   pull_request:
-    branches: ["dev/PUQ_with_hetGPy"]
+    branches: ["main", "develop"]
 
 jobs:
   run-full-tests:
