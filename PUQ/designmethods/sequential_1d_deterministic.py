@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from PUQ.designmethods.support import multiple_pdfs, multiple_determinants
 from PUQ.designmethods.gen_funcs.acquisition_1d_deterministic import var, ivar, imse
 import time

@@ -1,5 +1,5 @@
 import numpy as np
-from smt.sampling_methods import LHS
+from scipy.stats import qmc
 from PUQ.designmethods.support import multiple_pdfs, multiple_determinants
 from hetgpy.IMSE import crit_IMSPE, Wij, IMSPE, allocate_mult
 import emcee
@@ -13,17 +13,16 @@ def generate_neighborhood(acq):
 
     if neigh_type == "LHS":
         N = int(acq.nL)
-        sampling = LHS(xlimits=acq.zlim, random_state=int(acq.seed))
-        L = sampling(N)
+        sampling = qmc.LatinHypercube(d=acq.zlim.shape[0], seed=int(acq.seed))
+        L = sampling.random(n=N)
     else:
         N = int(acq.nL * 0.5)
-
-        sampling = LHS(xlimits=acq.zlim, random_state=int(acq.seed))
-        L_explore = sampling(N)
-
-        sampling = LHS(xlimits=acq.tlim, random_state=int(acq.seed))
-        Lt = sampling(N)
-
+        sampling = qmc.LatinHypercube(d=acq.zlim.shape[0], seed=int(acq.seed))
+        L_explore = sampling.random(n=N)
+        
+        sampling = qmc.LatinHypercube(d=acq.tlim.shape[0], seed=int(acq.seed))
+        Lt = sampling.random(n=N)
+        
         num_options = len(acq.x)
 
         # Distribute the rows as evenly as possible
@@ -248,9 +247,8 @@ class ivar(acquisition_function):
             self.nwalkers = args.get("nwalkers", 20)
             self.reference_set()
         elif args.get("integral") == "LHS":
-            print("LHS")
-            sampling = LHS(xlimits=self.tlim, random_state=int(self.seed))
-            self.t_ref = sampling(500)
+            sampling = qmc.LatinHypercube(d=self.tlim.shape[0], seed=int(self.seed))
+            self.t_ref = sampling.random(n=500)
             self.weights = 1
         else:
             self.t_ref = args.get("t_grid")
@@ -270,8 +268,8 @@ class ivar(acquisition_function):
             np.random.seed(int(self.seed))
             sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability)
 
-            sampling = LHS(xlimits=self.tlim, random_state=int(self.seed))
-            loc0 = sampling(nwalkers)
+            sampling = qmc.LatinHypercube(d=self.tlim.shape[0], seed=int(self.seed))
+            loc0 = sampling.random(n=nwalkers)
 
             sampler.run_mcmc(initial_state=loc0, nsteps=self.nsteps, progress=False)
 

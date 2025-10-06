@@ -52,7 +52,7 @@ if __name__ == "__main__":
         f0=f0[:, None],
         T=nmax,
         af="ivar",
-        args={"nL": 200, "seed": s, "integral": "importance"},
+        args={"nL": 200, "seed": s, "integral": "LHS"},
     )
 
     ax[1].scatter(
