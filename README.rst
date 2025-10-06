@@ -28,9 +28,9 @@ Dependencies
 PUQ is a Python package that employs novel experimental design techniques with intelligent selection criteria, 
 refining data collection to enhance the efficiency and effectiveness of uncertainty quantification.
 
-This code is tested with Python 3.9, 3.10, 3.11, and 3.12 and requires pip.
+This code is tested with Python 3.10, 3.11, and 3.12 and requires pip.
 
-Python 3.12 users need to install setuptools manually via::
+Users need to install setuptools manually via::
 
     python -m ensurepip --upgrade
     python -m pip install --upgrade setuptools
@@ -105,12 +105,12 @@ The HTML files are then stored in ``docs/html``
 
 .. code-block:: bibtex
 
-   @techreport{PUQ2022,
-     author      = {Özge Sürer, Matthew Plumlee, Stefan M. Wild},
+   @techreport{PUQ2025,
+     author      = {Özge Sürer, David O'Gara, Matthew Plumlee, Stefan M. Wild},
      title       = {PUQ Users Manual},
      institution = {},
-     number      = {Version 0.1.0},
-     year        = {2022},
+     number      = {Version 0.1.1},
+     year        = {2025},
      url         = {https://github.com/parallelUQ/PUQ}
    }
 
