@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as sps
-from smt.sampling_methods import LHS
 
 
 def twoD(designobj, Xpl, Ypl, p_test, nmesh):
