@@ -11,7 +11,7 @@ Release 0.1.1
 
 :Date: Oct 8, 2025
 
-- :code:`surrogatemethods` have been updated to use the `hetGPy <https://github.com/davidogara/hetGPy>`_ package as their base.
+- :code:`surrogatemethods` have been updated to use the `hetGPy <https://github.com/davidogara/hetGPy>`_ package as a base.
 - :code:`surrogatemethods` provide four emulators for deterministic, stochastic, and one- or multi-dimensional outputs.
 - :code:`designmethods` provide four sequential design procedures.
 - :code:`examples` have been revised to include illustrative cases from five different papers.
