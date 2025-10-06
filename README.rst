@@ -30,7 +30,7 @@ refining data collection to enhance the efficiency and effectiveness of uncertai
 
 This code is tested with Python 3.10, 3.11, and 3.12 and requires pip.
 
-Users need to install setuptools manually via::
+Users may need to install setuptools manually via::
 
     python -m ensurepip --upgrade
     python -m pip install --upgrade setuptools
@@ -80,9 +80,9 @@ Testing
 
 The test suite requires the pytest_ and pytest-cov_ packages, which can be installed via ``pip install pytest pytest-cov``.
 
-The test suite can be run from the ``tests/`` directory of the source distribution by running::
+The test suite can be run from the main directory of the source distribution by running::
 
-./run-tests.sh
+    pytest tests/
 
 
 Documentation
