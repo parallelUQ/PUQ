@@ -28,7 +28,7 @@ if __name__ == "__main__":
     )
 
     # Initial sample
-    n0, s = 10, 1
+    n0, s = 10, 2
 
     ndim = cex.thetalimits.shape[0]
     sampler = qmc.LatinHypercube(d=ndim, seed=s)

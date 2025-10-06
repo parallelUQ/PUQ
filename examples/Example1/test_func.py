@@ -15,7 +15,7 @@ class unimodal:
         self.real_x = np.arange(0, self.d)[:, None]
         ####
         self.dx = 1
-        self.dt = 1
+        self.dt = 2
 
     def function(self, theta1, theta2):
         """

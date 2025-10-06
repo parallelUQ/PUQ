@@ -1,5 +1,5 @@
 import numpy as np
-from smt.sampling_methods import LHS
+from scipy.stats import qmc
 from PUQ.designmethods.support import multiple_pdfs, multiple_determinants
 from hetgpy.IMSE import crit_IMSPE
 import emcee
@@ -7,8 +7,11 @@ import emcee
 
 def generate_neighborhood(acq):
     N = int(acq.nL)
-    sampling = LHS(xlimits=acq.tlim, random_state=acq.seed)
-    L = sampling(N)
+    ndim = acq.tlim.shape[0]
+    sampler = qmc.LatinHypercube(d=ndim, seed=acq.seed)
+    unit_sample = sampler.random(n=N)
+    L = qmc.scale(unit_sample, acq.tlim[:, 0], acq.tlim[:, 1])
+    
     return L
 
 
@@ -203,10 +206,12 @@ class ivar(acquisition_function):
             self.thin = args.get("thin", 20)
             self.nwalkers = args.get("nwalkers", 20)
             self.reference_set()
+
         elif args.get("integral") == "LHS":
-            print("LHS")
-            sampling = LHS(xlimits=self.tlim, random_state=int(self.seed))
-            self.t_ref = sampling(500)
+            ndim = self.tlim.shape[0]
+            sampler = qmc.LatinHypercube(d=ndim, seed=int(self.seed))
+            unit_sample = sampler.random(n=500)
+            self.t_ref = qmc.scale(unit_sample, self.tlim[:, 0], self.tlim[:, 1])
             self.weights = 1
         else:
             self.t_ref = args.get("t_grid")
@@ -226,8 +231,9 @@ class ivar(acquisition_function):
             np.random.seed(int(self.seed))
             sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability)
 
-            sampling = LHS(xlimits=self.tlim, random_state=int(self.seed))
-            loc0 = sampling(nwalkers)
+            sampler_init = qmc.LatinHypercube(d=ndim, seed=int(self.seed))
+            unit_sample = sampler_init.random(n=nwalkers)
+            loc0 = qmc.scale(unit_sample, self.tlim[:, 0], self.tlim[:, 1])
 
             sampler.run_mcmc(initial_state=loc0, nsteps=self.nsteps, progress=False)
 
@@ -240,7 +246,7 @@ class ivar(acquisition_function):
             unnorm_weight = 1 / pvar
             weight = unnorm_weight / np.sum(unnorm_weight)
             return weight
-
+        
         self.t_ref = sample(ndim=self.dt, nwalkers=self.nwalkers)
         self.weights = importance_weight(theta=self.t_ref)
 
