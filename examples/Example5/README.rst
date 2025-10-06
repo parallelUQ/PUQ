@@ -5,7 +5,7 @@ This example demonstrates how to use the active learning procedure from Sürer (
 Active Learning for Data-Efficient Calibration of Stochastic Simulation Models.
 
 
-**Instructions for running the illustrative examples with the active learning procedurel**
+**Instructions for running the illustrative examples with the active learning procedure**
 
 To replicate the figures below, respectively:
 
@@ -17,7 +17,8 @@ To replicate the figures below, respectively:
 
  python example.py
  
-Running this script should not take more than 5 min. See the figures (jpeg files) saved under ``examples/`` directory.
+Running this script should not take more than 5 min. See the figure (png files) saved under 
+``examples/Example5`` directory.
 
 .. image:: ex5.png
    :alt: Illustration of PUQ with the example
