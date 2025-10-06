@@ -15,7 +15,7 @@ To replicate the figures below, respectively:
 
 2) Execute the followings from the command line::
 
-    python3 example.py
+    python example.py
 
 Running this script should not take more than 60 sec. See the figures (png files) saved under the directory.
 
