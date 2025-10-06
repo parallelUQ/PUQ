@@ -5,3 +5,7 @@ docutils<0.19
 dill
 hetGPy
 emcee
+scipy 
+matplotlib 
+pandas 
+scikit-learn

@@ -11,7 +11,7 @@ from PUQ.surrogate import emulator
 
 
 class sequential_design:
-    def __init__(self, cls_func, trace=True):
+    def __init__(self, cls_func, trace=False):
         self.cls_func = cls_func
         self.trace = trace
         self.y = self.cls_func.real_data

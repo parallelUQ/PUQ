@@ -2,7 +2,7 @@ import numpy as np
 from utils import fig6
 from utils_sample import test_data_gen
 import matplotlib.pyplot as plt
-from smt.sampling_methods import LHS
+from scipy.stats import qmc
 from PUQ.designmethods.sequential_1d_stochastic import sequential_design
 from test_functions import unimodalx, bimodalx, braninx
 
@@ -53,8 +53,8 @@ if __name__ == "__main__":
 
         # Initial sample
         n0, rep0 = 30, 5
-        sampling = LHS(xlimits=cex.zlim, random_state=int(s))
-        z0u = sampling(n0)
+        sampling = qmc.LatinHypercube(d=cex.zlim.shape[0], seed=int(s))
+        z0u = sampling.random(n=n0)
         z0 = np.repeat(z0u, rep0, axis=0)
         f0 = np.array(
             [cex.sim_f(z0[i, :], persis_info=persis_info) for i in range(n0 * rep0)]
