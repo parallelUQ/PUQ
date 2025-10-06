@@ -4,7 +4,7 @@ import sys
 
 sys.path.append("./")
 import numpy as np
-from smt.sampling_methods import LHS
+from scipy.stats import qmc
 from PUQ.designmethods.sequential_1d_deterministic import sequential_design
 
 
@@ -54,8 +54,8 @@ cex.realdata(x=x_obs, seed=1)
 
 # Generate initial sample
 n0, nmax = 10, 30
-sampling = LHS(xlimits=cex.zlim, random_state=1)
-z0 = sampling(n0)
+sampling = qmc.LatinHypercube(d=cex.zlim.shape[0], seed=1)
+z0 = sampling.random(n=n0)
 f0 = np.array([cex.function(z0[i, 0], z0[i, 1]) for i in range(n0)])
 
 
