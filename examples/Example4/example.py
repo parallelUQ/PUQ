@@ -2,25 +2,16 @@ import numpy as np
 from PUQ.prior import prior_dist
 from test_funcs import bimodal, banana, unimodal
 from utilities import test_data_gen, twodpaper
-from smt.sampling_methods import LHS
+from scipy.stats import qmc
 from PUQ.designmethods.sequential_md_stochastic import sequential_design
 
 
 # # # # #
 batch = 8
-workers = batch + 1
 funcname = "unimodal"
-smin = 0
-smax = 1
-
-# # # # #
-
-
+smin, smax = 0, 1
 n0, rep0, rho = 15, 2, 1 / 2
-
-nmesh = 50
-maxiter = 10
-
+nmesh, maxiter = 50, 10
 
 # Inputs to designer
 desset = {"is_exploit": True, "is_explore": True, "nL": 200, "impute_str": "update"}
@@ -46,8 +37,8 @@ if __name__ == "__main__":
         persis_info = {"rand_stream": np.random.default_rng(s)}
 
         # Initial sample
-        sampling = LHS(xlimits=cls_func.thetalimits, random_state=int(s))
-        theta0 = sampling(n0)
+        sampling = qmc.LatinHypercube(d=cls_func.thetalimits.shape[0], seed=int(s))
+        theta0 = sampling.random(n=n0)
         theta0 = np.repeat(theta0, rep0, axis=0)
         f0 = np.zeros((cls_func.d, n0 * rep0))
         for i in range(0, n0 * rep0):

@@ -51,7 +51,7 @@ def impute_CL(ct, x, fE, tE, reps, liar):
 
 def build_emulator(x, theta, f, pcset):
 
-    print(theta.shape)
+
     # emu = emulator(x=x,
     #                theta=theta,
     #                f=f,
@@ -64,7 +64,7 @@ def build_emulator(x, theta, f, pcset):
     #                                  "checkHom": True, "penalty": True, "trace": 0, "return.matrices": True,
     #                                  "return.hom": False, "factr": 1e9},
     #                        'pc_settings':pcset})
-    print(f.shape)
+
     d = f.shape[0]
     md = np.arange(d).reshape(d, 1)
     emu = emulator(

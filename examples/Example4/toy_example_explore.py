@@ -59,7 +59,6 @@ if __name__ == "__main__":
 
         emu = build_emulator(x=x, theta=theta0, f=f0[None, :], pcset=None)
         for i in range(3):
-            print(i)
             ft = 18
             cL = np.linspace(
                 cls_func.thetalimits[0][0], cls_func.thetalimits[0][1], nL
