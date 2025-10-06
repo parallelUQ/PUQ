@@ -11,7 +11,7 @@ def generate_neighborhood(acq):
     sampler = qmc.LatinHypercube(d=ndim, seed=acq.seed)
     unit_sample = sampler.random(n=N)
     L = qmc.scale(unit_sample, acq.tlim[:, 0], acq.tlim[:, 1])
-    
+
     return L
 
 
@@ -246,7 +246,7 @@ class ivar(acquisition_function):
             unnorm_weight = 1 / pvar
             weight = unnorm_weight / np.sum(unnorm_weight)
             return weight
-        
+
         self.t_ref = sample(ndim=self.dt, nwalkers=self.nwalkers)
         self.weights = importance_weight(theta=self.t_ref)
 

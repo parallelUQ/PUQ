@@ -19,10 +19,10 @@ def generate_neighborhood(acq):
         N = int(acq.nL * 0.5)
         sampling = qmc.LatinHypercube(d=acq.zlim.shape[0], seed=int(acq.seed))
         L_explore = sampling.random(n=N)
-        
+
         sampling = qmc.LatinHypercube(d=acq.tlim.shape[0], seed=int(acq.seed))
         Lt = sampling.random(n=N)
-        
+
         num_options = len(acq.x)
 
         # Distribute the rows as evenly as possible
