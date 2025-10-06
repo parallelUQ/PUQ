@@ -8,7 +8,7 @@ import sys
 def sample_from_posterior(cls_data, seed):
     import emcee
     import scipy.stats as sps
-    from smt.sampling_methods import LHS
+    from scipy.stats import qmc
 
     discard = 250
     nsteps = 1000
@@ -36,10 +36,16 @@ def sample_from_posterior(cls_data, seed):
     def sample(ndim, nwalkers, seed):
         np.random.seed(seed)
         sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability)
-        sampling = LHS(
-            xlimits=cls_data.zlim[cls_data.dx : cls_data.p, :], random_state=seed
-        )
-        loc0 = sampling(nwalkers)
+        
+        sampling = qmc.LatinHypercube(d=cls_data.p-cls_data.dx, seed=seed)
+        loc0 = sampling.random(n=nwalkers)
+        
+        # sampling = LHS(
+        #     xlimits=cls_data.zlim[cls_data.dx : cls_data.p, :], random_state=seed
+        # )
+        # loc0 = sampling(nwalkers)
+        
+        
         sampler.run_mcmc(initial_state=loc0, nsteps=nsteps, progress=False)
         samples = sampler.get_chain(discard=discard, thin=thin, flat=True)
         return samples
