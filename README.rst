@@ -68,7 +68,11 @@ To install the PUQ package:
 
     pip install -r requirements.txt
 
-3) From the command line, use the following command to install PUQ::
+3) Install the latest development version of hetGPy::
+
+    python -m pip install git+https://github.com/davidogara/hetGPy.git
+
+4) From the command line, use the following command to install PUQ::
 
     pip install -e .
 
