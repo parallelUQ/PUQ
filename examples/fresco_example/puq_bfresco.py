@@ -3,9 +3,9 @@ from generate_test_data import generate_test_data
 import numpy as np
 import matplotlib.pyplot as plt
 from PUQ.prior import prior_dist
-from PUQ.design import designer
-from PUQ.designmethods.utils import parse_arguments
 import time
+from PUQ.designmethods.sequential_md_deterministic import sequential_design
+from scipy.stats import qmc
 
 if __name__ == "__main__":
 
@@ -54,6 +54,10 @@ if __name__ == "__main__":
             self.obsvar = np.diag(np.repeat(0.1, 15))
             self.out = [("f", float, (self.d,))]
 
+            ####
+            self.dx = 1
+            self.dt = 3
+            
         def generate_input_file(self, parameter_values):
 
             file = "48Ca_template.in"
@@ -74,7 +78,7 @@ if __name__ == "__main__":
             f.writelines(content)
             f.close()
 
-        def function(self):
+        def sim(self):
             output_file = "48Ca_temp.out"
             input_file = "frescox_temp_input.in"
             os.system("frescox < frescox_temp_input.in > 48Ca_temp.out")
@@ -99,16 +103,16 @@ if __name__ == "__main__":
             ]
             return f
 
-        def sim(self, H, persis_info, sim_specs, libE_info):
+        def function(self, theta1, theta2, theta3):
             """
             Wraps frescox function
             """
-            function = sim_specs["user"]["function"]
-            H_o = np.zeros(1, dtype=sim_specs["out"])
+            #function = sim_specs["user"]["function"]
+            #H_o = np.zeros(1, dtype=sim_specs["out"])
 
-            V = H["thetas"][0][0]
-            r = H["thetas"][0][1]
-            Ws = H["thetas"][0][2]
+            V = theta1#H["thetas"][0][0]
+            r = theta2#H["thetas"][0][1]
+            Ws = theta3#H["thetas"][0][2]
 
             # V = 49.2849
             # r = 0.9070
@@ -119,15 +123,14 @@ if __name__ == "__main__":
 
             parameter = [V, r, a, Ws, rs, a2]
             self.generate_input_file(parameter)
-            H_o["f"] = function()
+            f = self.sim()
             for fname in os.listdir():
                 if fname.startswith("fort"):
                     os.remove(fname)
-            return H_o, persis_info
+            return f
 
     design_start = time.time()
 
-    args = parse_arguments()
     cls_fresco = bfrescox()
     print("Generating test data")
     test_data = generate_test_data(cls_fresco)
@@ -138,25 +141,39 @@ if __name__ == "__main__":
         a=cls_fresco.thetalimits[:, 0], b=cls_fresco.thetalimits[:, 1]
     )
 
+    # Initial sample
+    ndim = cls_fresco.thetalimits.shape[0]
+    sampler = qmc.LatinHypercube(d=ndim, seed=1)
+    # Generate samples in [0,1]^d
+    unit_sample = sampler.random(n=32)
+    # Scale using limits
+    t0 = qmc.scale(unit_sample, cls_fresco.thetalimits[:, 0], cls_fresco.thetalimits[:, 1])
+    f0 = np.zeros((t0.shape[0], cls_fresco.d))
+    for i in range(t0.shape[0]):
+        f0[i, :] = cls_fresco.function(t0[i, 0], t0[i, 1], t0[i, 2])
+
     print("Beginning of sequential procedure")
-    al_fresco = designer(
-        data_cls=cls_fresco,
-        method="SEQCAL",
+    des_obj = sequential_design(cls_fresco)
+    des_obj.build_design(
+        z0=t0,
+        f0=f0,
+        T=64,
+        test=test_data,
+        af="ivar",
         args={
             "mini_batch": 1,
-            "n_init_thetas": args.n_init_thetas,
+            "n_init_thetas": 10,
             "nworkers": 2,
-            "AL": args.al_func,
-            "seed_n0": args.seed_n0,
             "prior": prior_func,
             "data_test": test_data,
-            "max_evals": args.max_eval,
-            "type_init": None,
+            "seed": 1,
+            "integral": "LHS",
         },
     )
 
     print("End of sequential procedure")
-    theta_al = al_fresco._info["theta"]
+    # theta_al = al_fresco._info["theta"]
+    theta_al = des_obj.zs
 
     real_x = np.array(
         [[26, 31, 41, 51, 61, 71, 76, 81, 91, 101, 111, 121, 131, 141, 151]]
@@ -184,7 +201,7 @@ if __name__ == "__main__":
         dtype="float64",
     )
     n0 = 32
-    f = al_fresco._info["f"]
+    f = des_obj.fs #al_fresco._info["f"]
 
     fig = plt.figure(figsize=(6, 4))
     ax = fig.add_subplot(1, 1, 1)
@@ -203,7 +220,7 @@ if __name__ == "__main__":
                     label="Initial sample",
                 )
         else:
-            if i < 63:
+            if i < 95:
                 ax.plot(
                     np.arange(15), np.exp(f[i, :]), color="red", alpha=0.3, zorder=1
                 )
@@ -225,7 +242,7 @@ if __name__ == "__main__":
     ax.set_ylabel("Cross section", fontsize=16)
     ax.set_yscale("log")
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=3, fontsize=10)
-    plt.savefig("Figure_fresco.jpg", format="jpeg", bbox_inches="tight", dpi=500)
+    plt.savefig("Figure_fresco.png", format="jpeg", bbox_inches="tight", dpi=500)
     plt.show()
 
     design_end = time.time()
