@@ -15,8 +15,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
     - uses: actions/checkout@v2
@@ -27,10 +27,12 @@ jobs:
     - name: Install dependencies
       run: |
         python -m ensurepip --upgrade
-        python -m pip install --upgrade setuptools
+        python -m pip install --upgrade pip setuptools wheel
+        pip install numpy
         pip install -r requirements.txt
+        python -m pip install git+https://github.com/davidogara/hetGPy.git
         python -m pip install flake8 pytest pytest-cov Cython
         pip install -e .
     - name: Test with pytest
       run: |
-        ./tests/run-tests.sh
+        pytest tests/

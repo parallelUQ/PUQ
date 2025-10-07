@@ -25,11 +25,12 @@ def compute_likelihood(emumean, emuvar, obs, obsvar, is_cov):
 
 
 def generate_test_data(cls_synth_init):
-    from smt.sampling_methods import LHS
+    # from smt.sampling_methods import LHS
+    from scipy.stats import qmc
 
     data_name = cls_synth_init.data_name
     print("Running ", data_name)
-    function = cls_synth_init.function
+    sim = cls_synth_init.sim
     sh = cls_synth_init.d
     thetalimits = cls_synth_init.thetalimits
     obsvar = cls_synth_init.obsvar
@@ -42,8 +43,16 @@ def generate_test_data(cls_synth_init):
             [thetalimits[2, :][0], thetalimits[2, :][1]],
         ]
     )
-    sampling = LHS(xlimits=xlimits, random_state=1)
-    x = sampling(n)
+    # Initial sample
+    ndim = xlimits.shape[0]
+    sampler = qmc.LatinHypercube(d=ndim, seed=1)
+    # Generate samples in [0,1]^d
+    unit_sample = sampler.random(n=n)
+    # Scale using limits
+    x = qmc.scale(unit_sample, xlimits[:, 0], xlimits[:, 1])
+
+    # sampling = LHS(xlimits=xlimits, random_state=1)
+    # x = sampling(n)
     ftest = np.zeros((sh, n))
     ptest = np.zeros(n)
     thetatest = np.zeros((n, cls_synth_init.p))
@@ -54,7 +63,7 @@ def generate_test_data(cls_synth_init):
     for i in range(n):
         parameter = [x[i, 0], x[i, 1], 0.6798, x[i, 2], 1.0941, 0.2763]
         cls_synth_init.generate_input_file(parameter)
-        f = function()
+        f = sim()
         ftest[:, i] = f
         ptest[i] = compute_likelihood(
             f.reshape((real_d, 1)),

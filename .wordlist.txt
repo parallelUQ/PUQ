@@ -69,3 +69,8 @@ jpg
 matyas
 ensurepip
 setuptools
+O'Gara
+davidogara
+designmethods
+hetGPy
+surrogatemethods

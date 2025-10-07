@@ -21,11 +21,11 @@ sys.path.append(os.path.abspath("../PUQ/surrogatesupport"))
 # -- Project information -----------------------------------------------------
 
 project = "PUQ"
-copyright = "2024, Özge Sürer, Matthew Plumlee, Stefan M. Wild"
-author = "Özge Sürer, Matthew Plumlee, Stefan M. Wild"
+copyright = "2025, Özge Sürer, David O'Gara, Matthew Plumlee, Stefan M. Wild"
+author = "Özge Sürer, David O'Gara, Matthew Plumlee, Stefan M. Wild"
 
 # The full version, including alpha/beta/rc tags
-release = "0.1"
+release = "0.1.1"
 
 needs_sphinx = "3.0"
 # -- General configuration ---------------------------------------------------
