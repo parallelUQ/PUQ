@@ -12,8 +12,8 @@ rng = np.random.default_rng(1)
 lhs = qmc.LatinHypercube(d=2, rng=rng)
 
 X = lhs.random(n=100)
-reps = rng.choice(len(X), size=100, replace=True)
-X = X[reps,]
+mult = rng.choice(np.arange(1,6),size = X.shape[0], replace = True)
+X    = np.vstack(np.repeat(X,mult,axis=0))
 # prediction grid
 Xp = lhs.random(n=100)
 Y = 0 * X
@@ -21,7 +21,7 @@ Y[:, 0] = np.sin(X[:, 0])
 Y[:, 1] = np.cos(X[:, 1])
 # varying noise field
 noise = rng.normal(size=Y.shape) * np.exp(-(X**2))
-noise *= 2
+noise *= 0.2
 
 Y += noise
 
@@ -68,7 +68,7 @@ def test_fit():
             "noiseControl": NOISECONTROL,
         },
     )
-    # multiGP.fit()
+    multiGP.fit()
 
     emulator_keys = ["ll", "theta", "beta0", "Delta"]
     for i in range(len(GPlist)):
@@ -182,4 +182,4 @@ def test_update():
 
 
 if __name__ == "__main__":
-    test_update()
+    test_fit()
