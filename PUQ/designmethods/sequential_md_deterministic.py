@@ -87,7 +87,7 @@ class sequential_design:
             acq_func.acquire_new()
             tnew = acq_func.znew
 
-            fnew = self.cls_func.function(tnew.flatten()[0], tnew.flatten()[1]).reshape(
+            fnew = self.cls_func.function(*tnew.flatten()).reshape(
                 1, self.cls_func.d
             )
 
