@@ -57,7 +57,7 @@ if __name__ == "__main__":
             ####
             self.dx = 1
             self.dt = 3
-            
+
         def generate_input_file(self, parameter_values):
 
             file = "48Ca_template.in"
@@ -107,12 +107,12 @@ if __name__ == "__main__":
             """
             Wraps frescox function
             """
-            #function = sim_specs["user"]["function"]
-            #H_o = np.zeros(1, dtype=sim_specs["out"])
+            # function = sim_specs["user"]["function"]
+            # H_o = np.zeros(1, dtype=sim_specs["out"])
 
-            V = theta1#H["thetas"][0][0]
-            r = theta2#H["thetas"][0][1]
-            Ws = theta3#H["thetas"][0][2]
+            V = theta1  # H["thetas"][0][0]
+            r = theta2  # H["thetas"][0][1]
+            Ws = theta3  # H["thetas"][0][2]
 
             # V = 49.2849
             # r = 0.9070
@@ -147,7 +147,9 @@ if __name__ == "__main__":
     # Generate samples in [0,1]^d
     unit_sample = sampler.random(n=32)
     # Scale using limits
-    t0 = qmc.scale(unit_sample, cls_fresco.thetalimits[:, 0], cls_fresco.thetalimits[:, 1])
+    t0 = qmc.scale(
+        unit_sample, cls_fresco.thetalimits[:, 0], cls_fresco.thetalimits[:, 1]
+    )
     f0 = np.zeros((t0.shape[0], cls_fresco.d))
     for i in range(t0.shape[0]):
         f0[i, :] = cls_fresco.function(t0[i, 0], t0[i, 1], t0[i, 2])
@@ -201,7 +203,7 @@ if __name__ == "__main__":
         dtype="float64",
     )
     n0 = 32
-    f = des_obj.fs #al_fresco._info["f"]
+    f = des_obj.fs  # al_fresco._info["f"]
 
     fig = plt.figure(figsize=(6, 4))
     ax = fig.add_subplot(1, 1, 1)

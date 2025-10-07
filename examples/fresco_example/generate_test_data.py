@@ -27,6 +27,7 @@ def compute_likelihood(emumean, emuvar, obs, obsvar, is_cov):
 def generate_test_data(cls_synth_init):
     # from smt.sampling_methods import LHS
     from scipy.stats import qmc
+
     data_name = cls_synth_init.data_name
     print("Running ", data_name)
     sim = cls_synth_init.sim
