@@ -87,9 +87,7 @@ class sequential_design:
             acq_func.acquire_new()
             tnew = acq_func.znew
 
-            fnew = self.cls_func.function(*tnew.flatten()).reshape(
-                1, self.cls_func.d
-            )
+            fnew = self.cls_func.function(*tnew.flatten()).reshape(1, self.cls_func.d)
 
             f0 = np.concatenate((f0, fnew), axis=0)
             z0 = np.concatenate((z0, tnew), axis=0)
