@@ -6,7 +6,7 @@ Batch Sequential Experimental Design for Calibration of Stochastic Simulation Mo
 for the stochastic models with high-dimensional outputs.
 
 
-**Instructions for running the illustrative examples with the active learning procedurel**
+**Instructions for running the illustrative examples with the active learning procedure**
 
 To replicate the figures below, respectively:
 
@@ -19,7 +19,7 @@ To replicate the figures below, respectively:
  python toy_example_exploit.py
  python toy_example_explore.py
  
-Running this script should not take more than 5 min. See the figures (jpeg files) saved under ``examples/`` directory.
+Running this script should not take more than 5 min. See the figures (png files) saved under ``examples/Example4`` directory.
 
 
 .. image:: toy1.png
