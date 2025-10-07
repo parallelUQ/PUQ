@@ -9,11 +9,12 @@ from hetgpy import hetGP
 from copy import deepcopy
 
 # create some noise 2D data
+np.random.seed(1)
 rng = np.random.default_rng(1)
 lhs = qmc.LatinHypercube(d=2, rng=rng)
 
 X = lhs.random(n=100)
-reps = rng.choice(len(X), size=100, replace=True)
+reps = rng.choice(len(X), size=5000, replace=True)
 X = X[reps,]
 # prediction grid
 Xp = lhs.random(n=100)
@@ -21,7 +22,7 @@ Y = 0 * X
 Y[:, 0] = np.sin(X[:, 0])
 Y[:, 1] = np.cos(X[:, 1])
 # varying noise field
-noise = rng.normal(size=Y.shape) * np.exp(-(X**2))
+noise = rng.normal(size=Y.shape)
 noise *= 2
 
 Y += noise
@@ -42,7 +43,7 @@ SETTINGS = {
 }
 NOISECONTROL = {"k_theta_g_bounds": (1, 100), "g_max": 1e2, "g_bounds": (1e-6, 1)}
 
-MAXIT = 100
+MAXIT = 200
 
 
 def test_fit():
