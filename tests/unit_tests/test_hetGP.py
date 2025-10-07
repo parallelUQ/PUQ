@@ -142,12 +142,12 @@ def test_conversion_to_homGP():
     # should return homoskedastic GP
     X = np.linspace(0, 1, 20).reshape(-1, 1)
     rand = np.random.default_rng(2)
-    reps = rand.choice(len(X),size=len(X))
-    X = X[reps,:]
+    reps = rand.choice(len(X), size=len(X))
+    X = X[reps, :]
     Y = np.sin(X).squeeze()
     noise = 0.2 * rand.normal(size=Y.shape[0])
     Y += noise
-    Y = Y.reshape(-1,1)
+    Y = Y.reshape(-1, 1)
     model = emulator(x=X, theta=np.array([0]), f=Y, method="hetGP")
     Xp = np.linspace(X.min(), X.max(), 100).reshape(-1, 1)
     preds = model.predict(Xp)
