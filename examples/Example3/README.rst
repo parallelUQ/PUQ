@@ -18,7 +18,7 @@ To replicate the figures below, respectively:
  python example_a.py
  python example_b.py
  
-Running each script should not take more than 60 sec. See the figures (jpeg files) saved under ``examples/`` directory.
+Running each script should not take more than 60 sec. See the figures (png files) saved under ``examples/Example3`` directory.
 
 .. image:: ex3_a.png
    :alt: Illustration of PUQ with the example
