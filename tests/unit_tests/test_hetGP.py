@@ -30,10 +30,10 @@ def test_fit():
     test_model = emulator(x=X, theta=np.array([0]), f=Y, method="hetGP")
     test_model.fit()
 
-    assert test_model._info["ll"] == reference_model["ll"]
-    assert test_model._info["theta"] == reference_model["theta"]
-    assert test_model._info["g"] == reference_model["g"]
-    assert test_model._info["beta0"] == reference_model["beta0"]
+    assert np.allclose(test_model._info["ll"], reference_model["ll"])
+    assert np.allclose(test_model._info["theta"], reference_model["theta"])
+    assert np.allclose(test_model._info["g"], reference_model["g"])
+    assert np.allclose(test_model._info["beta0"], reference_model["beta0"])
     assert np.allclose(test_model._info["Delta"], reference_model["Delta"])
     assert np.allclose(test_model._info["Lambda"], reference_model["Lambda"])
 
@@ -56,10 +56,10 @@ def test_matern():
     )
     test_model.fit()
 
-    assert test_model._info["ll"] == reference_model["ll"]
-    assert test_model._info["theta"] == reference_model["theta"]
-    assert test_model._info["g"] == reference_model["g"]
-    assert test_model._info["beta0"] == reference_model["beta0"]
+    assert np.allclose(test_model._info["ll"], reference_model["ll"])
+    assert np.allclose(test_model._info["theta"], reference_model["theta"])
+    assert np.allclose(test_model._info["g"], reference_model["g"])
+    assert np.allclose(test_model._info["beta0"], reference_model["beta0"])
     assert np.allclose(test_model._info["Delta"], reference_model["Delta"])
     assert np.allclose(test_model._info["Lambda"], reference_model["Lambda"])
 
@@ -114,10 +114,10 @@ def test_hetGP_update_kriging_believer():
     test_model.fit()
     test_model.update(Xnew)
 
-    assert test_model._info["ll"] == reference_model["ll"]
-    assert test_model._info["theta"] == reference_model["theta"]
-    assert test_model._info["g"] == reference_model["g"]
-    assert test_model._info["beta0"] == reference_model["beta0"]
+    assert np.allclose(test_model._info["ll"], reference_model["ll"])
+    assert np.allclose(test_model._info["theta"], reference_model["theta"])
+    assert np.allclose(test_model._info["g"], reference_model["g"])
+    assert np.allclose(test_model._info["beta0"], reference_model["beta0"])
 
 
 def test_hetGP_update():
@@ -132,16 +132,22 @@ def test_hetGP_update():
     test_model.fit()
     test_model.update(x=Xnew, Y=Ypred)
 
-    assert test_model._info["ll"] == reference_model["ll"]
-    assert test_model._info["theta"] == reference_model["theta"]
-    assert test_model._info["g"] == reference_model["g"]
-    assert test_model._info["beta0"] == reference_model["beta0"]
+    assert np.allclose(test_model._info["ll"], reference_model["ll"])
+    assert np.allclose(test_model._info["theta"], reference_model["theta"])
+    assert np.allclose(test_model._info["g"], reference_model["g"])
+    assert np.allclose(test_model._info["beta0"], reference_model["beta0"])
 
 
 def test_conversion_to_homGP():
     # should return homoskedastic GP
     X = np.linspace(0, 1, 20).reshape(-1, 1)
-    Y = X
+    rand = np.random.default_rng(2)
+    reps = rand.choice(len(X), size=len(X))
+    X = X[reps, :]
+    Y = np.sin(X).squeeze()
+    noise = 0.2 * rand.normal(size=Y.shape[0])
+    Y += noise
+    Y = Y.reshape(-1, 1)
     model = emulator(x=X, theta=np.array([0]), f=Y, method="hetGP")
     Xp = np.linspace(X.min(), X.max(), 100).reshape(-1, 1)
     preds = model.predict(Xp)

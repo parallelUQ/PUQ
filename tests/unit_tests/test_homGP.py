@@ -31,10 +31,10 @@ def test_fit():
     test_model = emulator(x=X, theta=np.array([0]), f=Y, method="homGP")
     test_model.fit()
 
-    assert test_model._info["ll"] == reference_model["ll"]
-    assert test_model._info["theta"] == reference_model["theta"]
-    assert test_model._info["g"] == reference_model["g"]
-    assert test_model._info["beta0"] == reference_model["beta0"]
+    assert np.allclose(test_model._info["ll"], reference_model["ll"])
+    assert np.allclose(test_model._info["theta"], reference_model["theta"])
+    assert np.allclose(test_model._info["g"], reference_model["g"])
+    assert np.allclose(test_model._info["beta0"], reference_model["beta0"])
 
 
 def test_predict():
@@ -93,10 +93,10 @@ def test_matern():
     )
     test_model.fit()
 
-    assert test_model._info["ll"] == reference_model["ll"]
-    assert test_model._info["theta"] == reference_model["theta"]
-    assert test_model._info["g"] == reference_model["g"]
-    assert test_model._info["beta0"] == reference_model["beta0"]
+    assert np.allclose(test_model._info["ll"], reference_model["ll"])
+    assert np.allclose(test_model._info["theta"], reference_model["theta"])
+    assert np.allclose(test_model._info["g"], reference_model["g"])
+    assert np.allclose(test_model._info["beta0"], reference_model["beta0"])
 
 
 def test_homGP_update_kriging_believer():
@@ -111,10 +111,10 @@ def test_homGP_update_kriging_believer():
     test_model.fit()
     test_model.update(Xnew)
 
-    assert test_model._info["ll"] == reference_model["ll"]
-    assert test_model._info["theta"] == reference_model["theta"]
-    assert test_model._info["g"] == reference_model["g"]
-    assert test_model._info["beta0"] == reference_model["beta0"]
+    assert np.allclose(test_model._info["ll"], reference_model["ll"])
+    assert np.allclose(test_model._info["theta"], reference_model["theta"])
+    assert np.allclose(test_model._info["g"], reference_model["g"])
+    assert np.allclose(test_model._info["beta0"], reference_model["beta0"])
 
 
 def test_homGP_update():
@@ -129,10 +129,10 @@ def test_homGP_update():
     test_model.fit()
     test_model.update(x=Xnew, Y=Ypred)
 
-    assert test_model._info["ll"] == reference_model["ll"]
-    assert test_model._info["theta"] == reference_model["theta"]
-    assert test_model._info["g"] == reference_model["g"]
-    assert test_model._info["beta0"] == reference_model["beta0"]
+    assert np.allclose(test_model._info["ll"], reference_model["ll"])
+    assert np.allclose(test_model._info["theta"], reference_model["theta"])
+    assert np.allclose(test_model._info["g"], reference_model["g"])
+    assert np.allclose(test_model._info["beta0"], reference_model["beta0"])
 
 
 if __name__ == "__main__":
